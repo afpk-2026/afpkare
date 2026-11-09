@@ -51,10 +51,14 @@ if not ssh_key.exists():
         ],
         check=True,
     )
-current_ip = (
-    urllib.request.urlopen("https://api.ipify.org", timeout=15).read().decode().strip()
-)
-env["TF_VAR_admin_ipv4"] = current_ip
+if command == "plan":
+    env["TF_VAR_admin_ipv4"] = (
+        env.get("TF_VAR_admin_ipv4")
+        or urllib.request.urlopen("https://api.ipify.org", timeout=15)
+        .read()
+        .decode()
+        .strip()
+    )
 env["TF_VAR_ssh_public_key_path"] = str(ssh_key) + ".pub"
 tf = ["terraform", f"-chdir={root / 'infra'}"]
 subprocess.run(
