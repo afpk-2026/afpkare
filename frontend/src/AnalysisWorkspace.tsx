@@ -179,7 +179,7 @@ export function AnalysisWorkspace({
         prefix + "-report.html",
       );
     setMessage(
-      "적용된 계산의 파일을 생성했습니다. 보고서 고정값과 미확인 가정을 함께 확인해 주세요.",
+      "파일 다운로드를 요청했습니다. 완료 여부와 차단 안내는 브라우저에서 확인해 주세요. 보고서의 미확인 가정도 함께 확인해 주세요.",
     );
   }
   const delta = (value: number | null, base: number | null) =>

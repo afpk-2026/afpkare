@@ -1,0 +1,8 @@
+# Enabled by scripts/enable_https.sh; HTTP remains available on port 80.
+services:
+  frontend:
+    ports: ["443:443"]
+    volumes:
+      - /opt/family-finance/acme:/var/www/acme:ro
+      - /opt/family-finance/tls/certs:/etc/nginx/tls:ro
+      - ./frontend/nginx.https.conf:/etc/nginx/conf.d/default.conf:ro

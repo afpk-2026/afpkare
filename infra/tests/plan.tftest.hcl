@@ -10,8 +10,8 @@ run "isolated_single_server" {
     error_message = "Default server must be the reviewed Seoul 2GB plan."
   }
   assert {
-    condition     = vultr_firewall_rule.ssh.subnet_size == 32 && vultr_firewall_rule.ssh.port == "22" && vultr_firewall_rule.http.port == "80"
-    error_message = "Only public HTTP and single-IP SSH may be exposed."
+    condition     = vultr_firewall_rule.ssh.subnet_size == 32 && vultr_firewall_rule.ssh.port == "22" && vultr_firewall_rule.http.port == "80" && vultr_firewall_rule.https.port == "443"
+    error_message = "Only public HTTP/HTTPS and single-IP SSH may be exposed."
   }
   assert {
     condition     = vultr_instance.app.backups == "disabled" && vultr_instance.app.enable_ipv6 == false

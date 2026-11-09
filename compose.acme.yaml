@@ -1,0 +1,6 @@
+# Bootstrap HTTP-01 validation before the first trusted certificate exists.
+services:
+  frontend:
+    volumes:
+      - /opt/family-finance/acme:/var/www/acme:ro
+      - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro

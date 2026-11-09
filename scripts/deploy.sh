@@ -11,9 +11,9 @@ root=$(cd "$(dirname "$0")/.." && pwd)
 archive=$(mktemp /tmp/family-finance.XXXXXX.tar.gz)
 trap 'rm -f "$archive"' EXIT
 # Explicit source allowlist: no .env, state, .git, reports, or local dependencies.
-COPYFILE_DISABLE=1 tar --no-xattrs -czf "$archive" --exclude=node_modules --exclude=dist --exclude=.venv --exclude=__pycache__ --exclude=.pytest_cache --exclude='*.tsbuildinfo' --exclude='.env*' -C "$root" frontend backend compose.yaml
+COPYFILE_DISABLE=1 tar --no-xattrs -czf "$archive" --exclude=node_modules --exclude=dist --exclude=.venv --exclude=__pycache__ --exclude=.pytest_cache --exclude='*.tsbuildinfo' --exclude='.env*' -C "$root" frontend backend compose.yaml compose.acme.yaml compose.https.yaml scripts/tls_config.py scripts/enable_https.sh scripts/renew_certificate.sh
 ssh -i "$identity" -o StrictHostKeyChecking=yes "root@$server" "cloud-init status --wait >/dev/null && install -d -m 750 /opt/family-finance/releases/$release"
 scp -q -i "$identity" -o StrictHostKeyChecking=yes "$archive" "root@$server:/opt/family-finance/releases/$release/source.tar.gz"
 # Copy secret separately; no echo, no archive, no Terraform state.
 scp -q -i "$identity" -o StrictHostKeyChecking=yes "$app_env" "root@$server:/opt/family-finance/releases/$release/.env"
-ssh -i "$identity" -o StrictHostKeyChecking=yes "root@$server" "cd /opt/family-finance/releases/$release && chmod 600 .env && printf '\nAPP_VERSION=%s\n' '$release' >> .env && tar -xzf source.tar.gz && rm source.tar.gz && docker compose build && docker compose up -d --wait --force-recreate && curl --fail --silent http://127.0.0.1/api/health && ln -sfn /opt/family-finance/releases/$release /opt/family-finance/current"
+ssh -i "$identity" -o StrictHostKeyChecking=yes "root@$server" "cd /opt/family-finance/releases/$release && chmod 600 .env && printf '\nAPP_VERSION=%s\n' '$release' >> .env && tar -xzf source.tar.gz && rm source.tar.gz && if test -f /opt/family-finance/tls/enabled; then python3 scripts/tls_config.py && printf 'COMPOSE_FILE=compose.yaml:compose.https.yaml\n' >> .env; fi && docker compose build && docker compose up -d --wait --force-recreate && curl --fail --silent http://127.0.0.1/api/health && ln -sfn /opt/family-finance/releases/$release /opt/family-finance/current"

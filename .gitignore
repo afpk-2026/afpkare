@@ -19,3 +19,5 @@
 .DS_Store
 
 *.tsbuildinfo
+
+frontend/nginx.https.conf

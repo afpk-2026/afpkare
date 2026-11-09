@@ -32,7 +32,7 @@ resource "vultr_ssh_key" "deploy" {
   name    = "family-finance-deploy"
   ssh_key = trimspace(file(pathexpand(var.ssh_public_key_path)))
 }
-resource "vultr_firewall_group" "app" { description = "family-finance public HTTP, restricted SSH" }
+resource "vultr_firewall_group" "app" { description = "family-finance public HTTP/HTTPS, restricted SSH" }
 resource "vultr_firewall_rule" "http" {
   firewall_group_id = vultr_firewall_group.app.id
   protocol          = "tcp"
@@ -40,6 +40,14 @@ resource "vultr_firewall_rule" "http" {
   subnet            = "0.0.0.0"
   subnet_size       = 0
   port              = "80"
+}
+resource "vultr_firewall_rule" "https" {
+  firewall_group_id = vultr_firewall_group.app.id
+  protocol          = "tcp"
+  ip_type           = "v4"
+  subnet            = "0.0.0.0"
+  subnet_size       = 0
+  port              = "443"
 }
 resource "vultr_firewall_rule" "ssh" {
   firewall_group_id = vultr_firewall_group.app.id
@@ -64,5 +72,5 @@ resource "vultr_instance" "app" {
   depends_on        = [vultr_firewall_rule.http, vultr_firewall_rule.ssh]
   lifecycle { prevent_destroy = true }
 }
-output "public_url" { value = "http://${vultr_instance.app.main_ip}/" }
+output "public_url" { value = "https://${vultr_instance.app.main_ip}/" }
 output "server_ipv4" { value = vultr_instance.app.main_ip }
