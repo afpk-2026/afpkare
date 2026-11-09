@@ -1,0 +1,19 @@
+{
+  "oversized_request": {
+    "http": 413,
+    "status": "invalid_input"
+  },
+  "parse_rate_limit_http": [
+    422,
+    422,
+    422,
+    429,
+    429,
+    429,
+    429,
+    429,
+    429,
+    429
+  ],
+  "manual_calculation_after_rate_limit": 200
+}

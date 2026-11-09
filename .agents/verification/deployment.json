@@ -1,0 +1,40 @@
+{
+  "date": "2026-11-09",
+  "server_ipv4": "158.247.203.92",
+  "public_url": "http://158.247.203.92/",
+  "instance_id": "005c9e96-8ab0-46a7-92bb-b3d1d7938303",
+  "plan": "vc2-1c-2gb",
+  "region": "icn",
+  "monthly_usd": 10,
+  "hourly_usd": 0.014,
+  "terraform_changes": {
+    "added": 5,
+    "changed": 0,
+    "destroyed": 0
+  },
+  "app_release": "p0-3afdfd6",
+  "public_p0_verification": "passed_assumption_based",
+  "source_commit": "3afdfd685e162ff79a00f40730d3ba2e04a31020",
+  "ssh_host_ed25519_fingerprint": "SHA256:0KcUAn88TVc5tiYcp7eGR/sXsUS+E6n87uq1LXX1HwU",
+  "browser": "Chrome",
+  "api_version": "0.2.0",
+  "assumption_version": "scenario-2026-11-09-v1",
+  "state_location": "outside_repository",
+  "api_credentials_location": "outside_repository",
+  "checks": [
+    "reference_case",
+    "F06_preview_and_apply",
+    "F07_real_upstage_proposal_and_confirmation",
+    "B_and_B_PRIME_recalculation",
+    "baseline_and_changed_graphs",
+    "65_transition",
+    "evidence_and_report_fixed_values",
+    "reload_restore",
+    "reset_and_reload",
+    "invalid_input",
+    "unsupported_withdrawal_cap",
+    "oversized_request",
+    "proposal_rate_limit",
+    "manual_calculation_after_proposal_error"
+  ]
+}
