@@ -67,7 +67,7 @@ export function SensitivityBars({
                     width="310"
                     height="11"
                     rx="3"
-                    fill="#eef1e9"
+                    fill="#eef4fb"
                   />
                   <rect
                     x="0"
@@ -77,7 +77,7 @@ export function SensitivityBars({
                     }
                     height="11"
                     rx="3"
-                    fill={r.strategy === "B" ? "#49785a" : "#b9a376"}
+                    fill={r.strategy === "B" ? "#004EA2" : "#B38944"}
                   />
                 </g>
               ))}

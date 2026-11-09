@@ -170,14 +170,14 @@ export function SimulationPaths({
             role="img"
             aria-label={`필요 잔액 ${money(need)}, 예상 잔액 ${money(result.summary.projected_trust_at_56)}`}
           >
-            <rect width="200" height="10" rx="5" fill="#e8ede5" />
+            <rect width="200" height="10" rx="5" fill="#eef4fb" />
             <rect
               width={
                 coverage == null ? 0 : Math.max(0, Math.min(1, coverage)) * 200
               }
               height="10"
               rx="5"
-              fill={coverage != null && coverage < 1 ? "#b2814c" : "#49785a"}
+              fill={coverage != null && coverage < 1 ? "#B38944" : "#004EA2"}
             />
           </svg>
           <p>

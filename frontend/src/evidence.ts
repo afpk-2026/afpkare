@@ -67,7 +67,7 @@ export function evidenceBundle(
 ) {
   return {
     export_schema_version: 1,
-    app_version: "0.3.2",
+    app_version: "0.4.0",
     exported_at: exportedAt,
     title: "부모가 없는 날 · 가상 계산 근거",
     base_year: reference.base_year,
@@ -205,7 +205,7 @@ export function evidenceHtml(
         ].map((k) => (r[k] == null ? "—" : number(r[k]))),
       ]),
     );
-  return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"><title>${h(bundle.title)}</title><style>body{font:14px/1.7 sans-serif;color:#243f34;max-width:1100px;margin:35px auto;padding:20px}h1{font-size:28px}h2{margin-top:35px}table{width:100%;border-collapse:collapse;font-size:11px;page-break-inside:auto}th,td{border:1px solid #dce4d7;padding:7px;text-align:left}th{background:#eef3e9}tr{break-inside:avoid}thead{display:table-header-group}.note{background:#f5f0e5;padding:15px}code{overflow-wrap:anywhere}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px}@media print{body{margin:0;max-width:none;padding:0}h2{break-after:avoid}@page{size:A4 landscape;margin:15mm}}</style></head><body>
+  return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"><title>${h(bundle.title)}</title><style>body{font:14px/1.4 Pretendard,sans-serif;color:#172b45;max-width:1100px;margin:35px auto;padding:20px}h1{font-size:28px}h2{margin-top:35px}table{width:100%;border-collapse:collapse;font-size:11px;page-break-inside:auto}th,td{border:1px solid #dce4ef;padding:7px;text-align:left}th{background:#004EA2;color:#fff}tr{break-inside:avoid}thead{display:table-header-group}.note{background:#faf5e9;padding:15px}code{overflow-wrap:anywhere}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px}@media print{body{margin:0;max-width:none;padding:0}h2{break-after:avoid}@page{size:A4 landscape;margin:15mm}}</style></head><body>
  <h1>${h(bundle.title)}</h1><p class="note">${h(bundle.disclaimer)}</p><p>기준: ${bundle.base_year}년 실질 가격 · 금액: 원 · 생성: ${h(bundle.exported_at)}</p><p>사례 <code>${h(bundle.case_id)}</code> · 출처 ${h(bundle.source_version)} · 가정 ${h(bundle.assumption_version)}</p>
  <h2>적용 입력</h2>${table(
    ["입력", "값", "단위", "근거"],

@@ -113,8 +113,8 @@ export function Chart({
               />
             </clipPath>
             <linearGradient id={`${id}-fill`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#739c80" stopOpacity="0.2" />
-              <stop offset="100%" stopColor="#739c80" stopOpacity="0.01" />
+              <stop offset="0%" stopColor="#004EA2" stopOpacity="0.2" />
+              <stop offset="100%" stopColor="#004EA2" stopOpacity="0.01" />
             </linearGradient>
           </defs>
           {[0, 0.5, 1].map((p) => (
@@ -124,14 +124,14 @@ export function Chart({
                 x2="552"
                 y1={18 + p * 155}
                 y2={18 + p * 155}
-                stroke="#e3e9df"
+                stroke="#dce4ef"
               />
               <text x="0" y={22 + p * 155}>
                 {((max - p * range) / 1e8).toFixed(1)}억
               </text>
             </g>
           ))}
-          <line x1="42" x2="552" y1={y(0)} y2={y(0)} stroke="#a8b6a2" />
+          <line x1="42" x2="552" y1={y(0)} y2={y(0)} stroke="#9aabc0" />
           {[2031, 2036, 2062, 2071]
             .filter((v) => v >= first && v <= last)
             .map((v) => (
@@ -141,14 +141,14 @@ export function Chart({
                 x2={x(v)}
                 y1="18"
                 y2="173"
-                stroke="#d9dfd2"
+                stroke="#dce4ef"
                 strokeDasharray="3 4"
               />
             ))}
           <polyline
             points={points(otherRows)}
             fill="none"
-            stroke="#a99773"
+            stroke="#B38944"
             strokeWidth="2"
             strokeDasharray="5 4"
           />
@@ -162,7 +162,7 @@ export function Chart({
             <polyline
               points={points(rows)}
               fill="none"
-              stroke="#315b45"
+              stroke="#004EA2"
               strokeWidth="2.5"
               strokeLinejoin="round"
             />
@@ -172,7 +172,7 @@ export function Chart({
               cx={x(shown.year)}
               cy={y(shown.end_balance)}
               r="3.5"
-              fill="#315b45"
+              fill="#004EA2"
             />
           )}
           {hoverYear != null && (
@@ -182,7 +182,7 @@ export function Chart({
                 x2={x(hoverYear)}
                 y1="18"
                 y2="173"
-                stroke="#567363"
+                stroke="#004EA2"
                 strokeDasharray="3 3"
               />
               {other && (
@@ -190,7 +190,7 @@ export function Chart({
                   cx={x(other.year)}
                   cy={y(other.end_balance)}
                   r="4"
-                  fill="#a99773"
+                  fill="#B38944"
                   stroke="white"
                   strokeWidth="2"
                 />
@@ -200,7 +200,7 @@ export function Chart({
                   cx={x(active.year)}
                   cy={y(active.end_balance)}
                   r="5"
-                  fill="#315b45"
+                  fill="#004EA2"
                   stroke="white"
                   strokeWidth="2"
                 />

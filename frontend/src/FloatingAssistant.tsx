@@ -1,20 +1,28 @@
 import React, { useEffect, useRef, useState } from "react";
 
 export function FloatingAssistant({ children }: { children: React.ReactNode }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const launcher = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLElement>(null);
+  const initial = useRef(true);
   const close = () => {
     setOpen(false);
-    launcher.current?.focus();
+    launcher.current?.focus({ preventScroll: true });
   };
   useEffect(() => {
+    if (initial.current) {
+      initial.current = false;
+      return;
+    }
     if (!open) return;
-    const frame = requestAnimationFrame(() =>
-      panel.current
-        ?.querySelector<HTMLElement>("input:not(:disabled), button")
-        ?.focus(),
-    );
+    const frame = requestAnimationFrame(() => {
+      const target = window.matchMedia("(max-width: 760px)").matches
+        ? panel.current?.querySelector<HTMLElement>("button")
+        : panel.current?.querySelector<HTMLElement>(
+            "textarea, input:not(:disabled), button",
+          );
+      target?.focus({ preventScroll: true });
+    });
     return () => cancelAnimationFrame(frame);
   }, [open]);
   return (

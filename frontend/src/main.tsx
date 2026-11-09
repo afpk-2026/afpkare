@@ -18,7 +18,8 @@ import {
 } from "./simulation.ts";
 import { SimulationPaths } from "./SimulationPaths.tsx";
 import { StepTitle } from "./StepTitle.tsx";
-import { FloatingAssistant } from "./FloatingAssistant.tsx";
+import { ChatAssistant } from "./ChatAssistant.tsx";
+import { ReportInsights } from "./ReportInsights.tsx";
 import { FormulaReference } from "./FormulaReference.tsx";
 import { AnalysisWorkspace } from "./AnalysisWorkspace.tsx";
 
@@ -41,12 +42,7 @@ function App() {
     [baseline, setBaseline] = useState<Result | null>(null),
     [notice, setNotice] = useState(""),
     [error, setError] = useState(""),
-    [busy, setBusy] = useState(false),
-    [parseBusy, setParseBusy] = useState(false),
-    [sample, setSample] = useState("cost185"),
-    [sentence, setSentence] = useState("생활비가 월 185만 원이면?"),
-    [proposal, setProposal] = useState<Inputs | null>(null),
-    [parseError, setParseError] = useState("");
+    [busy, setBusy] = useState(false);
   const [retry, setRetry] = useState(0);
   const [analysisReset, setAnalysisReset] = useState(0);
   const [exportTarget, setExportTarget] = useState<HTMLDivElement | null>(null);
@@ -136,7 +132,7 @@ function App() {
     }
   }
   async function apply(values?: Inputs, s: Strategy = strategy) {
-    if (!ref || busy) return;
+    if (!ref || busy) return false;
     setError("");
     const inputs =
       values ??
@@ -147,7 +143,7 @@ function App() {
       setError(
         "입력 범위와 단위를 확인해 주세요. 빈 값·음수 금액·허용 범위 밖 값은 적용할 수 없습니다.",
       );
-      return;
+      return false;
     }
     setBusy(true);
     try {
@@ -156,18 +152,19 @@ function App() {
       setStrategy(s);
       setDraft(fill(inputs, ref));
       const stored = persist(ref, inputs, s);
-      setProposal(null);
       setNotice(
         stored
           ? "가상 사례 설정을 적용했습니다. 설정은 이 브라우저에만 저장됩니다."
           : "가상 사례를 적용했지만 저장소가 차단되어 현재 탭에서만 사용합니다.",
       );
+      return true;
     } catch (e) {
       setError(
         e instanceof Error
           ? e.message
           : "서버에 연결하지 못했습니다. 적용을 다시 시도해 주세요.",
       );
+      return false;
     } finally {
       setBusy(false);
     }
@@ -175,11 +172,7 @@ function App() {
   async function reset() {
     if (!ref || busy) return;
     setError("");
-    setProposal(null);
     setAnalysisReset((v) => v + 1);
-    setParseError("");
-    setSample("cost185");
-    setSentence("생활비가 월 185만 원이면?");
     setResult(null);
     setComparison(null);
     setBaseline(null);
@@ -204,36 +197,6 @@ function App() {
       setBusy(false);
     }
   }
-  async function parse() {
-    setParseError("");
-    setProposal(null);
-    setParseBusy(true);
-    try {
-      const response = await fetch("/api/parse-change", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: sentence }),
-      });
-      const data = await response.json();
-      if (!response.ok)
-        throw new Error(data.message ?? "제안을 불러오지 못했습니다.");
-      if (
-        !ref ||
-        !validInputs(data.changes, ref.fields) ||
-        !Object.keys(data.changes).length
-      )
-        throw new Error("지원하지 않는 제안입니다.");
-      setProposal(data.changes);
-    } catch (e) {
-      setParseError(
-        e instanceof Error
-          ? e.message
-          : "연결 오류입니다. 수동 입력은 계속 사용할 수 있습니다.",
-      );
-    } finally {
-      setParseBusy(false);
-    }
-  }
   if (!ref)
     return (
       <main className="loading">
@@ -252,7 +215,6 @@ function App() {
   const preview = (changes: Inputs) => {
     setDraft(fill({ ...applied, ...changes }, ref));
     setNotice("변경안을 입력에 옮겼습니다. 확인 후 변경 적용을 눌러 주세요.");
-    setProposal(null);
   };
   const display = (key: string, v: number) =>
     key === "net_real_return"
@@ -294,7 +256,7 @@ function App() {
           <div className="version">
             <span className="dot" /> 보고서 계산식 재현 데모
             <br />
-            <small>보고서 v1.5 · 앱 0.3.2</small>
+            <small>보고서 v1.5 · 앱 0.4.0</small>
           </div>
         </section>
         <div className="banner">
@@ -322,7 +284,7 @@ function App() {
           </a>
           <span aria-hidden="true">→</span>
           <a href="#comparison-panel">
-            <b>05</b>대안 비교
+            <b>05</b>보고서 진단
           </a>
           <span aria-hidden="true">→</span>
           <a href="#formula-panel">
@@ -417,7 +379,6 @@ function App() {
                         }
                         onChange={(e) => {
                           setDraft({ ...draft, [key]: e.target.value });
-                          setProposal(null);
                         }}
                       />
                       <span>
@@ -440,7 +401,7 @@ function App() {
               </form>
               <button
                 className="text-button full"
-                disabled={busy || parseBusy}
+                disabled={busy}
                 onClick={reset}
               >
                 초기화 및 이 브라우저의 설정 삭제
@@ -591,11 +552,8 @@ function App() {
                 exportTarget={exportTarget}
               />
             )}
-            <section className="card comparison" id="comparison-panel">
-              <div className="section-title">
-                <StepTitle step="05">대안 비교</StepTitle>
-                <span className="tag">표 9 · 보고서 고정값</span>
-              </div>
+            <ReportInsights>
+              <span className="tag">표 9 · 보고서 고정값</span>
               <p className="fine">
                 2026년 기준 · 비용/최대 후회 단위: 억 원 · 새로운 권고를
                 계산하지 않습니다.
@@ -642,7 +600,7 @@ function App() {
                 선택 제외. 신탁 잔액 5억: 표 8 고정 민감도 참고값이며 A안이
                 아닙니다.
               </p>
-            </section>
+            </ReportInsights>
           </div>
           <FormulaReference />
         </div>
@@ -657,82 +615,13 @@ function App() {
           </div>
         </footer>
       </main>
-      <FloatingAssistant>
-        <p className="muted">
-          가상 사례의 입력 하나를 값·단위와 함께 적으면 LLM이 변경값을
-          제안합니다.
-        </p>
-        <label className="sentence-field">
-          자연어 변경 문장
-          <input
-            aria-label="자연어 변경 문장"
-            maxLength={120}
-            value={sentence}
-            disabled={parseBusy}
-            onChange={(e) => {
-              setSentence(e.target.value);
-              setProposal(null);
-              setParseError("");
-            }}
-          />
-        </label>
-        <div className="proposal-form">
-          <select
-            aria-label="가상 자연어 시연 문장"
-            value={sample}
-            disabled={parseBusy}
-            onChange={(e) => {
-              setSample(e.target.value);
-              setSentence(
-                ref.samples.find((s) => s.id === e.target.value)?.text ?? "",
-              );
-              setProposal(null);
-              setParseError("");
-            }}
-          >
-            {ref.samples.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.text}
-              </option>
-            ))}
-          </select>
-          <button disabled={parseBusy || busy} onClick={parse}>
-            {parseBusy ? "제안 요청 중…" : "변경 제안 받기"}
-          </button>
-        </div>
-        <details>
-          <summary>지원 범위·개인정보 안내</summary>
-          <p className="fine">
-            예시 형식의 지원 필드·숫자·단위만 허용하며, 이름·연락처·건강정보가
-            섞인 문장은 서버에서 거부합니다. LLM은 계산·법률 판단을 하지
-            않습니다.
-          </p>
-        </details>
-        {parseError && (
-          <p role="alert" className="error">
-            사용 불가 · {parseError}
-          </p>
-        )}
-        {proposal && (
-          <div className="proposal" role="status">
-            <strong>제안 변경값을 확인해 주세요</strong>
-            {Object.entries(proposal).map(([k, v]) => (
-              <p key={k}>
-                {ref.fields[k].label}: {display(k, applied[k])} →{" "}
-                <b>{display(k, v)}</b>
-              </p>
-            ))}
-            <button
-              className="primary"
-              disabled={busy}
-              onClick={() => apply({ ...applied, ...proposal })}
-            >
-              확인하고 계산 요청
-            </button>
-            <button onClick={() => setProposal(null)}>취소</button>
-          </div>
-        )}
-      </FloatingAssistant>
+      <ChatAssistant
+        reference={ref}
+        applied={applied}
+        disabled={busy}
+        resetKey={analysisReset}
+        onApply={(changes) => apply({ ...applied, ...changes })}
+      />
     </>
   );
 }
