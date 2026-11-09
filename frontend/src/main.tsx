@@ -274,16 +274,16 @@ function App() {
             </p>
           </div>
           <div className="version">
-            <span className="dot" /> 가정 기반 시뮬레이터
+            <span className="dot" /> 보고서 계산식 재현 데모
             <br />
             <small>{ref.source_version} / 앱 0.3.0</small>
           </div>
         </section>
         <div className="banner">
-          <strong>가정 기반 직접 계산</strong>
+          <strong>v1.5 세부 계산식 기반 직접 계산</strong>
           <span>
-            팀 보강 전 가상 계산 계약입니다. 보고서 고정값·실제 수급 판정과
-            구별해 보세요.
+            보고서의 가상 사례를 계산합니다. 제공된 원본의 핵심 경로는 대조했으며,
+            전체 기능 동등성과 기관의 실제 수급 판정은 미검증입니다.
           </span>
         </div>
         <nav className="analysis-nav" aria-label="분석 도구 바로가기">
@@ -462,7 +462,7 @@ function App() {
                     {money(value as number | undefined | null)}
                   </strong>
                   <div>
-                    <span className="tag">가정 기반 직접 계산</span>
+                    <span className="tag">보고서 세부식 직접 계산</span>
                   </div>
                 </article>
               ))}
@@ -544,8 +544,8 @@ function App() {
                   </p>
                   {result.summary.required_trust_at_56 == null && (
                     <p className="error">
-                      필요 잔액 계산 미지원 · 월 인출 한도로 선택 기간의
-                      생활비를 모두 충당할 수 없습니다.
+                      필요 잔액 계산 미지원 · 월 인출 한도와 0~15억 원 탐색 범위에서
+                      선택 기간의 생활비를 모두 충당하는 잔액을 찾지 못했습니다.
                     </p>
                   )}
                 </div>
@@ -621,14 +621,13 @@ function App() {
               </div>
               <p className="fine">
                 83세 필요액 1.30억 · 95세 필요액 1.75억 · B 56세 예상 1.81억 원.
-                원 엔진의 검증값이 아닙니다.
+                PDF의 대조값입니다. 제공 원본의 핵심 경로 대조와 기관 판정 검증은 구별합니다.
               </p>
               {result && (
                 <p className="fine">
-                  현재 모형: 83세 {money(result.summary.required_trust_83)} ·
-                  95세 {money(result.summary.required_trust_95)}. 예금 유지·급여
-                  단순모형·납입 시점 가정으로 보고서와 차이가 납니다. 목표값에
-                  맞춘 보정 없음.
+                  현재 입력의 PDF 재현 모형: 83세 {money(result.summary.required_trust_83)} ·
+                  95세 {money(result.summary.required_trust_95)}. 필요액은 500만 원
+                  단위 후보를 순서대로 검사한 값입니다. 실제 수급 판정은 아닙니다.
                 </p>
               )}
             </section>
@@ -796,8 +795,8 @@ function App() {
                 <p>식 2: 모든 해의 생활비 부족액이 없는 최소 56세 시작 잔액</p>
                 <p>식 3: 부모 자산 수익 + 소득 − 소비·부채·보험·신탁 적립</p>
                 <p>
-                  계산 계약 {ref.assumptions.version} · 사용자 판단 위임에 따른
-                  가상 가정
+                  계산 계약 {ref.assumptions.version} · PDF 규칙에 따른
+                  가상 보고서 사례
                 </p>
                 <ul>
                   {ref.assumptions.notes.map((b) => (

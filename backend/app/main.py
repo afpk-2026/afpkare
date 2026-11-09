@@ -16,13 +16,13 @@ from .contracts import (
 from .proposals import propose, ProposalUnavailable
 from .engine import simulate as run_simulation, CONFIG
 
-app = FastAPI(title="부모가 없는 날 · 가상 사례 API", version="0.2.0")
+app = FastAPI(title="부모가 없는 날 · 가상 사례 API", version="0.3.0")
 llm_gate = asyncio.Semaphore(2)
 BLOCKERS = [
-    "연간 처리 순서·기간 포함·반올림 규칙 미확정",
-    "부모 연도별 현금흐름·수익률 입력표 없음",
-    "65세 전후 급여 전체 산식·예금 처리 미확정",
-    "B′ 납입·사후 보충 계약 미확정",
+    "제공된 persona_v3.txt의 핵심 경로·입력 변경은 대조했으나 전체 기능 동등성 미검증",
+    "급여·예금의 실제 자산조사 반영은 기관 확인 전 가상 사례 규칙",
+    "신탁 첫 납입·추가 납입·사후 보충의 상품 실행 조건 서면 미확인",
+    "복잡한 사망 사건·최소최대후회 동적 계산은 현재 P0 범위 밖",
 ]
 
 
@@ -69,10 +69,10 @@ async def invalid(request, exc):
 def health():
     return {
         "status": "ok",
-        "version": "0.2.0",
+        "version": "0.3.0",
         "release": os.getenv("APP_VERSION", "local"),
         "assumption_version": CONFIG["version"],
-        "calculation_status": "assumption_based",
+        "calculation_status": "report_detail_based_unverified_policy",
     }
 
 
@@ -84,7 +84,7 @@ def reference():
         "base_year": 2026,
         "defaults": DEFAULTS,
         "fields": FIELDS,
-        "calculation_status": "assumption_based",
+        "calculation_status": "report_detail_based_unverified_policy",
         "blockers": BLOCKERS,
         "assumptions": CONFIG,
         "evidence": [
@@ -96,28 +96,28 @@ def reference():
             {
                 "ref": "식 1·2 / 표 8",
                 "status": "보고서 고정값",
-                "detail": "83세 1.30억·95세 1.75억은 대조값. 예금 1천만 원 처리 시 83세 1.35억이라는 검토 메모가 있어 확정 필요.",
+                "detail": "세부 PDF의 500만 원 격자·해 초 급여 판정·연말 수익 규칙으로 83세 1.30억·95세 1.75억을 재현. 실제 자산조사에서 예금 1천만 원 반영은 기관 확인 필요.",
             },
             {
                 "ref": "식 3 / 그림 6",
-                "status": "가정 기반 직접 계산",
-                "detail": "부모 금융자산은 가상 연도별 입력표로 계산. 주택연금 월110만·소비·재취업 기간·부모 사망 연도는 팀 보강 필요.",
+                "status": "보고서 세부식 기반 직접 계산",
+                "detail": "2031년 근로·세전 퇴직급여, 2032~2035년 재취업, 주택연금 월126.4만, 연령별 소비를 반영한 그림 6 기본 경로. 기관·상품 조건은 별도 확인.",
             },
             {
                 "ref": "표 9-2·10",
                 "status": "상품 서면 미확인",
-                "detail": "B/B′는 자익형 기준. 첫 납입·추가 납입 단위와 보수 조건 확인 필요.",
+                "detail": "B/B′는 자익형 기준. B′ 사후 보충액은 95세 필요액과 상속 가능액에 따라 계산. 실제 첫 납입·추가 납입·보수 조건은 확인 필요.",
             },
             {
                 "ref": "그림 5",
                 "status": "해석 미확인",
-                "detail": "65세(2071년) 급여 모형을 자동 전환. 2026년 기준 연속 감액 단순모형이며 실제 수급 판정 아님. 예금1천만 원은 재산에 포함.",
+                "detail": "65세(2071년) 급여 모형을 자동 전환. PDF의 감액 구간·절사 규칙을 재현하며 신탁 잔액만 급여 재산에 넣는 보고서 가정. 실제 수급 판정 아님.",
             },
         ],
         "report_values": {
             "required_83": 130000000,
             "required_95": 175000000,
-            "projected_b_56": 181000000,
+            "projected_b_56": 181269636,
         },
         "report_comparison": [
             {
@@ -134,7 +134,7 @@ def reference():
             },
             {
                 "strategy": "B_PRIME",
-                "label": "1.00억 + 사후 0.35억",
+                "label": "1.00억 + 사후 필요액 보충",
                 "costs": [0.45, 0.85, 2.01, 0.45],
                 "max_regret": 0.15,
             },

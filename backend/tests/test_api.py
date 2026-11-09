@@ -23,7 +23,7 @@ def test_reference_has_sources_and_no_calculated_numbers():
     r = client.get("/api/reference-case")
     assert r.status_code == 200
     assert r.json()["defaults"] == DEFAULTS
-    assert r.json()["calculation_status"] == "assumption_based"
+    assert r.json()["calculation_status"] == "report_detail_based_unverified_policy"
     assert r.json()["evidence"]
     assert r.headers["cache-control"] == "no-store"
 

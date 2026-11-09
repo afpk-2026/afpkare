@@ -101,7 +101,7 @@ export function Chart({
         ))}
       </svg>
       <p className="fine">
-        ━ {label}　┄ {otherLabel} · 연말 잔액 · 가정 기반 직접 계산
+        ━ {label}　┄ {otherLabel} · 연말 잔액 · 보고서 세부식 직접 계산
       </p>
       <details>
         <summary>{title} 연도별 수치 보기</summary>

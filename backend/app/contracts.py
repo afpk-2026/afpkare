@@ -4,7 +4,7 @@ from typing import Literal, Optional
 from pydantic import BaseModel, ConfigDict, Field
 
 CASE_ID = "jihoon-2026"
-SOURCE_VERSION = "v1.5-review"
+SOURCE_VERSION = "v1.5-calculation-detail-2026-11-09"
 DEFAULTS = dict(
     monthly_child_cost=1800000,
     monthly_survivor_pension=1070000,
