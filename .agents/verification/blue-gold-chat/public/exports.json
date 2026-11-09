@@ -1,0 +1,17 @@
+[
+  {
+    "format": "evidence.json",
+    "bytes": 135655,
+    "check": "passed"
+  },
+  {
+    "format": "timeline.csv",
+    "bytes": 20506,
+    "check": "passed"
+  },
+  {
+    "format": "report.html",
+    "bytes": 27740,
+    "check": "passed"
+  }
+]

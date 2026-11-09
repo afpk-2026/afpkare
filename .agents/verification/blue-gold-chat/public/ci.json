@@ -1,0 +1,1 @@
+{"conclusion":"success","headSha":"e02201d7100d4548a9a08f62f5da32e7bd47b2a1","jobs":[{"conclusion":"success","name":"application","status":"completed"},{"conclusion":"success","name":"infrastructure","status":"completed"},{"conclusion":"success","name":"deploy","status":"completed"}],"status":"completed","url":"https://github.com/afpk-2026/no-named/actions/runs/42587166872"}
