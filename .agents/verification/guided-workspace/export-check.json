@@ -1,0 +1,20 @@
+{
+  "json_comparisons": 1,
+  "json_variants": 3,
+  "evidence.json": {
+    "name": "family-finance-B_PRIME-2026-11-09-evidence.json",
+    "bytes": 602007,
+    "sha256": "8beda7b5cd138c55c63e179b8cd84ce7a0a229b5bc34b389f0bcda6b4750c69f"
+  },
+  "csv_rows": 113,
+  "timeline.csv": {
+    "name": "family-finance-B_PRIME-2026-11-09-timeline.csv",
+    "bytes": 21221,
+    "sha256": "48bc5afa4bbc57ddb0917946ba5c5700574b97e3f0bfe7394602cb5a443bda70"
+  },
+  "report.html": {
+    "name": "family-finance-B_PRIME-2026-11-09-report.html",
+    "bytes": 28848,
+    "sha256": "e54fd9b26228d3a7b4db6dda47d136e87b83ee2625dc5e41b37633f1e6d485b9"
+  }
+}

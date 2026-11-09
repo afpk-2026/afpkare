@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { StepTitle } from "./StepTitle.tsx";
 import { SensitivityBars, SnapshotCards } from "./AnalysisVisuals.tsx";
 import { money } from "./Chart.tsx";
 import { fromDisplay } from "./units.ts";
@@ -41,11 +43,13 @@ export function AnalysisWorkspace({
   current,
   alternative,
   disabled,
+  exportTarget,
 }: {
   reference: Reference;
   current: Result;
   alternative: Result;
   disabled: boolean;
+  exportTarget: HTMLElement | null;
 }) {
   const [field, setField] = useState("monthly_child_cost");
   const [lower, setLower] = useState(""),
@@ -57,6 +61,7 @@ export function AnalysisWorkspace({
     [sequence, setSequence] = useState(1),
     [message, setMessage] = useState(""),
     [cardError, setCardError] = useState("");
+  const [exportMessage, setExportMessage] = useState("");
   const requestId = useRef(0),
     controller = useRef<AbortController | null>(null);
   const contextKey = resultKey(current);
@@ -179,8 +184,8 @@ export function AnalysisWorkspace({
         "text/html;charset=utf-8",
         prefix + "-report.html",
       );
-    setMessage(
-      "파일 다운로드를 요청했습니다. 완료 여부와 차단 안내는 브라우저에서 확인해 주세요. 보고서의 미확인 가정도 함께 확인해 주세요.",
+    setExportMessage(
+      "다운로드를 요청했습니다. 브라우저에서 완료 여부를 확인해 주세요.",
     );
   }
   const delta = (value: number | null, base: number | null) =>
@@ -189,183 +194,14 @@ export function AnalysisWorkspace({
       : `${value - base > 0 ? "+" : ""}${money(value - base)}`;
   return (
     <div className="analysis-workspace">
-      <section className="card sensitivity" aria-labelledby="sensitivity-title">
-        <div className="section-title">
-          <h2 id="sensitivity-title">
-            한 가정의 영향 <span className="tag">F08 · P1</span>
-          </h2>
-          <span className="badge">민감도 분석</span>
-        </div>
-        <p className="muted">
-          다른 입력을 고정하고 한 가정의 하한·현재·상한에서 B와 B′를
-          재계산합니다.
-        </p>
-        <form
-          className="sensitivity-controls"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void analyze();
-          }}
-        >
-          <label>
-            바꿀 가정
-            <select
-              aria-label="민감도 분석 입력"
-              value={field}
-              disabled={disabled || loading}
-              onChange={(e) => setField(e.target.value)}
-            >
-              {INPUT_KEYS.map((k) => (
-                <option key={k} value={k}>
-                  {reference.fields[k].label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
-            하한 (
-            {field === "net_real_return"
-              ? "%"
-              : field === "child_end_age"
-                ? "세"
-                : "만 원/월"}
-            )
-            <input
-              aria-label="민감도 하한"
-              inputMode="decimal"
-              value={lower}
-              disabled={disabled}
-              onChange={(e) => {
-                invalidate();
-                setLower(e.target.value);
-              }}
-            />
-          </label>
-          <div className="sensitivity-current">
-            <small>현재 적용값</small>
-            <strong>
-              {formatInput(field, current.effective_inputs[field])}
-            </strong>
-          </div>
-          <label>
-            상한 (
-            {field === "net_real_return"
-              ? "%"
-              : field === "child_end_age"
-                ? "세"
-                : "만 원/월"}
-            )
-            <input
-              aria-label="민감도 상한"
-              inputMode="decimal"
-              value={upper}
-              disabled={disabled}
-              onChange={(e) => {
-                invalidate();
-                setUpper(e.target.value);
-              }}
-            />
-          </label>
-          <button
-            className="primary"
-            disabled={disabled || loading}
-            type="submit"
-          >
-            {loading ? "분석 중…" : "민감도 계산"}
-          </button>
-        </form>
-        <details>
-          <summary>구간 설정 기준</summary>
-          <p className="fine">
-            분석은 적용 입력을 바꾸지 않습니다. 기본 구간: 금액 ±20%(최소 10만
-            원), 수익률 ±0.5%p, 나이 ±5세. 허용 범위에서 조정하며 같은 값은 한
-            번만 계산합니다.
-          </p>
-        </details>
-        {analysisError && (
-          <p role="alert" className="error">
-            {analysisError}
-          </p>
-        )}
-        {visibleAnalysis && (
-          <>
-            <SensitivityBars
-              analysis={visibleAnalysis}
-              field={field}
-              currentValue={current.effective_inputs[field]}
-            />
-            <details>
-              <summary>민감도 전체 지표 표</summary>
-              <div className="table-scroll">
-                <table aria-label="민감도 분석 결과">
-                  <thead>
-                    <tr>
-                      <th>변경값</th>
-                      <th>전략</th>
-                      <th>필요 잔액</th>
-                      <th>현재 대비</th>
-                      <th>56세 예상</th>
-                      <th>자녀 부족액</th>
-                      <th>부모 최저</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {visibleAnalysis.variants.flatMap((v) =>
-                      v.results.map((r) => {
-                        const base =
-                          r.strategy === current.strategy
-                            ? current
-                            : alternative;
-                        return (
-                          <tr
-                            key={`${v.value}-${r.strategy}`}
-                            className={
-                              v.value === current.effective_inputs[field]
-                                ? "selected"
-                                : ""
-                            }
-                          >
-                            <th>
-                              {formatInput(field, v.value)}
-                              {v.value === current.effective_inputs[field] && (
-                                <small>현재</small>
-                              )}
-                            </th>
-                            <td>{names[r.strategy]}</td>
-                            <td>{money(r.summary.required_trust_at_56)}</td>
-                            <td>
-                              {delta(
-                                r.summary.required_trust_at_56,
-                                base.summary.required_trust_at_56,
-                              )}
-                            </td>
-                            <td>{money(r.summary.projected_trust_at_56)}</td>
-                            <td>{money(r.summary.child_shortfall_total)}</td>
-                            <td>{money(r.summary.parent_asset_min)}</td>
-                          </tr>
-                        );
-                      }),
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </details>
-            <p className="fine" role="status">
-              민감도 계산 완료 · {visibleAnalysis.variants.length}개 입력값 ×
-              B/B′ · {current.assumption_version}. 필요 잔액이 미지원이면 차이도
-              비교 불가로 표시합니다. 자동 권고가 아닙니다.
-            </p>
-          </>
-        )}
-      </section>
       <section
         className="card scenario-comparison"
         aria-labelledby="scenario-title"
       >
         <div className="section-title">
-          <h2 id="scenario-title">
-            가상 사례 나란히 보기 <span className="tag">F09 · P1</span>
-          </h2>
+          <StepTitle step="04" id="scenario-title">
+            가상 사례 나란히 보기
+          </StepTitle>
           <span className="badge">{snapshots.length}/3개 고정</span>
         </div>
         <p className="muted">
@@ -476,45 +312,208 @@ export function AnalysisWorkspace({
           </p>
         )}
       </section>
-      <section className="card exports" aria-labelledby="export-title">
-        <div className="section-title">
-          <h2 id="export-title">
-            계산 근거 가져가기 <span className="tag">F10 · P1</span>
-          </h2>
-          <span className="badge">가정·한계 포함</span>
-        </div>
-        <p className="muted">
-          편집 중인 값 대신 적용된 입력과 원 단위 결과를 내보냅니다.
-        </p>
-        <div className="export-actions">
-          <button
-            disabled={disabled || loading}
-            onClick={() => exportFile("json")}
-          >
-            근거 묶음 JSON 다운로드
-          </button>
-          <button disabled={disabled} onClick={() => exportFile("csv")}>
-            연도별 경로 CSV 다운로드
-          </button>
-          <button
-            disabled={disabled || loading}
-            onClick={() => exportFile("html")}
-          >
-            근거 보고서 HTML 다운로드
-          </button>
-        </div>
-        <p className="fine">
-          JSON·HTML에는 고정한 사례와 완료된 현재 민감도 분석도 포함됩니다.
-          CSV는 현재 전략의 부모·자녀 연도표입니다. 파일은 이 브라우저에서
-          생성하며 서버에 업로드하지 않습니다. HTML은 열어서 브라우저 인쇄로
-          PDF를 저장할 수 있습니다.
-        </p>
-        {message && (
-          <p className="notice" role="status">
-            {message}
+      <details className="card advanced-analysis">
+        <summary id="sensitivity-title">
+          <span className="badge">선택</span>
+          <strong>고급 분석 · 한 가정의 영향</strong>
+          <small>하한·현재·상한의 B/B′ 비교</small>
+        </summary>
+        <section className="advanced-content" aria-label="고급 민감도 분석">
+          <p className="muted">
+            다른 입력을 고정하고 한 가정의 하한·현재·상한에서 B와 B′를
+            재계산합니다.
           </p>
+          <form
+            className="sensitivity-controls"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void analyze();
+            }}
+          >
+            <label>
+              바꿀 가정
+              <select
+                aria-label="민감도 분석 입력"
+                value={field}
+                disabled={disabled || loading}
+                onChange={(e) => setField(e.target.value)}
+              >
+                {INPUT_KEYS.map((k) => (
+                  <option key={k} value={k}>
+                    {reference.fields[k].label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              하한 (
+              {field === "net_real_return"
+                ? "%"
+                : field === "child_end_age"
+                  ? "세"
+                  : "만 원/월"}
+              )
+              <input
+                aria-label="민감도 하한"
+                inputMode="decimal"
+                value={lower}
+                disabled={disabled}
+                onChange={(e) => {
+                  invalidate();
+                  setLower(e.target.value);
+                }}
+              />
+            </label>
+            <div className="sensitivity-current">
+              <small>현재 적용값</small>
+              <strong>
+                {formatInput(field, current.effective_inputs[field])}
+              </strong>
+            </div>
+            <label>
+              상한 (
+              {field === "net_real_return"
+                ? "%"
+                : field === "child_end_age"
+                  ? "세"
+                  : "만 원/월"}
+              )
+              <input
+                aria-label="민감도 상한"
+                inputMode="decimal"
+                value={upper}
+                disabled={disabled}
+                onChange={(e) => {
+                  invalidate();
+                  setUpper(e.target.value);
+                }}
+              />
+            </label>
+            <button
+              className="primary"
+              disabled={disabled || loading}
+              type="submit"
+            >
+              {loading ? "분석 중…" : "민감도 계산"}
+            </button>
+          </form>
+          <details>
+            <summary>구간 설정 기준</summary>
+            <p className="fine">
+              분석은 적용 입력을 바꾸지 않습니다. 기본 구간: 금액 ±20%(최소 10만
+              원), 수익률 ±0.5%p, 나이 ±5세. 허용 범위에서 조정하며 같은 값은 한
+              번만 계산합니다.
+            </p>
+          </details>
+          {analysisError && (
+            <p role="alert" className="error">
+              {analysisError}
+            </p>
+          )}
+          {visibleAnalysis && (
+            <>
+              <SensitivityBars
+                analysis={visibleAnalysis}
+                field={field}
+                currentValue={current.effective_inputs[field]}
+              />
+              <details>
+                <summary>민감도 전체 지표 표</summary>
+                <div className="table-scroll">
+                  <table aria-label="민감도 분석 결과">
+                    <thead>
+                      <tr>
+                        <th>변경값</th>
+                        <th>전략</th>
+                        <th>필요 잔액</th>
+                        <th>현재 대비</th>
+                        <th>56세 예상</th>
+                        <th>자녀 부족액</th>
+                        <th>부모 최저</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {visibleAnalysis.variants.flatMap((v) =>
+                        v.results.map((r) => {
+                          const base =
+                            r.strategy === current.strategy
+                              ? current
+                              : alternative;
+                          return (
+                            <tr
+                              key={`${v.value}-${r.strategy}`}
+                              className={
+                                v.value === current.effective_inputs[field]
+                                  ? "selected"
+                                  : ""
+                              }
+                            >
+                              <th>
+                                {formatInput(field, v.value)}
+                                {v.value ===
+                                  current.effective_inputs[field] && (
+                                  <small>현재</small>
+                                )}
+                              </th>
+                              <td>{names[r.strategy]}</td>
+                              <td>{money(r.summary.required_trust_at_56)}</td>
+                              <td>
+                                {delta(
+                                  r.summary.required_trust_at_56,
+                                  base.summary.required_trust_at_56,
+                                )}
+                              </td>
+                              <td>{money(r.summary.projected_trust_at_56)}</td>
+                              <td>{money(r.summary.child_shortfall_total)}</td>
+                              <td>{money(r.summary.parent_asset_min)}</td>
+                            </tr>
+                          );
+                        }),
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </details>
+              <p className="fine" role="status">
+                민감도 계산 완료 · {visibleAnalysis.variants.length}개 입력값 ×
+                B/B′ · {current.assumption_version}. 필요 잔액이 미지원이면
+                차이도 비교 불가로 표시합니다. 자동 권고가 아닙니다.
+              </p>
+            </>
+          )}
+        </section>
+      </details>
+      {message && (
+        <p className="notice" role="status">
+          {message}
+        </p>
+      )}
+      {exportTarget &&
+        createPortal(
+          <>
+            <button
+              disabled={disabled || loading}
+              onClick={() => exportFile("json")}
+            >
+              근거 묶음 json 내보내기 <span aria-hidden="true">↗</span>
+            </button>
+            <button disabled={disabled} onClick={() => exportFile("csv")}>
+              연도별 경로 csv 내보내기 <span aria-hidden="true">↗</span>
+            </button>
+            <button
+              disabled={disabled || loading}
+              onClick={() => exportFile("html")}
+            >
+              근거 보고서 html 다운로드 <span aria-hidden="true">↗</span>
+            </button>
+            {exportMessage && (
+              <p className="fine" role="status">
+                {exportMessage}
+              </p>
+            )}
+          </>,
+          exportTarget,
         )}
-      </section>
     </div>
   );
 }

@@ -1379,3 +1379,456 @@ footer {
   line-height: 1.6;
   margin: 10px 0 0;
 }
+/* Guided contest submission workspace. */
+.contest-header {
+  height: auto;
+  min-height: 108px;
+  display: grid;
+  grid-template-columns: minmax(210px, 0.85fr) minmax(250px, 1.6fr) minmax(
+      220px,
+      1fr
+    );
+  gap: 24px;
+  padding: 18px 3vw;
+}
+.contest-header .brand {
+  align-items: center;
+}
+.contest-header .brand strong {
+  display: block;
+  font-size: 17px;
+}
+.contest-header .brand small {
+  display: block;
+  margin-top: 5px;
+  color: #7d8976;
+  font-size: 10px;
+  font-weight: 500;
+}
+.contest-heading {
+  margin: 0;
+  line-height: 1.8;
+  color: #4b6249;
+  font-size: 12px;
+  text-align: center;
+  word-break: keep-all;
+}
+.header-credit {
+  text-align: right;
+}
+.header-credit b {
+  font-size: 12px;
+  color: #4b6249;
+}
+.header-credit small {
+  display: block;
+  font-size: 10px;
+  margin-top: 7px;
+  line-height: 1.7;
+  word-break: keep-all;
+}
+.heading .muted {
+  max-width: 650px;
+}
+.guided-nav {
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 24px;
+}
+.guided-nav a {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: transparent;
+  border: 1px solid #dfe6d7;
+  padding: 9px 11px;
+}
+.guided-nav b {
+  font-size: 10px;
+  color: #829076;
+}
+.guided-nav > span {
+  color: #a7b09e;
+  font-size: 10px;
+}
+.step-title {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+}
+.step-number {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 25px;
+  height: 25px;
+  border-radius: 7px;
+  color: #5d7753;
+  background: #edf2e7;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0;
+}
+#settings-panel,
+#events-panel,
+#paths-panel,
+#scenario-title,
+#comparison-panel,
+#formula-panel {
+  scroll-margin-top: 24px;
+}
+.workspace {
+  grid-template-columns: 275px minmax(0, 1fr) 280px;
+}
+.scenario-exports {
+  display: grid;
+  gap: 0;
+  border-top: 1px solid #dce4d5;
+  padding-top: 10px;
+}
+.scenario-exports:empty {
+  display: none;
+}
+.scenario-exports button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  border-bottom: 1px solid #e3e9dc;
+  padding: 12px 3px;
+  font-size: 11px;
+  font-weight: 500;
+  text-align: left;
+}
+.scenario-exports button:hover {
+  color: #315b45;
+  background: #edf3e7;
+}
+.scenario-exports button span {
+  color: #8a9c80;
+}
+.advanced-analysis > summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+.advanced-analysis > summary::after {
+  content: "＋";
+  margin-left: auto;
+  font-size: 17px;
+  color: #829673;
+  font-weight: 400;
+}
+.advanced-analysis[open] > summary::after {
+  content: "−";
+}
+.advanced-analysis > summary strong {
+  font-size: 13px;
+  font-weight: 600;
+}
+.advanced-analysis > summary small {
+  color: #839177;
+  font-size: 10px;
+  font-weight: 400;
+}
+.advanced-content {
+  margin-top: 20px;
+}
+.advanced-content table {
+  min-width: 650px;
+}
+.formula-reference .card {
+  display: block;
+}
+.formula-reference article {
+  margin-top: 22px;
+  padding-top: 18px;
+}
+.formula-index {
+  color: #819171;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+.formula-reference h3 {
+  margin: 6px 0 12px;
+  color: #3d5a38;
+  font-weight: 600;
+}
+.formula-reference article .equation {
+  background: #f3f6ee;
+  color: #3b5636;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.9;
+  padding: 10px;
+  border-radius: 7px;
+  margin: 7px 0;
+  overflow-wrap: anywhere;
+}
+.formula-reference article .formula-caption {
+  color: #7a886e;
+  font-size: 10px;
+  line-height: 1.8;
+  margin: 10px 0;
+}
+.formula-terms {
+  font-size: 9px;
+  margin: 12px 0 0;
+}
+.formula-terms > div {
+  display: flex;
+  gap: 9px;
+  padding: 4px 0;
+  align-items: baseline;
+}
+.formula-terms dt {
+  min-width: 36px;
+  font-weight: 600;
+  color: #6a7e5b;
+}
+.formula-terms dd {
+  margin: 0;
+  color: #87927b;
+}
+.formula-footnote {
+  margin: 20px 0 0;
+  border-top: 1px solid #e4e9dc;
+  padding-top: 13px;
+  font-size: 9px;
+  color: #7a886e;
+}
+.contest-footer {
+  border-top: 1px solid #dfe5d8;
+  margin-top: 32px;
+  padding: 24px 0 100px;
+  align-items: start;
+}
+.contest-footer > div {
+  display: grid;
+  gap: 8px;
+  max-width: 620px;
+}
+.contest-footer > div:last-child {
+  text-align: right;
+}
+.contest-footer strong {
+  font-size: 15px;
+  color: #4b6249;
+}
+.contest-footer b {
+  font-size: 11px;
+  color: #65775a;
+}
+.contest-footer span {
+  font-size: 10px;
+  color: #829076;
+  word-break: keep-all;
+}
+.floating-assistant {
+  position: fixed;
+  right: max(22px, env(safe-area-inset-right));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+.assistant-launcher {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  padding: 14px 18px;
+  background: #315b45;
+  color: #fff;
+  border: 1px solid #315b45;
+  border-radius: 30px;
+  box-shadow: 0 5px 20px #27432f24;
+  font-size: 12px;
+}
+.assistant-launcher:hover {
+  background: #244633;
+  color: #fff;
+}
+.assistant-launcher > span {
+  font-size: 18px;
+  color: #e0d4a7;
+}
+.assistant-panel {
+  width: 390px;
+  max-width: calc(100vw - 36px);
+  max-height: min(680px, calc(100dvh - 110px));
+  overflow: auto;
+  background: #fff;
+  border: 1px solid #dbe4d3;
+  border-radius: 16px;
+  box-shadow: 0 12px 45px #203c3729;
+}
+.assistant-panel[hidden] {
+  display: none;
+}
+.assistant-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 20px;
+  border-bottom: 1px solid #e3eadd;
+  background: #f2f6ec;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.assistant-header > div > span {
+  display: block;
+  font-size: 8px;
+  color: #7d906d;
+  letter-spacing: 1.6px;
+  margin-bottom: 7px;
+}
+.assistant-header h2 {
+  margin: 0;
+  font-size: 16px;
+}
+.assistant-header button {
+  border: 0;
+  background: transparent;
+  color: #718365;
+  font-size: 24px;
+  line-height: 1;
+  padding: 5px 8px;
+}
+.assistant-body {
+  padding: 20px;
+}
+.assistant-body > .muted {
+  margin: 0 0 16px;
+  font-size: 12px;
+}
+.assistant-body .proposal-form {
+  flex-direction: column;
+}
+.assistant-body .proposal-form button {
+  background: #315b45;
+  color: white;
+  border-color: #315b45;
+}
+.assistant-body .proposal-form select {
+  width: 100%;
+  flex: none;
+}
+.assistant-body .proposal {
+  font-size: 11px;
+}
+@media (min-width: 1500px) {
+  .workspace {
+    grid-template-columns: 290px minmax(0, 1fr) 290px;
+  }
+}
+@media (max-width: 1150px) {
+  .workspace {
+    grid-template-columns: 260px minmax(0, 1fr);
+  }
+  .formula-reference .card {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px 24px;
+  }
+  .formula-reference .card > .eyebrow,
+  .formula-reference .step-title,
+  .formula-reference .card > .fine,
+  .formula-footnote {
+    grid-column: 1/-1;
+  }
+  .formula-reference article {
+    padding-top: 16px;
+    margin: 0;
+  }
+  .contest-header {
+    grid-template-columns: 1fr 1.6fr;
+    gap: 10px 20px;
+  }
+  .header-credit {
+    grid-column: 1/-1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .header-credit small {
+    margin: 0;
+  }
+}
+@media (max-width: 760px) {
+  .contest-header {
+    display: grid;
+    grid-template-columns: 1fr;
+    padding: 18px;
+    height: auto;
+    min-height: 0;
+    gap: 14px;
+  }
+  .contest-header .brand {
+    font-size: 16px;
+  }
+  .contest-heading {
+    text-align: left;
+    font-size: 10px;
+  }
+  .header-credit {
+    display: block;
+    text-align: left;
+  }
+  .header-credit b {
+    display: none;
+  }
+  .header-credit small {
+    font-size: 9px;
+  }
+  .guided-nav {
+    gap: 6px;
+  }
+  .guided-nav > span {
+    display: none;
+  }
+  .guided-nav a {
+    font-size: 10px;
+    padding: 8px;
+    flex: 1 0 29%;
+    justify-content: center;
+  }
+  .workspace {
+    display: flex;
+  }
+  .formula-reference .card {
+    display: block;
+  }
+  .formula-reference article {
+    margin-top: 20px;
+  }
+  .contest-footer {
+    display: grid;
+    gap: 20px;
+  }
+  .contest-footer > div:last-child {
+    text-align: left;
+  }
+  .floating-assistant {
+    right: 14px;
+    bottom: max(14px, env(safe-area-inset-bottom));
+  }
+  .assistant-panel {
+    max-width: calc(100vw - 28px);
+    max-height: calc(100dvh - 98px);
+  }
+  .assistant-launcher {
+    padding: 12px 16px;
+    font-size: 11px;
+  }
+  .advanced-analysis > summary small {
+    flex-basis: 100%;
+  }
+}

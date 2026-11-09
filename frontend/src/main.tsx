@@ -17,8 +17,16 @@ import {
   type Result,
 } from "./simulation.ts";
 import { SimulationPaths } from "./SimulationPaths.tsx";
+import { StepTitle } from "./StepTitle.tsx";
+import { FloatingAssistant } from "./FloatingAssistant.tsx";
+import { FormulaReference } from "./FormulaReference.tsx";
 import { AnalysisWorkspace } from "./AnalysisWorkspace.tsx";
 
+const PROJECT_NAME = "예시 프로젝트명";
+const TEAM_NAME = "OOOO팀";
+const CONTEST_TITLE =
+  "제1회 전국 대학생 AI 재무설계 콘테스트 「AFPK 영 플래너 챌린지 2026」";
+const TEAM_CREDIT = "OOOO팀 제출작 - 김나예, 박민정, 박민준, 장유찬";
 const strategies: Record<Strategy, string> = {
   B: "B · 단계 적립",
   B_PRIME: "B′ · 사후 보충",
@@ -41,6 +49,7 @@ function App() {
     [parseError, setParseError] = useState("");
   const [retry, setRetry] = useState(0);
   const [analysisReset, setAnalysisReset] = useState(0);
+  const [exportTarget, setExportTarget] = useState<HTMLDivElement | null>(null);
   const fill = (inputs: Inputs, r: Reference) =>
     Object.fromEntries(
       Object.entries(inputs).map(([k, v]) => [
@@ -253,12 +262,19 @@ function App() {
         : `${(v / 10000).toLocaleString("ko-KR")}만 원`;
   return (
     <>
-      <header className="topbar">
+      <header className="topbar contest-header">
         <a className="brand" href="#">
-          <span className="brandmark">나</span> 부모가 없는 날
+          <span className="brandmark">영</span>
+          <span>
+            <strong>{PROJECT_NAME}</strong>
+            <small>{TEAM_NAME}</small>
+          </span>
         </a>
-        <span>가족의 내일을 함께 설계합니다</span>
-        <span className="badge">가상 사례 · 2026년 기준</span>
+        <p className="contest-heading">{CONTEST_TITLE}</p>
+        <div className="header-credit">
+          <b>{TEAM_NAME}</b>
+          <small>{TEAM_CREDIT}</small>
+        </div>
       </header>
       <main>
         <section className="heading">
@@ -270,23 +286,48 @@ function App() {
               하나의 계획으로.
             </h1>
             <p className="muted">
-              부모의 노후와 지훈 씨의 생활비를 함께 살펴보세요.
+              부모의 노후와 지훈 씨의 생활비를 함께 살펴보세요. 보고서의 산식을
+              직접 실행하고, 입력을 바꿔 두 세대의 자금 흐름이 어떻게 달라지는지
+              확인해 보세요.
             </p>
           </div>
           <div className="version">
             <span className="dot" /> 보고서 계산식 재현 데모
             <br />
-            <small>{ref.source_version} / 앱 0.3.1</small>
+            <small>보고서 v1.5 · 앱 0.3.2</small>
           </div>
         </section>
         <div className="banner">
           <strong>v1.5 세부 계산식 기반 직접 계산</strong>
           <span>가상 사례 재현 · 기관 수급 판정 미확인</span>
         </div>
-        <nav className="analysis-nav" aria-label="분석 도구 바로가기">
-          <a href="#sensitivity-title">민감도 분석 ↗</a>
-          <a href="#scenario-title">사례 비교 ↗</a>
-          <a href="#export-title">근거 내보내기 ↗</a>
+        <nav
+          className="analysis-nav guided-nav"
+          aria-label="시뮬레이터 사용 순서"
+        >
+          <a href="#settings-panel">
+            <b>01</b>전략과 가정
+          </a>
+          <span aria-hidden="true">→</span>
+          <a href="#events-panel">
+            <b>02</b>사건 선택
+          </a>
+          <span aria-hidden="true">→</span>
+          <a href="#paths-panel">
+            <b>03</b>결과 확인
+          </a>
+          <span aria-hidden="true">→</span>
+          <a href="#scenario-title">
+            <b>04</b>사례 비교
+          </a>
+          <span aria-hidden="true">→</span>
+          <a href="#comparison-panel">
+            <b>05</b>대안 비교
+          </a>
+          <span aria-hidden="true">→</span>
+          <a href="#formula-panel">
+            <b>06</b>산식 보기
+          </a>
         </nav>
         {notice && (
           <p className="notice" role="status">
@@ -302,7 +343,7 @@ function App() {
           <aside className="settings">
             <section className="card family">
               <div className="section-title">
-                <h2>지훈 씨 가족</h2>
+                <StepTitle step="00">지훈 씨 가족</StepTitle>
                 <span className="badge">기준 사례</span>
               </div>
               <p>
@@ -322,8 +363,8 @@ function App() {
                 가상 설정 · 실명·연락처·건강정보를 입력하지 마세요.
               </p>
             </section>
-            <section className="card">
-              <h2>전략과 가정</h2>
+            <section className="card" id="settings-panel">
+              <StepTitle step="01">전략과 가정</StepTitle>
               <div className="strategy-tabs">
                 {(Object.keys(strategies) as Strategy[]).map((s) => (
                   <button
@@ -339,7 +380,7 @@ function App() {
               <p className="fine">
                 {strategy === "B"
                   ? "지금 5천만 + 연 600만 × 5년 + 정년 5천만"
-                  : "지금·정년 합계 1억 + 사후 보충 3,500만"}{" "}
+                  : "지금·정년 합계 1억 + 사후 필요액 보충"}{" "}
                 · 상품 조건 미확인
               </p>
               <form
@@ -409,10 +450,8 @@ function App() {
                 않습니다.
               </p>
             </section>
-            <section className="card">
-              <h2>
-                샘플 사건 <span className="tag">F06</span>
-              </h2>
+            <section className="card" id="events-panel">
+              <StepTitle step="02">샘플 사건</StepTitle>
               <p className="fine">선택 → 변경안 확인 → 변경 적용</p>
               <div className="events">
                 {[
@@ -439,6 +478,7 @@ function App() {
                 미지원.
               </p>
             </section>
+            <div className="scenario-exports" ref={setExportTarget} />
           </aside>
           <div className="results">
             <section className="metrics" aria-label="계산 결과">
@@ -465,9 +505,9 @@ function App() {
               ))}
             </section>
             {result && (
-              <section className="card">
+              <section className="card" id="paths-panel">
                 <div className="section-title">
-                  <h2>부모와 자녀의 자금 경로</h2>
+                  <StepTitle step="03">부모와 자녀의 자금 경로</StepTitle>
                   <span className="badge">{strategies[strategy]}</span>
                 </div>
                 <SimulationPaths
@@ -541,123 +581,6 @@ function App() {
                 </p>
               </section>
             )}
-            <section className="card report-reference">
-              <div className="section-title">
-                <h2>보고서 대조값</h2>
-                <span className="tag">보고서 고정값</span>
-              </div>
-              <div className="reference-grid">
-                {[
-                  ["83세 필요액", 130000000, result?.summary.required_trust_83],
-                  ["95세 필요액", 175000000, result?.summary.required_trust_95],
-                  [
-                    "B · 56세 예상",
-                    181269636,
-                    (strategy === "B" ? result : comparison)?.summary
-                      .projected_trust_at_56,
-                  ],
-                ].map(([name, fixed, calculated]) => (
-                  <article key={String(name)}>
-                    <small>{String(name)}</small>
-                    <strong>{money(fixed as number)}</strong>
-                    <span>
-                      현재 입력 {money(calculated as number | undefined)}
-                    </span>
-                  </article>
-                ))}
-              </div>
-              <details>
-                <summary>보고서 대조 기준</summary>
-                <p>
-                  위 큰 수치는 보고서 고정값입니다. 현재 입력의 필요액은 500만
-                  원 단위 후보를 순서대로 검사합니다. 제공 원본의 핵심 경로
-                  대조와 기관 판정 검증은 구별합니다.
-                </p>
-              </details>
-            </section>
-            <section className="card natural">
-              <div className="section-title">
-                <h2>
-                  말로 바꾸는 가정 <span className="tag">F07</span>
-                </h2>
-                <span className="badge">확인 후 적용</span>
-              </div>
-              <p className="muted">
-                가상 사례의 입력 하나를 값·단위와 함께 적으면 LLM이 변경값을
-                제안합니다.
-              </p>
-              <label className="sentence-field">
-                자연어 변경 문장
-                <input
-                  aria-label="자연어 변경 문장"
-                  maxLength={120}
-                  value={sentence}
-                  disabled={parseBusy}
-                  onChange={(e) => {
-                    setSentence(e.target.value);
-                    setProposal(null);
-                    setParseError("");
-                  }}
-                />
-              </label>
-              <div className="proposal-form">
-                <select
-                  aria-label="가상 자연어 시연 문장"
-                  value={sample}
-                  disabled={parseBusy}
-                  onChange={(e) => {
-                    setSample(e.target.value);
-                    setSentence(
-                      ref.samples.find((s) => s.id === e.target.value)?.text ??
-                        "",
-                    );
-                    setProposal(null);
-                    setParseError("");
-                  }}
-                >
-                  {ref.samples.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.text}
-                    </option>
-                  ))}
-                </select>
-                <button disabled={parseBusy || busy} onClick={parse}>
-                  {parseBusy ? "제안 요청 중…" : "변경 제안 받기"}
-                </button>
-              </div>
-              <details>
-                <summary>지원 범위·개인정보 안내</summary>
-                <p className="fine">
-                  예시 형식의 지원 필드·숫자·단위만 허용하며,
-                  이름·연락처·건강정보가 섞인 문장은 서버에서 거부합니다. LLM은
-                  계산·법률 판단을 하지 않습니다.
-                </p>
-              </details>
-              {parseError && (
-                <p role="alert" className="error">
-                  사용 불가 · {parseError}
-                </p>
-              )}
-              {proposal && (
-                <div className="proposal" role="status">
-                  <strong>제안 변경값을 확인해 주세요</strong>
-                  {Object.entries(proposal).map(([k, v]) => (
-                    <p key={k}>
-                      {ref.fields[k].label}: {display(k, applied[k])} →{" "}
-                      <b>{display(k, v)}</b>
-                    </p>
-                  ))}
-                  <button
-                    className="primary"
-                    disabled={busy}
-                    onClick={() => apply({ ...applied, ...proposal })}
-                  >
-                    확인하고 계산 요청
-                  </button>
-                  <button onClick={() => setProposal(null)}>취소</button>
-                </div>
-              )}
-            </section>
             {result && comparison && (
               <AnalysisWorkspace
                 key={analysisReset}
@@ -665,11 +588,12 @@ function App() {
                 current={result}
                 alternative={comparison}
                 disabled={busy}
+                exportTarget={exportTarget}
               />
             )}
-            <section className="card comparison">
+            <section className="card comparison" id="comparison-panel">
               <div className="section-title">
-                <h2>대안 비교</h2>
+                <StepTitle step="05">대안 비교</StepTitle>
                 <span className="tag">표 9 · 보고서 고정값</span>
               </div>
               <p className="fine">
@@ -720,60 +644,95 @@ function App() {
               </p>
             </section>
           </div>
-          <aside className="evidence">
-            <section className="card">
-              <p className="eyebrow">WHY THESE NUMBERS</p>
-              <h2>계산 근거와 한계</h2>
-              <p className="fine">
-                2026년 실질 가격 · {ref.source_version}
-                <br />
-                수급·세금·상품 계약의 확정 판정이 아닙니다.
-              </p>
-              <div className="evidence-key">
-                <span>∑ 직접 계산</span>
-                <span>? 기관·상품 미확인</span>
-              </div>
-              {ref.evidence.map((e) => (
-                <details className="evidence-item" key={e.ref}>
-                  <summary>
-                    <span className="evidence-icon" aria-hidden="true">
-                      {e.status.includes("직접")
-                        ? "∑"
-                        : e.status.includes("미확인")
-                          ? "?"
-                          : "≡"}
-                    </span>
-                    <span>
-                      {e.ref}
-                      <small>{e.status}</small>
-                    </span>
-                  </summary>
-                  <p>{e.detail}</p>
-                </details>
-              ))}
-              <details>
-                <summary>산식과 미확정 조건</summary>
-                <p>식 1: F[t+1] = (F[t] − 12 × w[t]) × (1+r)</p>
-                <p>식 2: 모든 해의 생활비 부족액이 없는 최소 56세 시작 잔액</p>
-                <p>식 3: 부모 자산 수익 + 소득 − 소비·부채·보험·신탁 적립</p>
-                <p>
-                  계산 계약 {ref.assumptions.version} · PDF 규칙에 따른 가상
-                  보고서 사례
-                </p>
-                <ul>
-                  {ref.assumptions.notes.map((b) => (
-                    <li key={b}>{b}</li>
-                  ))}
-                </ul>
-              </details>
-            </section>
-          </aside>
+          <FormulaReference />
         </div>
-        <footer>
-          부모가 없는 날 · 가상 사례 비교 도구{" "}
-          <span>적용 설정만 이 브라우저에 저장 · 실제 수급 판정 아님</span>
+        <footer className="contest-footer">
+          <div>
+            <strong>{PROJECT_NAME}</strong>
+            <span>{CONTEST_TITLE}</span>
+          </div>
+          <div>
+            <b>{TEAM_NAME}</b>
+            <span>{TEAM_CREDIT}</span>
+          </div>
         </footer>
       </main>
+      <FloatingAssistant>
+        <p className="muted">
+          가상 사례의 입력 하나를 값·단위와 함께 적으면 LLM이 변경값을
+          제안합니다.
+        </p>
+        <label className="sentence-field">
+          자연어 변경 문장
+          <input
+            aria-label="자연어 변경 문장"
+            maxLength={120}
+            value={sentence}
+            disabled={parseBusy}
+            onChange={(e) => {
+              setSentence(e.target.value);
+              setProposal(null);
+              setParseError("");
+            }}
+          />
+        </label>
+        <div className="proposal-form">
+          <select
+            aria-label="가상 자연어 시연 문장"
+            value={sample}
+            disabled={parseBusy}
+            onChange={(e) => {
+              setSample(e.target.value);
+              setSentence(
+                ref.samples.find((s) => s.id === e.target.value)?.text ?? "",
+              );
+              setProposal(null);
+              setParseError("");
+            }}
+          >
+            {ref.samples.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.text}
+              </option>
+            ))}
+          </select>
+          <button disabled={parseBusy || busy} onClick={parse}>
+            {parseBusy ? "제안 요청 중…" : "변경 제안 받기"}
+          </button>
+        </div>
+        <details>
+          <summary>지원 범위·개인정보 안내</summary>
+          <p className="fine">
+            예시 형식의 지원 필드·숫자·단위만 허용하며, 이름·연락처·건강정보가
+            섞인 문장은 서버에서 거부합니다. LLM은 계산·법률 판단을 하지
+            않습니다.
+          </p>
+        </details>
+        {parseError && (
+          <p role="alert" className="error">
+            사용 불가 · {parseError}
+          </p>
+        )}
+        {proposal && (
+          <div className="proposal" role="status">
+            <strong>제안 변경값을 확인해 주세요</strong>
+            {Object.entries(proposal).map(([k, v]) => (
+              <p key={k}>
+                {ref.fields[k].label}: {display(k, applied[k])} →{" "}
+                <b>{display(k, v)}</b>
+              </p>
+            ))}
+            <button
+              className="primary"
+              disabled={busy}
+              onClick={() => apply({ ...applied, ...proposal })}
+            >
+              확인하고 계산 요청
+            </button>
+            <button onClick={() => setProposal(null)}>취소</button>
+          </div>
+        )}
+      </FloatingAssistant>
     </>
   );
 }
