@@ -26,6 +26,11 @@ jobs:
       - run: docker compose config --quiet
   infrastructure:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # Retry only safe registry requests; keep provider signatures and lock checks.
+      TF_REGISTRY_CLIENT_TIMEOUT: '60'
+      TF_REGISTRY_DISCOVERY_RETRY: '3'
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3

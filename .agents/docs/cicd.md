@@ -16,3 +16,7 @@
 ## 최초 실행 확인 · 2026-11-09
 
 원격 main 7eeb2f814e4a push로 [Actions42561658722](https://github.com/afpk-2026/no-named/actions/runs/42561658722)의 application/infrastructure/deploy가 모두 성공했다. 공개 `/api/health`는 `main-7eeb2f814e4a`, API0.3.0, `report-reproduction-2026-11-09-v1`을 반환했다. 새 계약 B/B′·83/95세 필요액·65세 전환·오류/미지원·실제 Upstage까지 공개 검사했다. F07 첫 실호출은503으로 안전 거부됐고 1회 수동 재시도는 성공했다. Chrome의 새 계산 화면도 확인했다. 기록은 `.agents/verification/cicd/`. 현재 release는 이후 main push에 따라 갱신된다.
+
+### 제공자 다운로드 장애 대응
+
+2026-11-09 그래프 공개 반영 때 GitHub-hosted 실행기의 제공자 서명 다운로드가504로3회 실패했다(42567504902). 로컬에서는 동일 공식파일 GET200이었다. Terraform의 공식 `TF_REGISTRY_CLIENT_TIMEOUT=60`, `TF_REGISTRY_DISCOVERY_RETRY=3`으로 대기/안전 재시도를 늘리고 job을10분으로 제한한다. 제공자 버전·lock·서명 검증은 변경하지 않는다. 검증 실패 시 배포를 계속 차단한다. [공식 환경변수 문서](https://developer.hashicorp.com/terraform/cli/config/environment-variables#tf_registry_client_timeout).
