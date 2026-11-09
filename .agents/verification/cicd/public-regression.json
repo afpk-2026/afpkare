@@ -1,0 +1,65 @@
+{
+  "base_url": "https://158.247.203.92",
+  "health": {
+    "status": "ok",
+    "version": "0.3.0",
+    "release": "main-7eeb2f814e4a",
+    "assumption_version": "report-reproduction-2026-11-09-v1",
+    "calculation_status": "report_detail_based_unverified_policy"
+  },
+  "checks": "passed",
+  "base_B": {
+    "required_trust_at_56": 175000000,
+    "required_trust_83": 130000000,
+    "required_trust_95": 175000000,
+    "projected_trust_at_56": 181269636,
+    "pre_supplement_trust_at_56": 181269636,
+    "supplement_at_56": 0,
+    "parent_estate_at_56": 131405335,
+    "parent_eligible_half_estate": 65702667,
+    "child_shortfall_total": 0,
+    "child_shortfall_years": [],
+    "parent_asset_min": 54993327,
+    "parent_first_negative_year": null,
+    "parent_feasible": true,
+    "required_status": "calculated"
+  },
+  "base_B_PRIME": {
+    "required_trust_at_56": 175000000,
+    "required_trust_83": 130000000,
+    "required_trust_95": 175000000,
+    "projected_trust_at_56": 175000000,
+    "pre_supplement_trust_at_56": 139604809,
+    "supplement_at_56": 35395191,
+    "parent_estate_at_56": 173070166,
+    "parent_eligible_half_estate": 86535083,
+    "child_shortfall_total": 0,
+    "child_shortfall_years": [],
+    "parent_asset_min": 88466692,
+    "parent_first_negative_year": null,
+    "parent_feasible": true,
+    "required_status": "calculated"
+  },
+  "changed_cost185": {
+    "required_trust_at_56": 195000000,
+    "required_trust_83": 150000000,
+    "required_trust_95": 195000000,
+    "projected_trust_at_56": 181269636,
+    "pre_supplement_trust_at_56": 181269636,
+    "supplement_at_56": 0,
+    "parent_estate_at_56": 131405335,
+    "parent_eligible_half_estate": 65702667,
+    "child_shortfall_total": 16030692,
+    "child_shortfall_years": [
+      2098,
+      2099,
+      2100,
+      2101
+    ],
+    "parent_asset_min": 54993327,
+    "parent_first_negative_year": null,
+    "parent_feasible": true,
+    "required_status": "calculated"
+  },
+  "f07": "real Upstage proposal validated"
+}

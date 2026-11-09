@@ -12,3 +12,7 @@
 - 공개 health·B/B′·83/95세·65세 전환 smoke check도 실행한다. 외부 LLM 일시 실패가 배포를 무작위 차단하지 않도록 LLM 실호출은 결정적 배포 gate에 넣지 않고 별도 검증한다.
 - 운영 확인: GitHub Actions 실행 결과, `systemctl status actions.runner.afpk-2026-no-named.vultr-family-finance.service`, 공개 `/api/health`의 release. 서버 재부팅 시 runner도 자동 시작한다.
 - 최초 연결은 사용자 승인으로 PR 없이 main 직접 push(강제 push 없음). 이후 브랜치/PR 기본 규칙은 유지한다.
+
+## 최초 실행 확인 · 2026-11-09
+
+원격 main 7eeb2f814e4a push로 [Actions42561658722](https://github.com/afpk-2026/no-named/actions/runs/42561658722)의 application/infrastructure/deploy가 모두 성공했다. 공개 `/api/health`는 `main-7eeb2f814e4a`, API0.3.0, `report-reproduction-2026-11-09-v1`을 반환했다. 새 계약 B/B′·83/95세 필요액·65세 전환·오류/미지원·실제 Upstage까지 공개 검사했다. F07 첫 실호출은503으로 안전 거부됐고 1회 수동 재시도는 성공했다. Chrome의 새 계산 화면도 확인했다. 기록은 `.agents/verification/cicd/`. 현재 release는 이후 main push에 따라 갱신된다.

@@ -35,6 +35,7 @@ docker compose build
 docker compose up -d --wait --force-recreate
 curl --connect-timeout 5 --max-time 15 --fail --silent http://127.0.0.1/api/health | \
   python3 -c 'import json,sys; r=json.load(sys.stdin); assert r["status"]=="ok" and r["release"]==sys.argv[1]; print(json.dumps(r))' "$release"
+python3 "$checkout/scripts/check_deployment.py" https://158.247.203.92/ "$release"
 ln -sfn "$next" "$base/current"
 trap - ERR
 echo "Deployed $sha as $release"
