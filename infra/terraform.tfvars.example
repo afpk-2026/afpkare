@@ -1,0 +1,4 @@
+region              = "icn"
+plan                = "vc2-1c-2gb"
+ssh_public_key_path = "~/.ssh/family-finance.pub"
+admin_ipv4          = "YOUR_CURRENT_PUBLIC_IPV4"

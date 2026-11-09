@@ -2,3 +2,20 @@
 .idea/*
 
 .env
+# Runtime and secrets
+.env.*
+!.env.example
+**/.venv/
+**/__pycache__/
+**/.pytest_cache/
+**/node_modules/
+**/dist/
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+!*.tfvars.example
+.DS_Store
+
+*.tsbuildinfo

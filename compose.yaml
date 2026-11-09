@@ -1,0 +1,32 @@
+name: family-finance
+services:
+  backend:
+    image: family-finance-backend:${APP_VERSION:-local}
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      APP_VERSION: ${APP_VERSION:-local}
+      UPSTAGE_LLM_API_KEY: ${UPSTAGE_LLM_API_KEY:-}
+      UPSTAGE_MODEL: ${UPSTAGE_MODEL:-solar-mini4}
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+    logging:
+      driver: json-file
+      options: {max-size: 5m, max-file: '2'}
+  frontend:
+    image: family-finance-frontend:${APP_VERSION:-local}
+    build: ./frontend
+    restart: unless-stopped
+    ports: ["80:80"]
+    depends_on:
+      backend: {condition: service_healthy}
+    logging:
+      driver: json-file
+      options: {max-size: 5m, max-file: '2'}
