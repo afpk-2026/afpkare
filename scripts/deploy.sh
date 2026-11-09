@@ -11,7 +11,7 @@ root=$(cd "$(dirname "$0")/.." && pwd)
 archive=$(mktemp /tmp/family-finance.XXXXXX.tar.gz)
 trap 'rm -f "$archive"' EXIT
 # Explicit source allowlist: no .env, state, .git, reports, or local dependencies.
-tar -czf "$archive" --exclude=node_modules --exclude=dist --exclude=.venv --exclude=__pycache__ --exclude=.pytest_cache --exclude='*.tsbuildinfo' --exclude='.env*' -C "$root" frontend backend compose.yaml
+COPYFILE_DISABLE=1 tar --no-xattrs -czf "$archive" --exclude=node_modules --exclude=dist --exclude=.venv --exclude=__pycache__ --exclude=.pytest_cache --exclude='*.tsbuildinfo' --exclude='.env*' -C "$root" frontend backend compose.yaml
 ssh -i "$identity" -o StrictHostKeyChecking=yes "root@$server" "cloud-init status --wait >/dev/null && install -d -m 750 /opt/family-finance/releases/$release"
 scp -q -i "$identity" -o StrictHostKeyChecking=yes "$archive" "root@$server:/opt/family-finance/releases/$release/source.tar.gz"
 # Copy secret separately; no echo, no archive, no Terraform state.
