@@ -7,53 +7,18 @@ import {
   clear,
   validInputs,
   type Inputs,
-  type Fields,
   type Strategy,
 } from "./storage.ts";
 import "./style.css";
-import { Chart, money, type Row } from "./Chart.tsx";
+import { Chart, money } from "./Chart.tsx";
 import { fromDisplay } from "./units.ts";
+import {
+  requestSimulation,
+  type Reference,
+  type Result,
+} from "./simulation.ts";
+import { AnalysisWorkspace } from "./AnalysisWorkspace.tsx";
 
-type Reference = {
-  case_id: string;
-  source_version: string;
-  base_year: number;
-  defaults: Inputs;
-  fields: Fields;
-  blockers: string[];
-  evidence: { ref: string; status: string; detail: string }[];
-  report_comparison: {
-    strategy: string;
-    label: string;
-    costs: number[];
-    max_regret: number;
-  }[];
-  samples: { id: string; text: string }[];
-  assumptions: { version: string; notes: string[] };
-};
-type Summary = {
-  required_trust_at_56: number | null;
-  required_trust_83: number | null;
-  required_trust_95: number | null;
-  projected_trust_at_56: number;
-  child_shortfall_total: number;
-  child_shortfall_years: number[];
-  parent_asset_min: number;
-  parent_first_negative_year: number | null;
-  parent_feasible: boolean;
-  required_status: string;
-};
-type Result = {
-  status: string;
-  reason?: string;
-  effective_inputs: Inputs;
-  strategy: Strategy;
-  summary: Summary;
-  child_timeline: Row[];
-  parent_timeline: Row[];
-  warnings: string[];
-  assumption_version: string;
-};
 const strategies: Record<Strategy, string> = {
   B: "B · 단계 적립",
   B_PRIME: "B′ · 사후 보충",
@@ -75,6 +40,7 @@ function App() {
     [proposal, setProposal] = useState<Inputs | null>(null),
     [parseError, setParseError] = useState("");
   const [retry, setRetry] = useState(0);
+  const [analysisReset, setAnalysisReset] = useState(0);
   const fill = (inputs: Inputs, r: Reference) =>
     Object.fromEntries(
       Object.entries(inputs).map(([k, v]) => [
@@ -90,37 +56,13 @@ function App() {
     );
   const storage = () => window.localStorage;
   async function calculate(r: Reference, inputs: Inputs, s: Strategy) {
-    const overrides = Object.fromEntries(
-      Object.entries(inputs).filter(([k, v]) => v !== r.defaults[k]),
+    const changed = Object.keys(r.defaults).some(
+      (k) => inputs[k] !== r.defaults[k],
     );
-    async function request(
-      selected: Strategy,
-      chosenOverrides: Inputs = overrides,
-    ) {
-      const response = await fetch("/api/simulations", {
-        method: "POST",
-        signal: AbortSignal.timeout(30000),
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          case_id: r.case_id,
-          strategy: selected,
-          overrides: chosenOverrides,
-        }),
-      });
-      const data = await response.json();
-      if (!response.ok)
-        throw new Error(
-          data.reason ??
-            "계산 요청이 거부되었습니다. 입력과 연결을 확인해 주세요.",
-        );
-      if (data.status !== "calculated")
-        throw new Error("지원하지 않는 계산 응답입니다.");
-      return data as Result;
-    }
     const [selected, other, referenceResult] = await Promise.all([
-      request(s),
-      request(s === "B" ? "B_PRIME" : "B"),
-      Object.keys(overrides).length ? request(s, {}) : Promise.resolve(null),
+      requestSimulation(r, inputs, s),
+      requestSimulation(r, inputs, s === "B" ? "B_PRIME" : "B"),
+      changed ? requestSimulation(r, r.defaults, s) : Promise.resolve(null),
     ]);
     setResult(selected);
     setComparison(other);
@@ -225,6 +167,7 @@ function App() {
     if (!ref || busy) return;
     setError("");
     setProposal(null);
+    setAnalysisReset((v) => v + 1);
     setParseError("");
     setSample("cost185");
     setSentence("생활비가 월 185만 원이면?");
@@ -333,7 +276,7 @@ function App() {
           <div className="version">
             <span className="dot" /> 가정 기반 시뮬레이터
             <br />
-            <small>{ref.source_version} / 앱 0.2.0</small>
+            <small>{ref.source_version} / 앱 0.3.0</small>
           </div>
         </section>
         <div className="banner">
@@ -343,6 +286,11 @@ function App() {
             구별해 보세요.
           </span>
         </div>
+        <nav className="analysis-nav" aria-label="분석 도구 바로가기">
+          <a href="#sensitivity-title">민감도 분석 ↗</a>
+          <a href="#scenario-title">사례 비교 ↗</a>
+          <a href="#export-title">근거 내보내기 ↗</a>
+        </nav>
         {notice && (
           <p className="notice" role="status">
             {notice}
@@ -764,6 +712,15 @@ function App() {
                 </div>
               )}
             </section>
+            {result && comparison && (
+              <AnalysisWorkspace
+                key={analysisReset}
+                reference={ref}
+                current={result}
+                alternative={comparison}
+                disabled={busy}
+              />
+            )}
             <section className="card comparison">
               <div className="section-title">
                 <h2>대안 비교</h2>

@@ -739,3 +739,111 @@ footer {
     font-size: 10px;
   }
 }
+.analysis-workspace {
+  display: grid;
+  gap: 20px;
+}
+.sensitivity-controls {
+  display: grid;
+  grid-template-columns:
+    minmax(140px, 1.4fr) minmax(80px, 1fr) minmax(80px, 1fr)
+    minmax(80px, 1fr);
+  gap: 12px;
+  align-items: end;
+}
+.sensitivity-controls > label {
+  display: grid;
+  gap: 7px;
+  font-size: 11px;
+  color: #64775c;
+}
+.sensitivity-controls select,
+.sensitivity-controls input {
+  width: 100%;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #d5ded0;
+  border-radius: 7px;
+  background: #fbfcf9;
+  color: #31523c;
+}
+.sensitivity-controls > button {
+  grid-column: 1/-1;
+}
+.sensitivity-current {
+  display: grid;
+  gap: 7px;
+  font-size: 12px;
+  padding: 10px 0;
+}
+.sensitivity-current small {
+  font-size: 10px;
+  color: #7b8c72;
+}
+.scenario-actions,
+.export-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.scenario-actions button,
+.export-actions button {
+  font-size: 11px;
+}
+.scenario-comparison table {
+  min-width: 1200px;
+}
+.sensitivity table {
+  min-width: 650px;
+}
+.empty-comparison {
+  margin: 15px 0 0;
+  padding: 20px;
+  background: #f6f8f2;
+  border: 1px dashed #d8e1ce;
+  border-radius: 7px;
+  color: #7a8b70;
+  font-size: 12px;
+}
+.scenario-comparison td button {
+  font-size: 10px;
+  padding: 6px 9px;
+}
+.exports .notice {
+  margin-bottom: 0;
+}
+@media (max-width: 760px) {
+  .sensitivity-controls {
+    grid-template-columns: 1fr 1fr;
+  }
+  .sensitivity-controls > label:first-child {
+    grid-column: 1/-1;
+  }
+  .sensitivity-current {
+    grid-column: 1/-1;
+    grid-row: 3;
+  }
+  .export-actions {
+    display: grid;
+  }
+  .scenario-actions button {
+    flex: 1;
+  }
+}
+.analysis-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: -6px 0 22px;
+}
+.analysis-nav a {
+  color: #496a3d;
+  text-decoration: none;
+  font-size: 12px;
+  background: #eaf0e2;
+  padding: 9px 13px;
+  border-radius: 6px;
+}
+.analysis-nav a:hover {
+  background: #dce8d0;
+}
