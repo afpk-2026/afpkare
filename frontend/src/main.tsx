@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
-  STORAGE_KEY,
   restore,
   save,
   clear,
@@ -10,13 +9,14 @@ import {
   type Strategy,
 } from "./storage.ts";
 import "./style.css";
-import { Chart, money } from "./Chart.tsx";
+import { money } from "./Chart.tsx";
 import { fromDisplay } from "./units.ts";
 import {
   requestSimulation,
   type Reference,
   type Result,
 } from "./simulation.ts";
+import { SimulationPaths } from "./SimulationPaths.tsx";
 import { AnalysisWorkspace } from "./AnalysisWorkspace.tsx";
 
 const strategies: Record<Strategy, string> = {
@@ -276,15 +276,12 @@ function App() {
           <div className="version">
             <span className="dot" /> 보고서 계산식 재현 데모
             <br />
-            <small>{ref.source_version} / 앱 0.3.0</small>
+            <small>{ref.source_version} / 앱 0.3.1</small>
           </div>
         </section>
         <div className="banner">
           <strong>v1.5 세부 계산식 기반 직접 계산</strong>
-          <span>
-            보고서의 가상 사례를 계산합니다. 제공된 원본의 핵심 경로는 대조했으며,
-            전체 기능 동등성과 기관의 실제 수급 판정은 미검증입니다.
-          </span>
+          <span>가상 사례 재현 · 기관 수급 판정 미확인</span>
         </div>
         <nav className="analysis-nav" aria-label="분석 도구 바로가기">
           <a href="#sensitivity-title">민감도 분석 ↗</a>
@@ -473,82 +470,12 @@ function App() {
                   <h2>부모와 자녀의 자금 경로</h2>
                   <span className="badge">{strategies[strategy]}</span>
                 </div>
-                <p className="muted">
-                  실선은 적용 설정입니다. 변경 시 점선은 같은 전략의 기준 사례,
-                  기본 상태에서는 다른 전략을 보여 줍니다.
-                </p>
-                <div className="path-grid">
-                  <Chart
-                    title="부모 금융자산"
-                    rows={result.parent_timeline}
-                    otherRows={
-                      (changed ? baseline : comparison)?.parent_timeline ?? []
-                    }
-                    label={strategies[strategy]}
-                    otherLabel={
-                      changed
-                        ? `기준 사례 · ${strategies[strategy]}`
-                        : strategies[strategy === "B" ? "B_PRIME" : "B"]
-                    }
-                  />
-                  <Chart
-                    title="자녀 신탁 잔액"
-                    rows={result.child_timeline}
-                    otherRows={
-                      (changed ? baseline : comparison)?.child_timeline ?? []
-                    }
-                    label={strategies[strategy]}
-                    otherLabel={
-                      changed
-                        ? `기준 사례 · ${strategies[strategy]}`
-                        : strategies[strategy === "B" ? "B_PRIME" : "B"]
-                    }
-                  />
-                </div>
-                <div className="milestones">
-                  <span>2031 정년</span>
-                  <span>2036 국민연금</span>
-                  <span>2062 부모 사후</span>
-                  <span>2071 자녀 65세 전환</span>
-                </div>
-                <div className="calculation-summary">
-                  {changed && baseline && (
-                    <p>
-                      기준 사례: 필요 잔액{" "}
-                      <b>{money(baseline.summary.required_trust_at_56)}</b> ·
-                      자녀 부족액{" "}
-                      <b>{money(baseline.summary.child_shortfall_total)}</b> ·
-                      부모 최저{" "}
-                      <b>{money(baseline.summary.parent_asset_min)}</b> (95세
-                      목표)
-                    </p>
-                  )}
-                  <p>
-                    부모 금융자산 최저{" "}
-                    <b>{money(result.summary.parent_asset_min)}</b> · 첫 음수
-                    연도{" "}
-                    <b>{result.summary.parent_first_negative_year ?? "없음"}</b>
-                  </p>
-                  <p>
-                    부모 자금 계획{" "}
-                    <b>
-                      {result.summary.parent_feasible
-                        ? "금융자산 ≥ 0"
-                        : "부족 · 실행 재원 재검토 필요"}
-                    </b>
-                  </p>
-                  <p>
-                    자녀 부족한 해{" "}
-                    <b>{result.summary.child_shortfall_years.length}년</b>{" "}
-                    {result.summary.child_shortfall_years.join(", ")}
-                  </p>
-                  {result.summary.required_trust_at_56 == null && (
-                    <p className="error">
-                      필요 잔액 계산 미지원 · 월 인출 한도와 0~15억 원 탐색 범위에서
-                      선택 기간의 생활비를 모두 충당하는 잔액을 찾지 못했습니다.
-                    </p>
-                  )}
-                </div>
+                <SimulationPaths
+                  result={result}
+                  comparison={comparison}
+                  baseline={baseline}
+                  changed={changed}
+                />
                 <details>
                   <summary>
                     적용 입력 · 기준과 비교{" "}
@@ -619,17 +546,34 @@ function App() {
                 <h2>보고서 대조값</h2>
                 <span className="tag">보고서 고정값</span>
               </div>
-              <p className="fine">
-                83세 필요액 1.30억 · 95세 필요액 1.75억 · B 56세 예상 1.81억 원.
-                PDF의 대조값입니다. 제공 원본의 핵심 경로 대조와 기관 판정 검증은 구별합니다.
-              </p>
-              {result && (
-                <p className="fine">
-                  현재 입력의 PDF 재현 모형: 83세 {money(result.summary.required_trust_83)} ·
-                  95세 {money(result.summary.required_trust_95)}. 필요액은 500만 원
-                  단위 후보를 순서대로 검사한 값입니다. 실제 수급 판정은 아닙니다.
+              <div className="reference-grid">
+                {[
+                  ["83세 필요액", 130000000, result?.summary.required_trust_83],
+                  ["95세 필요액", 175000000, result?.summary.required_trust_95],
+                  [
+                    "B · 56세 예상",
+                    181269636,
+                    (strategy === "B" ? result : comparison)?.summary
+                      .projected_trust_at_56,
+                  ],
+                ].map(([name, fixed, calculated]) => (
+                  <article key={String(name)}>
+                    <small>{String(name)}</small>
+                    <strong>{money(fixed as number)}</strong>
+                    <span>
+                      현재 입력 {money(calculated as number | undefined)}
+                    </span>
+                  </article>
+                ))}
+              </div>
+              <details>
+                <summary>보고서 대조 기준</summary>
+                <p>
+                  위 큰 수치는 보고서 고정값입니다. 현재 입력의 필요액은 500만
+                  원 단위 후보를 순서대로 검사합니다. 제공 원본의 핵심 경로
+                  대조와 기관 판정 검증은 구별합니다.
                 </p>
-              )}
+              </details>
             </section>
             <section className="card natural">
               <div className="section-title">
@@ -681,11 +625,14 @@ function App() {
                   {parseBusy ? "제안 요청 중…" : "변경 제안 받기"}
                 </button>
               </div>
-              <p className="fine">
-                예시 형식의 지원 필드·숫자·단위만 허용하며,
-                이름·연락처·건강정보가 섞인 문장은 서버에서 거부합니다. LLM은
-                계산·법률 판단을 하지 않습니다.
-              </p>
+              <details>
+                <summary>지원 범위·개인정보 안내</summary>
+                <p className="fine">
+                  예시 형식의 지원 필드·숫자·단위만 허용하며,
+                  이름·연락처·건강정보가 섞인 문장은 서버에서 거부합니다. LLM은
+                  계산·법률 판단을 하지 않습니다.
+                </p>
+              </details>
               {parseError && (
                 <p role="alert" className="error">
                   사용 불가 · {parseError}
@@ -782,12 +729,27 @@ function App() {
                 <br />
                 수급·세금·상품 계약의 확정 판정이 아닙니다.
               </p>
+              <div className="evidence-key">
+                <span>∑ 직접 계산</span>
+                <span>? 기관·상품 미확인</span>
+              </div>
               {ref.evidence.map((e) => (
-                <article key={e.ref}>
-                  <span className="tag">{e.status}</span>
-                  <h3>{e.ref}</h3>
+                <details className="evidence-item" key={e.ref}>
+                  <summary>
+                    <span className="evidence-icon" aria-hidden="true">
+                      {e.status.includes("직접")
+                        ? "∑"
+                        : e.status.includes("미확인")
+                          ? "?"
+                          : "≡"}
+                    </span>
+                    <span>
+                      {e.ref}
+                      <small>{e.status}</small>
+                    </span>
+                  </summary>
                   <p>{e.detail}</p>
-                </article>
+                </details>
               ))}
               <details>
                 <summary>산식과 미확정 조건</summary>
@@ -795,8 +757,8 @@ function App() {
                 <p>식 2: 모든 해의 생활비 부족액이 없는 최소 56세 시작 잔액</p>
                 <p>식 3: 부모 자산 수익 + 소득 − 소비·부채·보험·신탁 적립</p>
                 <p>
-                  계산 계약 {ref.assumptions.version} · PDF 규칙에 따른
-                  가상 보고서 사례
+                  계산 계약 {ref.assumptions.version} · PDF 규칙에 따른 가상
+                  보고서 사례
                 </p>
                 <ul>
                   {ref.assumptions.notes.map((b) => (
@@ -809,7 +771,7 @@ function App() {
         </div>
         <footer>
           부모가 없는 날 · 가상 사례 비교 도구{" "}
-          <span>브라우저 저장 키: {STORAGE_KEY} · 서버 DB·계정 없음</span>
+          <span>적용 설정만 이 브라우저에 저장 · 실제 수급 판정 아님</span>
         </footer>
       </main>
     </>

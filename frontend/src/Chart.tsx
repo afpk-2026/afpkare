@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useId, useState } from "react";
 export type Row = {
   year: number;
   child_age?: number;
@@ -27,13 +27,17 @@ export function Chart({
   otherRows,
   label,
   otherLabel,
+  cursorYear,
 }: {
   title: string;
   rows: Row[];
   otherRows: Row[];
   label: string;
   otherLabel: string;
+  cursorYear?: number;
 }) {
+  const id = useId().replace(/:/g, "");
+  const [hoverYear, setHoverYear] = useState<number | null>(null);
   const all = [...rows, ...otherRows].map((x) => x.end_balance),
     min = Math.min(0, ...all),
     max = Math.max(1, ...all),
@@ -45,63 +49,238 @@ export function Chart({
   const y = (v: number) => 18 + ((max - v) / range) * 155;
   const points = (r: Row[]) =>
     r.map((row) => `${x(row.year)},${y(row.end_balance)}`).join(" ");
+  const active =
+    hoverYear == null ? undefined : rows.find((r) => r.year === hoverYear);
+  const other =
+    hoverYear == null ? undefined : otherRows.find((r) => r.year === hoverYear);
+  const reveal = Math.max(first, Math.min(last, cursorYear ?? last));
+  const shown = rows.filter((r) => r.year <= reveal).at(-1);
+  const selectYear = (event: React.PointerEvent<SVGRectElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const fraction = Math.max(
+      0,
+      Math.min(1, (event.clientX - rect.left) / rect.width),
+    );
+    setHoverYear(Math.round(first + fraction * (last - first)));
+  };
   return (
     <div className="real-chart">
       <h3>{title}</h3>
-      <svg
-        viewBox="0 0 570 210"
-        role="img"
-        aria-label={`${title} 연도별 경로. ${label} 실선, ${otherLabel} 점선. 상세 값은 아래 연도별 표 참조.`}
-      >
-        {[0, 0.5, 1].map((p) => (
-          <g key={p}>
-            <line
-              x1="42"
-              x2="552"
-              y1={18 + p * 155}
-              y2={18 + p * 155}
-              stroke="#e3e9df"
-            />
-            <text x="0" y={22 + p * 155}>
-              {((max - p * range) / 1e8).toFixed(1)}억
-            </text>
-          </g>
-        ))}
-        <line x1="42" x2="552" y1={y(0)} y2={y(0)} stroke="#a8b6a2" />
-        {[2031, 2036, 2062, 2071]
-          .filter((v) => v >= first && v <= last)
-          .map((v) => (
-            <line
-              key={v}
-              x1={x(v)}
-              x2={x(v)}
-              y1="18"
-              y2="173"
-              stroke="#d9dfd2"
-              strokeDasharray="3 4"
-            />
+      <div className="chart-stage" onPointerLeave={() => setHoverYear(null)}>
+        <svg
+          tabIndex={0}
+          onFocus={() => setHoverYear(Math.round(reveal))}
+          onBlur={() => setHoverYear(null)}
+          onKeyDown={(event) => {
+            if (
+              !["ArrowLeft", "ArrowRight", "Home", "End", "Escape"].includes(
+                event.key,
+              )
+            )
+              return;
+            event.preventDefault();
+            if (event.key === "Escape") {
+              setHoverYear(null);
+              return;
+            }
+            setHoverYear((year) =>
+              event.key === "Home"
+                ? first
+                : event.key === "End"
+                  ? last
+                  : Math.max(
+                      first,
+                      Math.min(
+                        last,
+                        (year ?? Math.round(reveal)) +
+                          (event.key === "ArrowRight" ? 1 : -1),
+                      ),
+                    ),
+            );
+          }}
+          aria-describedby={`${id}-help${hoverYear == null ? "" : ` ${id}-tooltip`}`}
+          viewBox="0 0 570 210"
+          role="img"
+          aria-label={`${title} 연도별 경로. ${label} 실선, ${otherLabel} 점선. 상세 값은 아래 연도별 표 참조.`}
+        >
+          <defs>
+            <clipPath id={`${id}-reveal`}>
+              <rect
+                x="42"
+                y="16"
+                width={Math.max(0, x(reveal) - 42)}
+                height="160"
+              />
+            </clipPath>
+            <linearGradient id={`${id}-fill`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#739c80" stopOpacity="0.2" />
+              <stop offset="100%" stopColor="#739c80" stopOpacity="0.01" />
+            </linearGradient>
+          </defs>
+          {[0, 0.5, 1].map((p) => (
+            <g key={p}>
+              <line
+                x1="42"
+                x2="552"
+                y1={18 + p * 155}
+                y2={18 + p * 155}
+                stroke="#e3e9df"
+              />
+              <text x="0" y={22 + p * 155}>
+                {((max - p * range) / 1e8).toFixed(1)}억
+              </text>
+            </g>
           ))}
-        <polyline
-          points={points(otherRows)}
-          fill="none"
-          stroke="#a99773"
-          strokeWidth="2"
-          strokeDasharray="5 4"
-        />
-        <polyline
-          points={points(rows)}
-          fill="none"
-          stroke="#315b45"
-          strokeWidth="2.5"
-        />
-        {[first, Math.round((first + last) / 2), last].map((v) => (
-          <text key={v} x={x(v) - 12} y="196">
-            {v}
-          </text>
-        ))}
-      </svg>
-      <p className="fine">
-        ━ {label}　┄ {otherLabel} · 연말 잔액 · 보고서 세부식 직접 계산
+          <line x1="42" x2="552" y1={y(0)} y2={y(0)} stroke="#a8b6a2" />
+          {[2031, 2036, 2062, 2071]
+            .filter((v) => v >= first && v <= last)
+            .map((v) => (
+              <line
+                key={v}
+                x1={x(v)}
+                x2={x(v)}
+                y1="18"
+                y2="173"
+                stroke="#d9dfd2"
+                strokeDasharray="3 4"
+              />
+            ))}
+          <polyline
+            points={points(otherRows)}
+            fill="none"
+            stroke="#a99773"
+            strokeWidth="2"
+            strokeDasharray="5 4"
+          />
+          <g clipPath={`url(#${id}-reveal)`}>
+            {rows.length > 0 && (
+              <polygon
+                points={`${x(rows[0].year)},${y(0)} ${points(rows)} ${x(rows.at(-1)!.year)},${y(0)}`}
+                fill={`url(#${id}-fill)`}
+              />
+            )}
+            <polyline
+              points={points(rows)}
+              fill="none"
+              stroke="#315b45"
+              strokeWidth="2.5"
+              strokeLinejoin="round"
+            />
+          </g>
+          {shown && cursorYear != null && cursorYear <= last && (
+            <circle
+              cx={x(shown.year)}
+              cy={y(shown.end_balance)}
+              r="3.5"
+              fill="#315b45"
+            />
+          )}
+          {hoverYear != null && (
+            <g pointerEvents="none">
+              <line
+                x1={x(hoverYear)}
+                x2={x(hoverYear)}
+                y1="18"
+                y2="173"
+                stroke="#567363"
+                strokeDasharray="3 3"
+              />
+              {other && (
+                <circle
+                  cx={x(other.year)}
+                  cy={y(other.end_balance)}
+                  r="4"
+                  fill="#a99773"
+                  stroke="white"
+                  strokeWidth="2"
+                />
+              )}
+              {active && (
+                <circle
+                  cx={x(active.year)}
+                  cy={y(active.end_balance)}
+                  r="5"
+                  fill="#315b45"
+                  stroke="white"
+                  strokeWidth="2"
+                />
+              )}
+            </g>
+          )}
+          <rect
+            x="42"
+            y="18"
+            width="510"
+            height="155"
+            fill="transparent"
+            onPointerMove={selectYear}
+            onPointerDown={selectYear}
+          />
+          {[first, Math.round((first + last) / 2), last].map((v) => (
+            <text key={v} x={x(v) - 12} y="196">
+              {v}
+            </text>
+          ))}
+        </svg>
+        {hoverYear != null && (
+          <div
+            id={`${id}-tooltip`}
+            role="tooltip"
+            className={`chart-tooltip ${hoverYear < (first + last) / 2 ? "tooltip-right" : "tooltip-left"}`}
+          >
+            <header>
+              <b>{hoverYear}년</b>
+              <span>
+                {active?.child_age != null
+                  ? `자녀 ${active.child_age}세`
+                  : active?.parent_age != null
+                    ? `부모 기준 ${active.parent_age}세`
+                    : ""}
+              </span>
+            </header>
+            <div>
+              <span className="legend-dot" />
+              {label}
+              <strong>
+                {active
+                  ? `${active.end_balance.toLocaleString("ko-KR")}원`
+                  : "해당 연도 경로 없음"}
+              </strong>
+            </div>
+            <div>
+              <span className="legend-dot other" />
+              {otherLabel}
+              <strong>
+                {other
+                  ? `${other.end_balance.toLocaleString("ko-KR")}원`
+                  : "해당 연도 경로 없음"}
+              </strong>
+            </div>
+            {active && (
+              <footer>
+                연간 유입 {money(active.inflows)} · 유출{" "}
+                {money(active.outflows)}
+                {active.shortfall != null && active.shortfall > 0
+                  ? ` · 부족 ${money(active.shortfall)}`
+                  : ""}
+              </footer>
+            )}
+          </div>
+        )}
+      </div>
+      <div className="chart-legend">
+        <span>
+          <i />
+          {label}
+        </span>
+        <span>
+          <i className="other" />
+          {otherLabel}
+        </span>
+        <small>연말 잔액</small>
+      </div>
+      <p className="chart-hint" id={`${id}-help`}>
+        마우스·터치로 연도 확인 · 키보드 ← →
       </p>
       <details>
         <summary>{title} 연도별 수치 보기</summary>

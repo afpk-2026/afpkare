@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { SensitivityBars, SnapshotCards } from "./AnalysisVisuals.tsx";
 import { money } from "./Chart.tsx";
 import { fromDisplay } from "./units.ts";
 import {
@@ -273,11 +274,14 @@ export function AnalysisWorkspace({
             {loading ? "분석 중…" : "민감도 계산"}
           </button>
         </form>
-        <p className="fine">
-          분석은 적용 입력을 바꾸지 않습니다. 기본 구간: 금액 ±20%(최소 10만
-          원), 수익률 ±0.5%p, 나이 ±5세. 허용 범위에서 조정하며 같은 값은 한
-          번만 계산합니다.
-        </p>
+        <details>
+          <summary>구간 설정 기준</summary>
+          <p className="fine">
+            분석은 적용 입력을 바꾸지 않습니다. 기본 구간: 금액 ±20%(최소 10만
+            원), 수익률 ±0.5%p, 나이 ±5세. 허용 범위에서 조정하며 같은 값은 한
+            번만 계산합니다.
+          </p>
+        </details>
         {analysisError && (
           <p role="alert" className="error">
             {analysisError}
@@ -285,57 +289,67 @@ export function AnalysisWorkspace({
         )}
         {visibleAnalysis && (
           <>
-            <div className="table-scroll">
-              <table aria-label="민감도 분석 결과">
-                <thead>
-                  <tr>
-                    <th>변경값</th>
-                    <th>전략</th>
-                    <th>필요 잔액</th>
-                    <th>현재 대비</th>
-                    <th>56세 예상</th>
-                    <th>자녀 부족액</th>
-                    <th>부모 최저</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {visibleAnalysis.variants.flatMap((v) =>
-                    v.results.map((r) => {
-                      const base =
-                        r.strategy === current.strategy ? current : alternative;
-                      return (
-                        <tr
-                          key={`${v.value}-${r.strategy}`}
-                          className={
-                            v.value === current.effective_inputs[field]
-                              ? "selected"
-                              : ""
-                          }
-                        >
-                          <th>
-                            {formatInput(field, v.value)}
-                            {v.value === current.effective_inputs[field] && (
-                              <small>현재</small>
-                            )}
-                          </th>
-                          <td>{names[r.strategy]}</td>
-                          <td>{money(r.summary.required_trust_at_56)}</td>
-                          <td>
-                            {delta(
-                              r.summary.required_trust_at_56,
-                              base.summary.required_trust_at_56,
-                            )}
-                          </td>
-                          <td>{money(r.summary.projected_trust_at_56)}</td>
-                          <td>{money(r.summary.child_shortfall_total)}</td>
-                          <td>{money(r.summary.parent_asset_min)}</td>
-                        </tr>
-                      );
-                    }),
-                  )}
-                </tbody>
-              </table>
-            </div>
+            <SensitivityBars
+              analysis={visibleAnalysis}
+              field={field}
+              currentValue={current.effective_inputs[field]}
+            />
+            <details>
+              <summary>민감도 전체 지표 표</summary>
+              <div className="table-scroll">
+                <table aria-label="민감도 분석 결과">
+                  <thead>
+                    <tr>
+                      <th>변경값</th>
+                      <th>전략</th>
+                      <th>필요 잔액</th>
+                      <th>현재 대비</th>
+                      <th>56세 예상</th>
+                      <th>자녀 부족액</th>
+                      <th>부모 최저</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visibleAnalysis.variants.flatMap((v) =>
+                      v.results.map((r) => {
+                        const base =
+                          r.strategy === current.strategy
+                            ? current
+                            : alternative;
+                        return (
+                          <tr
+                            key={`${v.value}-${r.strategy}`}
+                            className={
+                              v.value === current.effective_inputs[field]
+                                ? "selected"
+                                : ""
+                            }
+                          >
+                            <th>
+                              {formatInput(field, v.value)}
+                              {v.value === current.effective_inputs[field] && (
+                                <small>현재</small>
+                              )}
+                            </th>
+                            <td>{names[r.strategy]}</td>
+                            <td>{money(r.summary.required_trust_at_56)}</td>
+                            <td>
+                              {delta(
+                                r.summary.required_trust_at_56,
+                                base.summary.required_trust_at_56,
+                              )}
+                            </td>
+                            <td>{money(r.summary.projected_trust_at_56)}</td>
+                            <td>{money(r.summary.child_shortfall_total)}</td>
+                            <td>{money(r.summary.parent_asset_min)}</td>
+                          </tr>
+                        );
+                      }),
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </details>
             <p className="fine" role="status">
               민감도 계산 완료 · {visibleAnalysis.variants.length}개 입력값 ×
               B/B′ · {current.assumption_version}. 필요 잔액이 미지원이면 차이도
@@ -384,65 +398,78 @@ export function AnalysisWorkspace({
           </p>
         )}
         {snapshots.length > 0 ? (
-          <div className="table-scroll">
-            <table aria-label="고정 사례 비교">
-              <thead>
-                <tr>
-                  <th>사례</th>
-                  <th>전략</th>
-                  {INPUT_KEYS.map((k) => (
-                    <th key={k}>{reference.fields[k].label}</th>
-                  ))}
-                  <th>필요 잔액</th>
-                  <th>56세 예상</th>
-                  <th>자녀 부족액</th>
-                  <th>부모 최저</th>
-                  <th>관리</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[
-                  { id: "current", label: "현재 적용", result: current },
-                  ...snapshots,
-                ].map((s) => (
-                  <tr
-                    key={s.id}
-                    className={s.id === "current" ? "selected" : ""}
-                  >
-                    <th>
-                      {s.label}
-                      <small>{s.result.assumption_version}</small>
-                    </th>
-                    <td>{names[s.result.strategy]}</td>
-                    {INPUT_KEYS.map((k) => (
-                      <td key={k}>
-                        {formatInput(k, s.result.effective_inputs[k])}
-                      </td>
+          <>
+            <SnapshotCards
+              current={current}
+              snapshots={snapshots}
+              remove={(id) => {
+                setSnapshots(snapshots.filter((s) => s.id !== id));
+                setCardError("");
+              }}
+            />
+            <details>
+              <summary>입력·지표 전체 비교 표</summary>
+              <div className="table-scroll">
+                <table aria-label="고정 사례 비교">
+                  <thead>
+                    <tr>
+                      <th>사례</th>
+                      <th>전략</th>
+                      {INPUT_KEYS.map((k) => (
+                        <th key={k}>{reference.fields[k].label}</th>
+                      ))}
+                      <th>필요 잔액</th>
+                      <th>56세 예상</th>
+                      <th>자녀 부족액</th>
+                      <th>부모 최저</th>
+                      <th>관리</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      { id: "current", label: "현재 적용", result: current },
+                      ...snapshots,
+                    ].map((s) => (
+                      <tr
+                        key={s.id}
+                        className={s.id === "current" ? "selected" : ""}
+                      >
+                        <th>
+                          {s.label}
+                          <small>{s.result.assumption_version}</small>
+                        </th>
+                        <td>{names[s.result.strategy]}</td>
+                        {INPUT_KEYS.map((k) => (
+                          <td key={k}>
+                            {formatInput(k, s.result.effective_inputs[k])}
+                          </td>
+                        ))}
+                        <td>{money(s.result.summary.required_trust_at_56)}</td>
+                        <td>{money(s.result.summary.projected_trust_at_56)}</td>
+                        <td>{money(s.result.summary.child_shortfall_total)}</td>
+                        <td>{money(s.result.summary.parent_asset_min)}</td>
+                        <td>
+                          {s.id !== "current" && (
+                            <button
+                              aria-label={`${s.label} 삭제`}
+                              onClick={() => {
+                                setSnapshots(
+                                  snapshots.filter((x) => x.id !== s.id),
+                                );
+                                setCardError("");
+                              }}
+                            >
+                              삭제
+                            </button>
+                          )}
+                        </td>
+                      </tr>
                     ))}
-                    <td>{money(s.result.summary.required_trust_at_56)}</td>
-                    <td>{money(s.result.summary.projected_trust_at_56)}</td>
-                    <td>{money(s.result.summary.child_shortfall_total)}</td>
-                    <td>{money(s.result.summary.parent_asset_min)}</td>
-                    <td>
-                      {s.id !== "current" && (
-                        <button
-                          aria-label={`${s.label} 삭제`}
-                          onClick={() => {
-                            setSnapshots(
-                              snapshots.filter((x) => x.id !== s.id),
-                            );
-                            setCardError("");
-                          }}
-                        >
-                          삭제
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                  </tbody>
+                </table>
+              </div>
+            </details>
+          </>
         ) : (
           <p className="empty-comparison">
             아직 고정한 사례가 없습니다. 현재 계산을 추가해 비교를 시작하세요.
