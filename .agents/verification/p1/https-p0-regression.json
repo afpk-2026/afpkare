@@ -1,0 +1,60 @@
+{
+  "base_url": "https://158.247.203.92",
+  "health": {
+    "status": "ok",
+    "version": "0.2.0",
+    "release": "p1-cbe8301",
+    "assumption_version": "scenario-2026-11-09-v1",
+    "calculation_status": "assumption_based"
+  },
+  "checks": "passed",
+  "base_B": {
+    "required_trust_at_56": 174185205,
+    "required_trust_83": 135300299,
+    "required_trust_95": 174185205,
+    "projected_trust_at_56": 181269637,
+    "pre_supplement_trust_at_56": 181269637,
+    "supplement_at_56": 0,
+    "child_shortfall_total": 0,
+    "child_shortfall_years": [],
+    "parent_asset_min": 78721960,
+    "parent_first_negative_year": null,
+    "parent_feasible": true,
+    "required_status": "calculated"
+  },
+  "base_B_PRIME": {
+    "required_trust_at_56": 174185205,
+    "required_trust_83": 135300299,
+    "required_trust_95": 174185205,
+    "projected_trust_at_56": 174604811,
+    "pre_supplement_trust_at_56": 139604811,
+    "supplement_at_56": 35000000,
+    "child_shortfall_total": 0,
+    "child_shortfall_years": [],
+    "parent_asset_min": 102760000,
+    "parent_first_negative_year": null,
+    "parent_feasible": true,
+    "required_status": "calculated"
+  },
+  "changed_cost185": {
+    "required_trust_at_56": 196373279,
+    "required_trust_83": 152029368,
+    "required_trust_95": 196373279,
+    "projected_trust_at_56": 181269637,
+    "pre_supplement_trust_at_56": 181269637,
+    "supplement_at_56": 0,
+    "child_shortfall_total": 18774841,
+    "child_shortfall_years": [
+      2097,
+      2098,
+      2099,
+      2100,
+      2101
+    ],
+    "parent_asset_min": 78721960,
+    "parent_first_negative_year": null,
+    "parent_feasible": true,
+    "required_status": "calculated"
+  },
+  "f07": "real Upstage proposal validated"
+}

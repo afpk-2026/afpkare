@@ -1,0 +1,37 @@
+{
+  "release": "p1-eefb7bc",
+  "app_version": "0.3.0",
+  "exported_strategy": "B_PRIME",
+  "applied_cost": 1850000,
+  "draft_cost_excluded": 2200000,
+  "compared_cards": 3,
+  "sensitivity_variants": 3,
+  "api_calculations_matched": 10,
+  "csv_rows": 113,
+  "current_summary": {
+    "required_trust_at_56": 196373279,
+    "required_trust_83": 152029368,
+    "required_trust_95": 196373279,
+    "projected_trust_at_56": 174604811,
+    "pre_supplement_trust_at_56": 139604811,
+    "supplement_at_56": 35000000,
+    "child_shortfall_total": 26936116,
+    "child_shortfall_years": [
+      2096,
+      2097,
+      2098,
+      2099,
+      2100,
+      2101
+    ],
+    "parent_asset_min": 102760000,
+    "parent_first_negative_year": null,
+    "parent_feasible": true,
+    "required_status": "calculated"
+  },
+  "html_public_download": "user_confirmed_HTTP_and_actual_HTTPS_file_verified",
+  "sha256": {
+    "evidence.json": "5bf269a9b101a2a2e69bac2a46a7615e561bbbd9998d11b39576d1fed55f59f2",
+    "timeline.csv": "7691c0b7d91c01e503f78af96245771c24665e32aec05dd2f2e8e3fc39c24f1f"
+  }
+}

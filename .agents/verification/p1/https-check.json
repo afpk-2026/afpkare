@@ -1,0 +1,21 @@
+{
+  "release": "p1-cbe8301",
+  "url": "https://158.247.203.92/",
+  "html_file": "family-finance-B_PRIME-2026-11-09-report (3).html",
+  "bytes": 29274,
+  "sha256": "e1a7da8658b8f369d33acafb8b1d0d1867d379e6029c59735cf961a624ad266a",
+  "exact_required_95": 196373279,
+  "script_or_external_assets": [],
+  "report_table_row_count": 150,
+  "certificate_issuer": "Lets Encrypt YE1",
+  "certificate_not_after_utc": "2026-11-15 19:04:21",
+  "certificate_ip_san": "158.247.203.92",
+  "renewal_dry_run_with_deploy_hook": "passed",
+  "terraform_apply": {
+    "added": 1,
+    "changed": 1,
+    "destroyed": 0
+  },
+  "monthly_usd": 10,
+  "separate_uncommitted_engine_changes_deployed": false
+}
