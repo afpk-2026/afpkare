@@ -1,10 +1,14 @@
-name: P0 checks
+name: CI and Vultr deployment
 on:
   pull_request:
   push:
-    branches: ['feat/**', 'fix/**', 'test/**', 'chore/**']
+    branches: [main, 'feat/**', 'fix/**', 'test/**', 'chore/**']
+  workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
   application:
     runs-on: ubuntu-latest
@@ -30,3 +34,28 @@ jobs:
       - run: terraform -chdir=infra fmt -check -recursive
       - run: terraform -chdir=infra validate
       - run: terraform -chdir=infra test
+
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: [application, infrastructure]
+    runs-on: [self-hosted, linux, x64, vultr-production]
+    environment:
+      name: production
+      url: https://158.247.203.92/
+    timeout-minutes: 20
+    concurrency:
+      group: vultr-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          clean: true
+      - name: Deploy tested main commit
+        env:
+          DEPLOY_SHA: ${{ github.sha }}
+        run: sudo /usr/local/sbin/family-finance-deploy "$GITHUB_WORKSPACE" "$DEPLOY_SHA"
+      - name: Verify public release and calculation contract
+        env:
+          DEPLOY_SHA: ${{ github.sha }}
+        run: python3 scripts/check_deployment.py https://158.247.203.92/ "main-${DEPLOY_SHA:0:12}"

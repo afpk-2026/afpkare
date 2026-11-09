@@ -28,7 +28,7 @@ def request(path, body=None, expected=200):
 
 
 health = request("/api/health")
-assert health["calculation_status"] == "assumption_based"
+assert health["calculation_status"] == "report_detail_based_unverified_policy"
 ref = request("/api/reference-case")
 case = {"case_id": ref["case_id"], "strategy": "B", "overrides": {}}
 base_b = request("/api/simulations", case)
