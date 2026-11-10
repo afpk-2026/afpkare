@@ -153,13 +153,16 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
   return (
     <>
       <section id="about" className="landing-section landing-story">
-        <div>
+        <header className="landing-story-heading">
           <p className="eyebrow">01 / 서비스 배경</p>
-          <h2>
-            부모의 노후부터
-            <br />
-            자녀의 생활까지
-          </h2>
+          <h2>부모의 노후부터 자녀의 생활까지</h2>
+          <p>
+            디지털 화면을 이용하기 어렵고 장기 돌봄에 맞는 신탁 상품을 찾기
+            힘들면, 부모 사후 누가 재산을 관리하고 생활비를 지급할지 계획하기도
+            어려워집니다.
+          </p>
+        </header>
+        <div className="landing-story-media">
           <figure className="landing-story-photo">
             <img
               src="/home/family-planning.webp"
@@ -170,25 +173,32 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
               가족이 함께 생활비 계획을 살펴보는 장면 · AI 생성 이미지
             </figcaption>
           </figure>
+          <figure className="landing-preparation">
+            <figcaption>
+              <strong>부모 사후, 가족이 답한 걱정과 준비</strong>
+              <span>2021년 발달장애인 실태조사</span>
+            </figcaption>
+            <ul>
+              {preparation.map(([label, value]) => (
+                <li key={label}>
+                  <span>{label}</span>
+                  <strong>{value}%</strong>
+                  <meter min={0} max={100} value={value} aria-hidden="true" />
+                </li>
+              ))}
+            </ul>
+            <p>
+              서로 다른 문항의 응답 비율입니다. 출처는 보고서 v1.5 그림 1(나),
+              보건복지부·한국보건사회연구원(2022) 「2021년 발달장애인 실태조사」
+              표 2-226·2-213입니다.
+            </p>
+          </figure>
         </div>
-        <div>
+        <div className="landing-story-outcome">
           <p>
-            한 가족의 재무설계에는 부모가 생활비를 충당하는 기간과 자녀가 부모
-            사후에 생활을 이어가는 기간이 함께 들어 있습니다. 적립액만 봐서는
-            어느 시점에 자금이 부족해지고, 무엇을 조정하면 달라지는지 파악하기
-            어렵습니다.
-          </p>
-          <p>
-            케어 파트너스는 보고서 속 지훈 씨 가족을 가상 사례로 옮겼습니다.
-            같은 사례에 서로 다른 가정을 적용해 장기간의 자금 흐름을 살펴보고,
-            가족과 전문가에게 어떤 질문을 가져갈지 정리할 수 있습니다.
-          </p>
-          <p>
-            디지털 화면을 읽거나 조작하기 어려우면 금융 정보와 상담 창구를 찾는
-            일부터 막힐 수 있습니다. 장애인의 장기 생활과 돌봄에 맞는 신탁 등
-            금융상품 선택지도 제한적입니다. 흩어진 정보를 찾더라도 부모 사후에
-            누가 재산을 관리하고 생활비를 어떻게 지급할지 정하는 일은 가족에게
-            남습니다.
+            케어 파트너스는 보고서 속 지훈 씨 가족의 가상 사례로 부모의 노후
+            자금과 자녀의 생활비를 함께 계산합니다. 가정을 바꿔 부족 시점을
+            비교하고, 가족이나 상담 창구에서 확인할 질문을 정리할 수 있습니다.
           </p>
           <dl className="landing-facts">
             <div>
@@ -205,26 +215,6 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
             </div>
           </dl>
         </div>
-        <figure className="landing-preparation">
-          <figcaption>
-            <strong>부모 사후, 가족이 답한 걱정과 준비</strong>
-            <span>2021년 발달장애인 실태조사</span>
-          </figcaption>
-          <ul>
-            {preparation.map(([label, value]) => (
-              <li key={label}>
-                <span>{label}</span>
-                <strong>{value}%</strong>
-                <meter min={0} max={100} value={value} aria-hidden="true" />
-              </li>
-            ))}
-          </ul>
-          <p>
-            서로 다른 문항의 응답 비율입니다. 출처는 보고서 v1.5 그림 1(나),
-            보건복지부·한국보건사회연구원(2022) 「2021년 발달장애인 실태조사」
-            표 2-226·2-213입니다.
-          </p>
-        </figure>
       </section>
       <section className="landing-section landing-differences">
         <p className="eyebrow">02 / 케어 파트너스의 차별점</p>
@@ -282,12 +272,14 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
         ))}
       </section>
       <section id="privacy" className="landing-section landing-safeguards">
-        <p className="eyebrow">04 / 개인정보 보호</p>
-        <h2>개인정보를 보호하는 방법</h2>
-        <p>
-          가상 사례를 중심으로 서비스에 필요한 정보만 처리합니다. 현재 보호
-          조치와 공공 도입 시 검토할 항목을 확인하세요.
-        </p>
+        <header>
+          <p className="eyebrow">04 / 개인정보 보호</p>
+          <h2>개인정보를 보호하는 방법</h2>
+          <p>
+            가상 사례를 중심으로 서비스에 필요한 정보만 처리합니다. 현재 보호
+            조치와 공공 도입 시 검토할 항목을 확인하세요.
+          </p>
+        </header>
         <dl>
           {protections.map(([title, detail]) => (
             <div key={title}>
@@ -301,9 +293,13 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
         id="accessibility"
         className="landing-section landing-safeguards"
       >
-        <p className="eyebrow">05 / 접근성</p>
-        <h2>읽고 쓰기 편한 화면</h2>
-        <p>로그인한 뒤 왼쪽 메뉴의 ‘환경설정’에서 화면을 나에게 맞춰 보세요.</p>
+        <header>
+          <p className="eyebrow">05 / 접근성</p>
+          <h2>읽고 쓰기 편한 화면</h2>
+          <p>
+            로그인한 뒤 왼쪽 메뉴의 ‘환경설정’에서 화면을 나에게 맞춰 보세요.
+          </p>
+        </header>
         <dl>
           {accessibility.map(([title, detail]) => (
             <div key={title}>
