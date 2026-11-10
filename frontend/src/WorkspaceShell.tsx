@@ -76,28 +76,40 @@ export function PreferencesPanel({
   ] as const;
   return (
     <div className="care-settings">
-      <section className="card">
-        <h2>내 접근성 환경</h2>
+      <section className="card care-display-settings">
+        <div className="care-settings-heading">
+          <div>
+            <h2>디스플레이와 접근성</h2>
+            <p>설정을 바꾸면 화면에 바로 적용됩니다.</p>
+          </div>
+          <button onClick={() => onChange(defaults)}>기본값으로 초기화</button>
+        </div>
         <fieldset>
           <legend>글자 크기</legend>
-          {(
-            [
-              ["normal", "기본"],
-              ["large", "크게"],
-              ["largest", "아주 크게"],
-            ] as const
-          ).map(([size, label]) => (
-            <label key={size}>
-              <input
-                type="radio"
-                name="text-size"
-                checked={value.size === size}
-                onChange={() => onChange({ ...value, size })}
-              />{" "}
-              {label}
-            </label>
-          ))}
+          <div className="care-size-options">
+            {(
+              [
+                ["normal", "기본"],
+                ["large", "크게"],
+                ["largest", "아주 크게"],
+              ] as const
+            ).map(([size, label]) => (
+              <label key={size}>
+                <input
+                  type="radio"
+                  name="text-size"
+                  checked={value.size === size}
+                  onChange={() => onChange({ ...value, size })}
+                />{" "}
+                <span aria-hidden="true" className={`care-size-sample ${size}`}>
+                  가
+                </span>
+                {label}
+              </label>
+            ))}
+          </div>
         </fieldset>
+        <h3>색상, 움직임, 화면 읽기</h3>
         <div className="care-option-grid">
           {options.map(([name, label, detail]) => (
             <label className="care-option" key={name}>
@@ -108,6 +120,7 @@ export function PreferencesPanel({
               <input
                 type="checkbox"
                 role="switch"
+                className="care-switch"
                 checked={value[name]}
                 onChange={(event) =>
                   onChange({ ...value, [name]: event.target.checked })
@@ -128,7 +141,6 @@ export function PreferencesPanel({
           결과는 새로고침이나 로그아웃 시 지워집니다. 가상 사례 슬롯은 오른쪽
           패널에서 삭제할 수 있습니다.
         </p>
-        <button onClick={() => onChange(defaults)}>접근성 설정 초기화</button>
       </section>
     </div>
   );

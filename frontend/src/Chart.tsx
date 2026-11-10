@@ -282,7 +282,7 @@ export function Chart({
       <p className="chart-hint" id={`${id}-help`}>
         마우스·터치로 연도 확인 · 키보드 ← →
       </p>
-      <details>
+      <details open>
         <summary>{title} 연도별 수치 보기</summary>
         <div className="timeline-table">
           <table>

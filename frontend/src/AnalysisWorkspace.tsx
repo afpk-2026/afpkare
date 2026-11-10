@@ -238,12 +238,15 @@ export function AnalysisWorkspace({
           </p>
         )}
       </section>
-      <details className="card advanced-analysis">
-        <summary id="sensitivity-title">
+      <section
+        className="card advanced-analysis"
+        aria-labelledby="sensitivity-title"
+      >
+        <header id="sensitivity-title">
           <span className="badge">선택</span>
           <strong>고급 분석 · 한 가정의 영향</strong>
           <small>하한·현재·상한의 B/B′ 비교</small>
-        </summary>
+        </header>
         <section className="advanced-content" aria-label="고급 민감도 분석">
           <p className="muted">
             다른 입력을 고정하고 한 가정의 하한·현재·상한에서 B와 B′를
@@ -408,7 +411,7 @@ export function AnalysisWorkspace({
             </>
           )}
         </section>
-      </details>
+      </section>
       {exportTarget &&
         createPortal(
           <>

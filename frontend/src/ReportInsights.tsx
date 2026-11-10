@@ -549,11 +549,11 @@ export function ReportInsights({
                         <small>{owner}</small>
                       </th>
                       <td>
-                        <div
-                          className="schedule-track"
-                          aria-label={`${start}일부터 ${end}일까지`}
-                        >
+                        <div className="schedule-track">
                           <span
+                            tabIndex={0}
+                            role="img"
+                            aria-label={`${task} · ${owner} · 착수 후 ${start}~${end}일`}
                             className={
                               task.startsWith("증여세")
                                 ? "schedule-deadline"
@@ -564,10 +564,9 @@ export function ReportInsights({
                               width: `${((end - start) / 180) * 100}%`,
                               backgroundColor: colors[category],
                             }}
-                          >
-                            <span className="sr-only">
-                              {start}~{end}일
-                            </span>
+                          ></span>
+                          <span className="schedule-tooltip" aria-hidden="true">
+                            {task} · {start}–{end}일
                           </span>
                         </div>
                       </td>

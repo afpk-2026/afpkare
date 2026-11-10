@@ -105,31 +105,6 @@ export function SimulationPaths({
                 ? "다시 재생"
                 : "재생"}
         </button>
-        <div className="playback-year">
-          <strong>{Math.floor(year)}</strong>
-          <small>{year >= last ? "전체 경로" : "연도별 재생"}</small>
-        </div>
-        <input
-          aria-label="경로 재생 연도"
-          type="range"
-          min={first}
-          max={last}
-          step="1"
-          value={Math.floor(year)}
-          onChange={(e) => {
-            setPlaying(false);
-            setYear(Number(e.target.value));
-          }}
-        />
-        <button
-          className="show-all"
-          onClick={() => {
-            setPlaying(false);
-            setYear(last);
-          }}
-        >
-          전체 보기
-        </button>
       </div>
       <div className="milestone-track" aria-label="주요 시점">
         {milestones.map(([value, label]) => (
@@ -137,9 +112,10 @@ export function SimulationPaths({
             key={value}
             disabled={value > last}
             aria-pressed={Math.floor(year) === value}
+            title="선택한 시점을 다시 누르면 전체 경로를 표시합니다."
             onClick={() => {
               setPlaying(false);
-              setYear(value);
+              setYear(Math.floor(year) === value ? last : value);
             }}
           >
             <small>{value}</small>

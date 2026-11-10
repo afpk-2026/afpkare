@@ -160,6 +160,16 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
             <br />
             자녀의 생활까지
           </h2>
+          <figure className="landing-story-photo">
+            <img
+              src="/home/family-planning.webp"
+              alt="식탁에서 생활비 계획을 함께 살펴보는 어머니와 성인 자녀"
+              loading="lazy"
+            />
+            <figcaption>
+              가족이 함께 생활비 계획을 살펴보는 장면 · AI 생성 이미지
+            </figcaption>
+          </figure>
         </div>
         <div>
           <p>

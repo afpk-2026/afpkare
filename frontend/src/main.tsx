@@ -49,6 +49,7 @@ const strategies: Record<Strategy, string> = {
   B_PRIME: "B′ · 사후 보충",
 };
 function App() {
+  const displayPreferences = usePreferences();
   const [entered, setEntered] = useState(false);
   const enter = useCallback(() => {
     if (!Object.hasOwn(pages, location.hash.slice(1)))
@@ -78,10 +79,20 @@ function App() {
       document.removeEventListener("visibilitychange", verify);
     };
   }, [entered]);
-  return entered ? <Workspace onExit={leave} /> : <Entrance onEnter={enter} />;
+  return entered ? (
+    <Workspace onExit={leave} displayPreferences={displayPreferences} />
+  ) : (
+    <Entrance onEnter={enter} />
+  );
 }
 
-function Workspace({ onExit }: { onExit: () => void }) {
+function Workspace({
+  onExit,
+  displayPreferences,
+}: {
+  onExit: () => void;
+  displayPreferences: ReturnType<typeof usePreferences>;
+}) {
   const [page, setPage] = useState(currentPage);
   const [sources, setSources] = useState<TrustSource[]>([]);
   const [catalogError, setCatalogError] = useState(false);
@@ -151,7 +162,7 @@ function Workspace({ onExit }: { onExit: () => void }) {
       setLoggingOut(false);
     }
   }
-  const [preferences, setPreferences] = usePreferences();
+  const [preferences, setPreferences] = displayPreferences;
   useEffect(() => {
     const navigate = () => {
       setPage(currentPage());
@@ -437,7 +448,9 @@ function Workspace({ onExit }: { onExit: () => void }) {
               <p>
                 {page === "trusts"
                   ? "은행 홈페이지와 신탁 상품 공식 문서를 한곳에서 찾아보세요."
-                  : "가상 사례에서 가정을 바꾸고 적용 결과를 확인하세요. 모르는 용어를 선택하면 연결된 공식 자료를 볼 수 있어요."}
+                  : page === "settings"
+                    ? "글자와 색상, 움직임을 내게 맞게 조정하세요."
+                    : "가상 사례에서 가정을 바꾸고 적용 결과를 확인하세요. 모르는 용어를 선택하면 연결된 공식 자료를 볼 수 있어요."}
               </p>
               <button
                 className="care-rail-jump"
@@ -561,9 +574,6 @@ function Workspace({ onExit }: { onExit: () => void }) {
                       자녀 예금 <b>1,000만 원</b>
                     </span>
                   </div>
-                  <p className="fine">
-                    가상 설정 · 실명·연락처·건강정보를 입력하지 마세요.
-                  </p>
                 </section>
                 {result && (
                   <section className="card" id="paths-panel">
@@ -578,73 +588,77 @@ function Workspace({ onExit }: { onExit: () => void }) {
                       changed={changed}
                       motionDisabled={preferences.motion}
                     />
-                    <details>
+                    <details open>
                       <summary>
                         적용 입력 · 기준과 비교{" "}
                         {changed ? "(변경 있음)" : "(기준 사례)"}
                       </summary>
-                      <table>
-                        <thead>
-                          <tr>
-                            <th>입력</th>
-                            <th>기준</th>
-                            <th>적용</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {Object.keys(ref.fields).map((k) => (
-                            <tr key={k}>
-                              <th>{ref.fields[k].label}</th>
-                              <td>{display(k, ref.defaults[k])}</td>
-                              <td>{display(k, applied[k])}</td>
+                      <div className="table-scroll">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>입력</th>
+                              <th>기준</th>
+                              <th>적용</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </details>
-                    <details>
-                      <summary>B/B′ 계산 결과 비교</summary>
-                      <table>
-                        <thead>
-                          <tr>
-                            <th>전략</th>
-                            <th>56세 잔액</th>
-                            <th>자녀 부족액</th>
-                            <th>부모 최저</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {[
-                            ...(changed && baseline ? [baseline] : []),
-                            result,
-                            comparison,
-                          ]
-                            .filter((v): v is Result => !!v)
-                            .map((v) => (
-                              <tr
-                                key={`${v === baseline ? "baseline" : "applied"}-${v.strategy}`}
-                              >
-                                <th>
-                                  {v === baseline ? "기준 · " : "적용 · "}
-                                  {strategies[v.strategy]}
-                                </th>
-                                <td>
-                                  {money(v.summary.projected_trust_at_56)}
-                                </td>
-                                <td>
-                                  {money(v.summary.child_shortfall_total)}
-                                </td>
-                                <td>{money(v.summary.parent_asset_min)}</td>
+                          </thead>
+                          <tbody>
+                            {Object.keys(ref.fields).map((k) => (
+                              <tr key={k}>
+                                <th>{ref.fields[k].label}</th>
+                                <td>{display(k, ref.defaults[k])}</td>
+                                <td>{display(k, applied[k])}</td>
                               </tr>
                             ))}
-                        </tbody>
-                      </table>
+                          </tbody>
+                        </table>
+                      </div>
                     </details>
-                    <p className="fine" role="status">
-                      {busy
-                        ? "서버에 재계산을 요청하는 중…"
-                        : `계산 완료 · ${result.assumption_version} · ${applied.child_end_age}세 해 포함`}
-                    </p>
+                    <details open>
+                      <summary>B/B′ 계산 결과 비교</summary>
+                      <div className="table-scroll">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th>전략</th>
+                              <th>56세 잔액</th>
+                              <th>자녀 부족액</th>
+                              <th>부모 최저</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {[
+                              ...(changed && baseline ? [baseline] : []),
+                              result,
+                              comparison,
+                            ]
+                              .filter((v): v is Result => !!v)
+                              .map((v) => (
+                                <tr
+                                  key={`${v === baseline ? "baseline" : "applied"}-${v.strategy}`}
+                                >
+                                  <th>
+                                    {v === baseline ? "기준 · " : "적용 · "}
+                                    {strategies[v.strategy]}
+                                  </th>
+                                  <td>
+                                    {money(v.summary.projected_trust_at_56)}
+                                  </td>
+                                  <td>
+                                    {money(v.summary.child_shortfall_total)}
+                                  </td>
+                                  <td>{money(v.summary.parent_asset_min)}</td>
+                                </tr>
+                              ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </details>
+                    {busy && (
+                      <p className="fine" role="status">
+                        재계산 중…
+                      </p>
+                    )}
                   </section>
                 )}
               </>
@@ -764,6 +778,38 @@ function Workspace({ onExit }: { onExit: () => void }) {
             </div>
           </div>
           <aside className="care-rail" aria-label="현재 사례와 설정">
+            <CaseSlots
+              reference={ref}
+              disabled={busy}
+              current={
+                result
+                  ? {
+                      schema_version: 1,
+                      case_id: ref.case_id,
+                      source_version: ref.source_version,
+                      strategy,
+                      overrides: Object.fromEntries(
+                        Object.entries(applied).filter(
+                          ([key, value]) => ref.defaults[key] !== value,
+                        ),
+                      ),
+                    }
+                  : null
+              }
+              activeSlot={activeSlot}
+              onLoad={(name, slot) =>
+                apply(
+                  { ...ref.defaults, ...slot.overrides },
+                  slot.strategy,
+                  name,
+                )
+              }
+              onSave={(name, saved) => {
+                if (saved) setActiveSlot(name);
+                else if (activeSlot === name) setActiveSlot(null);
+              }}
+              onCompare={setSnapshots}
+            />
             <div
               className="care-rail-heading"
               id="current-case-summary"
@@ -836,38 +882,6 @@ function Workspace({ onExit }: { onExit: () => void }) {
               >
                 {showAssumptions ? "가정 입력 닫기" : "전략과 가정 편집"}
               </button>
-              <CaseSlots
-                reference={ref}
-                disabled={busy}
-                current={
-                  result
-                    ? {
-                        schema_version: 1,
-                        case_id: ref.case_id,
-                        source_version: ref.source_version,
-                        strategy,
-                        overrides: Object.fromEntries(
-                          Object.entries(applied).filter(
-                            ([key, value]) => ref.defaults[key] !== value,
-                          ),
-                        ),
-                      }
-                    : null
-                }
-                activeSlot={activeSlot}
-                onLoad={(name, slot) =>
-                  apply(
-                    { ...ref.defaults, ...slot.overrides },
-                    slot.strategy,
-                    name,
-                  )
-                }
-                onSave={(name, saved) => {
-                  if (saved) setActiveSlot(name);
-                  else if (activeSlot === name) setActiveSlot(null);
-                }}
-                onCompare={setSnapshots}
-              />
             </div>
           </aside>
         </div>

@@ -854,21 +854,14 @@ footer {
 }
 /* Interactive simulation: motion changes the view, never the computed values. */
 .simulation-player {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 16px;
-  margin-top: 18px;
-  background: #eef4fb;
-  border: 1px solid #dce4ef;
-  border-radius: 10px;
+  margin-top: 12px;
 }
 .play-button {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 9px;
-  min-width: 106px;
+  padding: 5px 10px;
   background: var(--primary);
   color: #fff;
   border-color: var(--primary);
@@ -877,30 +870,6 @@ footer {
 .play-button:hover {
   background: #172b45;
   color: #fff;
-}
-.playback-year {
-  min-width: 68px;
-  display: grid;
-  gap: 3px;
-}
-.playback-year strong {
-  font-size: 22px;
-  font-variant-numeric: tabular-nums;
-}
-.playback-year small {
-  font-size: 12px;
-  color: #53667e;
-}
-.simulation-player input {
-  min-width: 50px;
-  flex: 1;
-  accent-color: var(--primary);
-  cursor: ew-resize;
-}
-.show-all {
-  font-size: 12px;
-  padding: 8px;
-  white-space: nowrap;
 }
 .milestone-track {
   display: grid;
@@ -1185,18 +1154,6 @@ footer {
   }
 }
 @media (max-width: 760px) {
-  .simulation-player {
-    flex-wrap: wrap;
-    gap: 12px;
-    padding: 12px;
-  }
-  .simulation-player input {
-    order: 4;
-    flex-basis: 100%;
-  }
-  .simulation-player .show-all {
-    margin-left: auto;
-  }
   .milestone-track {
     gap: 3px;
   }
@@ -1514,27 +1471,17 @@ footer {
 .scenario-exports button span {
   color: #53667e;
 }
-.advanced-analysis > summary {
+.advanced-analysis > header {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 9px;
 }
-.advanced-analysis > summary::after {
-  content: "＋";
-  margin-left: auto;
-  font-size: 17px;
-  color: #53667e;
-  font-weight: 400;
-}
-.advanced-analysis[open] > summary::after {
-  content: "−";
-}
-.advanced-analysis > summary strong {
+.advanced-analysis > header strong {
   font-size: 13px;
   font-weight: 600;
 }
-.advanced-analysis > summary small {
+.advanced-analysis > header small {
   color: #53667e;
   font-size: 12px;
   font-weight: 400;
@@ -1833,7 +1780,7 @@ footer {
     padding: 12px 16px;
     font-size: 12px;
   }
-  .advanced-analysis > summary small {
+  .advanced-analysis > header small {
     flex-basis: 100%;
   }
 }
@@ -2242,7 +2189,7 @@ textarea:focus-visible {
     transparent 16.666%
   );
 }
-.schedule-track > span {
+.schedule-track > [role="img"] {
   position: absolute;
   height: 14px;
   top: 4px;
@@ -2277,4 +2224,22 @@ textarea:focus-visible {
   .report-stat-row {
     flex-direction: column;
   }
+}
+
+.schedule-tooltip {
+  display: none;
+  position: absolute;
+  z-index: 3;
+  inset-inline-start: 0;
+  bottom: 100%;
+  max-width: 100%;
+  padding: 5px 8px;
+  border-radius: 5px;
+  background: #172b45;
+  color: white;
+  font-size: 12px;
+  pointer-events: none;
+}
+.schedule-track > [role="img"]:is(:hover, :focus) + .schedule-tooltip {
+  display: block;
 }
