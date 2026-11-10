@@ -847,7 +847,6 @@ function Workspace({
                               : "만 원 / 월"}
                         </span>
                       </div>
-                      <small>{f.source}</small>
                     </label>
                   ))}
                 </div>
