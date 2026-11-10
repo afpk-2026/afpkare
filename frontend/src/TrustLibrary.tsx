@@ -157,6 +157,7 @@ export function TrustChat({
   } | null>(null);
   const [message, setMessage] = useState("");
   const controller = useRef<AbortController | null>(null);
+  const searchInput = useRef<HTMLInputElement>(null);
   useEffect(() => () => controller.current?.abort(), []);
   async function ask(ids: string[]) {
     controller.current?.abort();
@@ -224,9 +225,37 @@ export function TrustChat({
           setQuery("");
         }}
       >
+        {sources.length > 0 && (
+          <div>
+            <div className="suggestions-heading">이렇게 물어보세요</div>
+            <div
+              className="chat-suggestions"
+              role="group"
+              aria-label="공식 자료 예시 질문"
+            >
+              {sources.slice(0, 4).map(({ id, title }) => {
+                const example = `${title} 관련 공식 자료가 있나요?`;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    title="입력창에 넣기"
+                    onClick={() => {
+                      setQuery(example);
+                      searchInput.current?.focus({ preventScroll: true });
+                    }}
+                  >
+                    {example}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
         <label htmlFor="trust-query">공식 자료에서 찾아보기</label>
         <input
           id="trust-query"
+          ref={searchInput}
           maxLength={120}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
