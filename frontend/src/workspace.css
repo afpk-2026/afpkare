@@ -340,6 +340,7 @@ html[data-patterns] .diagnosis.risk {
 }
 .care-chat-mode button[aria-pressed="true"] {
   background: #004ea2;
+  border-color: #004ea2;
   color: white;
 }
 .care-chat-pane {
@@ -351,6 +352,25 @@ html[data-patterns] .diagnosis.risk {
 .care-chat-pane[hidden] {
   display: none;
 }
+@media (prefers-reduced-motion: no-preference) {
+  html:not([data-no-motion]) .care-chat-mode button {
+    transition: background-color 160ms ease, border-color 160ms ease,
+      color 160ms ease;
+  }
+  html:not([data-no-motion]) .care-chat-pane:not([hidden]) {
+    animation: care-chat-pane-enter 180ms ease-out;
+  }
+}
+@keyframes care-chat-pane-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 .care-source-answer {
   border-top: 1px solid #dce4ef;
   padding-block: 8px;
@@ -358,21 +378,10 @@ html[data-patterns] .diagnosis.risk {
 .care-source-answer h3 {
   margin: 0;
 }
-.care-source-search {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 7px;
-}
 .care-source-search .chat-suggestions button {
   max-width: 100%;
   white-space: normal;
   overflow-wrap: anywhere;
-}
-.care-source-search input {
-  min-width: 0;
-  padding: 8px;
-  border: 1px solid #53667e;
-  border-radius: 6px;
 }
 .care-selection {
   position: fixed;

@@ -157,7 +157,7 @@ export function TrustChat({
   } | null>(null);
   const [message, setMessage] = useState("");
   const controller = useRef<AbortController | null>(null);
-  const searchInput = useRef<HTMLInputElement>(null);
+  const searchInput = useRef<HTMLTextAreaElement>(null);
   const suggestions = useRef<HTMLDivElement>(null);
   const suggestionsId = useId();
   function scrollSuggestions(direction: number) {
@@ -202,13 +202,21 @@ export function TrustChat({
   useEffect(() => {
     if (request) void ask(request.ids);
   }, [request]);
+  function submitQuery() {
+    if (!query.trim()) return;
+    void ask(matchingSources(query, sources));
+    setQuery("");
+  }
   return (
     <>
       <div className="chat-thread" role="log" aria-label="공식 신탁 자료 설명">
-        <p>
-          {message ||
-            "은행 이름, 상품 이름, 유언대용신탁 같은 용어로 공식 자료를 찾아보세요."}
-        </p>
+        <div className="chat-message assistant">
+          <span className="chat-speaker">자료 도우미</span>
+          <div className="chat-bubble">
+            {message ||
+              "은행 이름, 상품 이름, 유언대용신탁 같은 용어로 공식 자료를 찾아보세요."}
+          </div>
+        </div>
         {answer?.sources.map((source) => (
           <article className="care-source-answer" key={source.id}>
             <h3>{source.title}</h3>
@@ -227,8 +235,7 @@ export function TrustChat({
         className="chat-bottom care-source-search"
         onSubmit={(event) => {
           event.preventDefault();
-          void ask(matchingSources(query, sources));
-          setQuery("");
+          submitQuery();
         }}
       >
         {sources.length > 0 && (
@@ -282,22 +289,39 @@ export function TrustChat({
             </div>
           </div>
         )}
-        <label htmlFor="trust-query">공식 자료에서 찾아보기</label>
-        <input
+        <label className="chat-input-label" htmlFor="trust-query">
+          공식 자료에서 찾아보기
+        </label>
+        <textarea
           id="trust-query"
           ref={searchInput}
+          rows={2}
           maxLength={120}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (
+              e.key === "Enter" &&
+              !e.shiftKey &&
+              !e.nativeEvent.isComposing
+            ) {
+              e.preventDefault();
+              submitQuery();
+            }
+          }}
           placeholder="예: 하나 리빙트러스트"
         />
-        <button className="primary" disabled={!query.trim()}>
+        <button className="primary chat-send" disabled={!query.trim()}>
           자료 찾기
+          <span aria-hidden="true">↗</span>
         </button>
-        <small>
-          입력한 문구는 이 브라우저에서 자료와 대조합니다. 서버에는 연결된 공식
-          자료의 식별자만 전송합니다.
-        </small>
+        <details className="chat-privacy">
+          <summary>지원 범위·개인정보 안내</summary>
+          <p>
+            입력한 문구는 이 브라우저에서 자료와 대조합니다. 서버에는 연결된
+            공식 자료의 식별자만 전송합니다.
+          </p>
+        </details>
       </form>
     </>
   );
