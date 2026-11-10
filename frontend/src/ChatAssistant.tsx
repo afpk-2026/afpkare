@@ -205,7 +205,7 @@ export function ChatAssistant({
           aria-pressed={mode === "sources"}
           onClick={() => setMode("sources")}
         >
-          자료 설명
+          금융 설명
         </button>
       </div>
       <div className="care-chat-pane" hidden={mode !== "sources"}>

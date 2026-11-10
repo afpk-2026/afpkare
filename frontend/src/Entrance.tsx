@@ -157,7 +157,8 @@ export function Entrance({ onEnter }: { onEnter: () => void }) {
       <FloatingAssistant initiallyOpen={false} title="케어 파트너스 안내">
         <div className="chat-thread">
           <p>
-            가상 사례 계산과 공식 신탁 자료 설명은 로그인 후 이용할 수 있어요.
+            로그인하면 가상 사례를 계산하고 공식 신탁 자료를 바탕으로 금융
+            설명을 볼 수 있어요.
           </p>
           <button className="primary" onClick={start}>
             데모 로그인 열기

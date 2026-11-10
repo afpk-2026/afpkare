@@ -196,7 +196,7 @@ export function TrustChat({
       }
     } catch {
       if (!abort.signal.aborted)
-        setMessage("자료 설명 요청을 완료하지 못했습니다. 다시 시도해 주세요.");
+        setMessage("금융 설명 요청을 완료하지 못했습니다. 다시 시도해 주세요.");
     }
   }
   useEffect(() => {
@@ -209,7 +209,11 @@ export function TrustChat({
   }
   return (
     <>
-      <div className="chat-thread" role="log" aria-label="공식 신탁 자료 설명">
+      <div
+        className="chat-thread"
+        role="log"
+        aria-label="공식 신탁 자료 기반 금융 설명"
+      >
         <div className="chat-message assistant">
           <span className="chat-speaker">자료 도우미</span>
           <div className="chat-bubble">
