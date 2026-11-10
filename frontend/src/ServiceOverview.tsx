@@ -39,6 +39,46 @@ const steps = [
   },
 ];
 
+const preparation = [
+  ["보호자 사후에 대한 막막함을 가장 큰 어려움으로 응답", 34.9],
+  ["집이나 재산을 마련했거나 모으는 중", 8.9],
+  ["가족 사망에 대비해 다른 보호자를 정함", 2.7],
+] as const;
+
+const protections = [
+  [
+    "공공기관 개인정보 영향평가",
+    "공공기관 도입 시 영향평가 적용 여부와 필요한 절차를 검토할 항목입니다. 현재 데모는 영향평가를 완료하지 않았습니다.",
+  ],
+  [
+    "보안",
+    "운영 환경의 로그인은 HTTPS를 사용하며, 세션을 확인한 뒤 계산 기능을 제공합니다.",
+  ],
+  [
+    "익명정보 처리",
+    "시뮬레이터는 가상의 가족과 수치를 사용합니다. 입력한 사례를 익명정보로 변환하는 별도 절차는 제공하지 않습니다.",
+  ],
+  [
+    "민감정보 보호",
+    "실명·연락처·계좌번호·건강정보 대신 가상의 금액과 나이를 입력하세요. 공식 자료 검색은 브라우저에서 대조하고 자료 식별자만 서버에 보냅니다.",
+  ],
+  [
+    "운영통제 및 공공기준",
+    "운영자가 데모 접속을 관리하고, 세션은 로그아웃·만료·서버 재시작 시 종료됩니다. 공공 도입 기준 충족 여부는 별도 검토 대상입니다.",
+  ],
+];
+
+const accessibility = [
+  [
+    "스크린리더",
+    "메뉴를 옮길 때 화면 제목으로 초점을 이동하는 화면 읽기 안내를 켤 수 있습니다.",
+  ],
+  ["고대비", "텍스트와 카드 경계를 더 뚜렷하게 표시합니다."],
+  ["색약 모드", "그래프 선 모양과 상태 패턴을 함께 표시합니다."],
+  ["애니메이션 끄기", "그래프 자동 재생과 부드러운 스크롤을 줄입니다."],
+  ["글자 크기 조정", "기본·크게·아주 크게 중에서 선택할 수 있습니다."],
+];
+
 export function LandingPreview() {
   const [selected, setSelected] = useState(0);
   const x = (age: number) => 30 + ((age - 56) / 39) * 360;
@@ -133,6 +173,13 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
             같은 사례에 서로 다른 가정을 적용해 장기간의 자금 흐름을 살펴보고,
             가족과 전문가에게 어떤 질문을 가져갈지 정리할 수 있습니다.
           </p>
+          <p>
+            디지털 화면을 읽거나 조작하기 어려우면 금융 정보와 상담 창구를 찾는
+            일부터 막힐 수 있습니다. 장애인의 장기 생활과 돌봄에 맞는 신탁 등
+            금융상품 선택지도 제한적입니다. 흩어진 정보를 찾더라도 부모 사후에
+            누가 재산을 관리하고 생활비를 어떻게 지급할지 정하는 일은 가족에게
+            남습니다.
+          </p>
           <dl className="landing-facts">
             <div>
               <dt>계산 전략</dt>
@@ -148,6 +195,26 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
             </div>
           </dl>
         </div>
+        <figure className="landing-preparation">
+          <figcaption>
+            <strong>부모 사후, 가족이 답한 걱정과 준비</strong>
+            <span>2021년 발달장애인 실태조사</span>
+          </figcaption>
+          <ul>
+            {preparation.map(([label, value]) => (
+              <li key={label}>
+                <span>{label}</span>
+                <strong>{value}%</strong>
+                <meter min={0} max={100} value={value} aria-hidden="true" />
+              </li>
+            ))}
+          </ul>
+          <p>
+            서로 다른 문항의 응답 비율입니다. 출처는 보고서 v1.5 그림 1(나),
+            보건복지부·한국보건사회연구원(2022) 「2021년 발달장애인 실태조사」
+            표 2-226·2-213입니다.
+          </p>
+        </figure>
       </section>
       <section className="landing-section landing-differences">
         <p className="eyebrow">02 / 케어 파트너스의 차별점</p>
@@ -241,38 +308,37 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
           </article>
         </div>
       </section>
-      <section id="faq" className="landing-section landing-faq">
-        <p className="eyebrow">05 / 자주 묻는 질문</p>
-        <h2>시작하기 전에 확인하세요</h2>
-        <details>
-          <summary>로그인하려면 무엇이 필요한가요?</summary>
-          <p>
-            운영자에게 받은 공용 데모 비밀번호로 로그인합니다. 소개와 기준 사례
-            미리보기는 공개되어 있습니다.
-          </p>
-        </details>
-        <details>
-          <summary>저장한 슬롯은 어디에 보관되나요?</summary>
-          <p>
-            슬롯의 가정과 전략은 이 브라우저에 보관됩니다. 다른 브라우저에서
-            같은 비밀번호로 로그인하더라도 각 브라우저에 저장한 사례를 따로
-            사용합니다.
-          </p>
-        </details>
-        <details>
-          <summary>결과와 상품 자료를 어떻게 활용하나요?</summary>
-          <p>
-            결과는 가상 사례의 가정에 따른 비교입니다. 실제 급여 수급과 신탁
-            계약 조건은 해당 기관의 공식 문서나 상담 창구에서 확인하세요.
-          </p>
-        </details>
-        <details>
-          <summary>화면을 읽기 편하게 바꿀 수 있나요?</summary>
-          <p>
-            환경설정에서 글자 크기, 고대비, 색약 패턴, 화면 읽기 초점 이동,
-            애니메이션 설정을 조정할 수 있습니다.
-          </p>
-        </details>
+      <section id="privacy" className="landing-section landing-safeguards">
+        <p className="eyebrow">05 / 개인정보 보호</p>
+        <h2>개인정보를 보호하는 방법</h2>
+        <p>
+          가상 사례를 중심으로 서비스에 필요한 정보만 처리합니다. 현재 보호
+          조치와 공공 도입 시 검토할 항목을 확인하세요.
+        </p>
+        <dl>
+          {protections.map(([title, detail]) => (
+            <div key={title}>
+              <dt>{title}</dt>
+              <dd>{detail}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+      <section
+        id="accessibility"
+        className="landing-section landing-safeguards"
+      >
+        <p className="eyebrow">06 / 접근성</p>
+        <h2>읽고 쓰기 편한 화면</h2>
+        <p>로그인한 뒤 왼쪽 메뉴의 ‘환경설정’에서 화면을 나에게 맞춰 보세요.</p>
+        <dl>
+          {accessibility.map(([title, detail]) => (
+            <div key={title}>
+              <dt>{title}</dt>
+              <dd>{detail}</dd>
+            </div>
+          ))}
+        </dl>
       </section>
       <section className="landing-start">
         <div>

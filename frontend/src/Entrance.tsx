@@ -92,7 +92,7 @@ export function Entrance({ onEnter }: { onEnter: () => void }) {
         <nav aria-label="홈 메뉴">
           <a href="#about">서비스 소개</a>
           <a href="#workflow">이용 방법</a>
-          <a href="#faq">자주 묻는 질문</a>
+          <a href="#privacy">개인정보와 접근성</a>
           <button className="primary" onClick={start}>
             {signedIn ? "시뮬레이터 열기" : "로그인"}
           </button>
