@@ -1609,7 +1609,7 @@ footer {
 .contest-footer {
   border-top: 1px solid #dce4ef;
   margin-top: 32px;
-  padding: 24px 0 100px;
+  padding: 24px clamp(20px, 3vw, 48px) 100px;
   align-items: start;
 }
 .contest-footer > div {
