@@ -207,12 +207,18 @@ html[data-patterns] .diagnosis.risk {
     grid-template-columns: 1fr;
   }
 }
+.care-home {
+  --home-content-width: 1280px;
+  --home-gutter: clamp(20px, 5vw, 72px);
+  background: #fff;
+}
 .care-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 14px clamp(16px, 5vw, 80px);
+  padding-block: 14px;
+  padding-inline: max(var(--home-gutter), calc((100% - var(--home-content-width)) / 2));
   border-bottom: 1px solid #dce4ef;
   background: white;
 }
@@ -226,15 +232,16 @@ html[data-patterns] .diagnosis.risk {
   text-decoration: none;
 }
 .care-landing {
-  width: min(1120px, calc(100% - 32px));
-  margin: 28px auto 100px;
+  width: min(var(--home-content-width), calc(100% - 2 * var(--home-gutter)));
+  padding: 0;
+  margin-inline: auto;
 }
 .care-hero {
-  padding-block: clamp(36px, 7vw, 108px);
+  padding-block: clamp(24px, 3vw, 44px) clamp(36px, 5vw, 72px);
   display: grid;
   grid-template-columns: 1.4fr 1fr;
   align-items: center;
-  gap: 32px;
+  gap: clamp(24px, 5vw, 68px);
 }
 .care-hero h1 {
   font-size: clamp(2.4em, 6vw, 4em);
@@ -473,22 +480,13 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
   margin-top: 14px;
 }
 
-.care-home {
-  background: #fff;
-}
-.care-landing {
-  width: min(1280px, calc(100% - clamp(40px, 10vw, 144px)));
-  margin-bottom: 0;
-}
-.care-hero {
-  gap: clamp(24px, 5vw, 68px);
-}
 .landing-demo {
   margin: 0;
   min-width: 0;
   padding: 22px;
   border-radius: 14px;
   background: #102f4b;
+  color: #eef7ff;
   border: 1px solid #55738b;
 }
 .landing-demo figcaption {
@@ -644,11 +642,11 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
   margin-bottom: 0;
 }
 @media (max-width: 680px) {
+  .care-home {
+    --home-gutter: 20px;
+  }
   .care-header nav a:not(:first-child) {
     display: none;
-  }
-  .care-landing {
-    width: calc(100% - 40px);
   }
   .landing-story-media,
   .landing-story-outcome,
