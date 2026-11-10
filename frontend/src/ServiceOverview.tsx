@@ -281,45 +281,8 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
           </article>
         ))}
       </section>
-      <section id="evidence" className="landing-section landing-evidence">
-        <p className="eyebrow">04 / 근거를 읽는 방법</p>
-        <h2>결과 옆에서 산식과 자료를 확인하세요</h2>
-        <div className="landing-evidence-grid">
-          <article>
-            <h3>보고서 진단과 대안</h3>
-            <p>
-              선택한 가정에서 계산된 필요 잔액, 생활비 부족액, 신탁과 급여
-              경로를 확인할 수 있습니다. 보고서의 설계 전 진단과 180일 일정도
-              별도로 열어볼 수 있습니다.
-            </p>
-          </article>
-          <article>
-            <h3>은행과 신탁 상품</h3>
-            <p>
-              은행 8곳의 홈페이지와 신탁 자료 8건의 원문 링크를 모았습니다.
-              상품이나 용어가 궁금하면 AI 도우미에서 관련 공식 문서 요약을
-              확인할 수 있습니다.
-            </p>
-          </article>
-          <article>
-            <h3>입력 변경 도우미</h3>
-            <p>
-              예시 문장으로 생활비나 설계 종료 나이 등을 제안받을 수 있습니다.
-              제안 내용을 확인하고 적용을 눌러야 계산에 반영됩니다.
-            </p>
-          </article>
-          <article>
-            <h3>비교와 내보내기</h3>
-            <p>
-              저장한 사례를 현재 결과와 비교하고, 샘플 사건과 민감도 화면에서 한
-              가지 가정의 영향을 살펴봅니다. 계산 근거를 JSON, CSV, HTML로
-              내려받을 수 있습니다.
-            </p>
-          </article>
-        </div>
-      </section>
       <section id="privacy" className="landing-section landing-safeguards">
-        <p className="eyebrow">05 / 개인정보 보호</p>
+        <p className="eyebrow">04 / 개인정보 보호</p>
         <h2>개인정보를 보호하는 방법</h2>
         <p>
           가상 사례를 중심으로 서비스에 필요한 정보만 처리합니다. 현재 보호
@@ -338,7 +301,7 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
         id="accessibility"
         className="landing-section landing-safeguards"
       >
-        <p className="eyebrow">06 / 접근성</p>
+        <p className="eyebrow">05 / 접근성</p>
         <h2>읽고 쓰기 편한 화면</h2>
         <p>로그인한 뒤 왼쪽 메뉴의 ‘환경설정’에서 화면을 나에게 맞춰 보세요.</p>
         <dl>
@@ -349,6 +312,113 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
             </div>
           ))}
         </dl>
+      </section>
+      <section id="evidence" className="landing-section landing-evidence">
+        <p className="eyebrow">06 / 자료와 계산 근거</p>
+        <h2>결과가 어디에서 나왔는지 확인하세요</h2>
+        <div className="landing-evidence-grid">
+          <article>
+            <h3>사례와 산식</h3>
+            <p>
+              재무설계 보고서 v1.5의 지훈 씨 가족과 계산식 세부 과정이
+              기준입니다. 계산산식 보기에서 부모 금융자산, 자녀 신탁, 급여
+              전환의 산식을 확인할 수 있습니다.
+            </p>
+          </article>
+          <article>
+            <h3>필요 잔액을 찾는 방법</h3>
+            <p>
+              56세 시작 신탁액을 500만 원 간격으로 늘려, 선택한 종료 나이까지
+              매년 생활비를 충당할 수 있는 최소 잔액을 찾습니다. 인출 한도
+              안에서 충당할 수 없으면 계산 미지원으로 표시합니다.
+            </p>
+          </article>
+          <article>
+            <h3>조사 자료와 보고서 도표</h3>
+            <p>
+              부모 사후 대비 현황은 2021년 발달장애인 실태조사를 인용한 보고서
+              그림 1을 바탕으로 합니다. 보고서 진단 화면에서 계산 결과와 기준
+              사례 도표를 구분해 볼 수 있습니다.
+            </p>
+          </article>
+          <article>
+            <h3>은행 공식 자료</h3>
+            <p>
+              은행 8곳의 홈페이지와 신탁 안내·계약서 8건을 연결했습니다. 상품
+              카드에서 원문을 열거나 AI 설명으로 요약과 출처를 함께 확인하세요.
+            </p>
+          </article>
+        </div>
+      </section>
+      <section className="landing-section">
+        <p className="eyebrow">07 / 활용 효과</p>
+        <h2>한 가지 가정을 바꾸고 차이를 살펴보세요</h2>
+        <p>
+          같은 가족 사례에서 B안, 연 순실질수익률 1%, 95세까지를 유지하고 부모
+          사후 월 생활비만 바꾼 예시입니다.
+        </p>
+        <div className="table-scroll">
+          <table aria-label="월 생활비에 따른 가상 사례 계산 비교">
+            <thead>
+              <tr>
+                <th scope="col">월 생활비</th>
+                <th scope="col">56세 필요 잔액</th>
+                <th scope="col">자녀 평생 생활비 부족액</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">180만 원</th>
+                <td>1.75억 원</td>
+                <td>0원</td>
+              </tr>
+              <tr>
+                <th scope="row">185만 원</th>
+                <td>1.95억 원</td>
+                <td>약 1,603만 원</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>
+          필요 잔액과 부족액이 얼마나 달라지는지 확인하고, 어떤 가정을 가족이나
+          상담 창구와 다시 검토할지 정리할 수 있습니다.
+        </p>
+      </section>
+      <section className="landing-section landing-evidence">
+        <p className="eyebrow">08 / 기능 소개</p>
+        <h2>사례 설정부터 근거 내보내기까지</h2>
+        <div className="landing-evidence-grid">
+          <article>
+            <h3>시뮬레이터와 보고서 진단</h3>
+            <p>
+              부모 금융자산과 자녀 신탁의 연도별 경로를 보고, 정년·부모
+              사후·65세 급여 전환 시점으로 이동할 수 있습니다.
+            </p>
+          </article>
+          <article>
+            <h3>사례 슬롯과 고급 분석</h3>
+            <p>
+              A–D 슬롯에 가정을 저장해 다시 적용하세요. 샘플 사건과 고급
+              분석에서는 재취업 소득이나 생활비 한 가지가 결과에 미치는 영향을
+              비교합니다.
+            </p>
+          </article>
+          <article>
+            <h3>입력 변경과 공식 문서 설명</h3>
+            <p>
+              AI 도우미의 입력 제안을 확인한 뒤 적용하거나, 낯선 신탁 용어를
+              선택해 관련 공식 자료를 찾아볼 수 있습니다.
+            </p>
+          </article>
+          <article>
+            <h3>근거 파일 내려받기</h3>
+            <p>
+              현재 가정과 계산 결과를 JSON으로, 연도별 경로를 CSV로, 읽기용
+              보고서를 HTML로 내려받을 수 있습니다.
+            </p>
+          </article>
+        </div>
       </section>
       <section className="landing-start">
         <div>
