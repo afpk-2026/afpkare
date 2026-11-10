@@ -1022,3 +1022,33 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
     animation: landing-draw 0.85s 0.25s ease-out both;
   }
 }
+
+.benefit-charts {
+  max-width: 760px;
+}
+.benefit-charts > .reference-chart {
+  max-width: 560px;
+}
+.trust-bank-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.trust-bank-label img {
+  flex: none;
+  width: auto;
+  max-width: 58px;
+  height: 16px;
+  object-fit: contain;
+}
+.care-settings-faq details {
+  border-top: 1px solid #dce4ef;
+  padding-block: 12px;
+}
+.care-settings-faq summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.care-settings-faq details p {
+  margin-bottom: 0;
+}

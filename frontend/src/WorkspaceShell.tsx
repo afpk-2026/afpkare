@@ -142,6 +142,38 @@ export function PreferencesPanel({
           패널에서 삭제할 수 있습니다.
         </p>
       </section>
+      <section className="card care-settings-faq">
+        <h2>자주 묻는 질문</h2>
+        <details>
+          <summary>로그인하려면 무엇이 필요한가요?</summary>
+          <p>
+            운영자에게 받은 공용 데모 비밀번호로 로그인합니다. 소개와 기준 사례
+            미리보기는 공개되어 있습니다.
+          </p>
+        </details>
+        <details>
+          <summary>저장한 슬롯은 어디에 보관되나요?</summary>
+          <p>
+            슬롯의 가정과 전략은 이 브라우저에 보관됩니다. 다른 브라우저에서
+            같은 비밀번호로 로그인하더라도 각 브라우저에 저장한 사례를 따로
+            사용합니다.
+          </p>
+        </details>
+        <details>
+          <summary>결과와 상품 자료를 어떻게 활용하나요?</summary>
+          <p>
+            결과는 가상 사례의 가정에 따른 비교입니다. 실제 급여 수급과 신탁
+            계약 조건은 해당 기관의 공식 문서나 상담 창구에서 확인하세요.
+          </p>
+        </details>
+        <details>
+          <summary>화면을 읽기 편하게 바꿀 수 있나요?</summary>
+          <p>
+            환경설정에서 글자 크기, 고대비, 색약 패턴, 화면 읽기 초점 이동,
+            애니메이션 설정을 조정할 수 있습니다.
+          </p>
+        </details>
+      </section>
     </div>
   );
 }

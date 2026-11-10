@@ -22,6 +22,8 @@ const banks = [
   ["토스뱅크", "t.png", "https://www.tossbank.com/"],
 ];
 
+const bankImages = new Map(banks.map(([name, image]) => [name, image]));
+
 const normalize = (value: string) =>
   value.toLowerCase().replace(/[^가-힣a-z0-9]/g, "");
 export function matchingSources(text: string, sources: TrustSource[]) {
@@ -111,7 +113,14 @@ export function TrustLibrary({
                 data-source-id={source.id}
               >
                 <div className="trust-item-copy">
-                  <p>
+                  <p className="trust-bank-label">
+                    {bankImages.has(source.bank) && (
+                      <img
+                        src={`/banks/${bankImages.get(source.bank)}`}
+                        alt=""
+                        loading="lazy"
+                      />
+                    )}
                     {source.bank} · {source.category}
                   </p>
                   <h3>

@@ -1582,6 +1582,7 @@ footer {
 }
 .floating-assistant {
   position: fixed;
+  zoom: 0.8;
   right: max(22px, env(safe-area-inset-right));
   bottom: max(20px, env(safe-area-inset-bottom));
   z-index: 50;

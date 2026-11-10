@@ -464,7 +464,7 @@ export function ReportInsights({
           </div>
         )}
         {tab === 3 && (
-          <>
+          <div className="benefit-charts">
             {benefits.length > 0 && (
               <ReferenceChart
                 title="현재 가정의 월평균 공적급여 경로"
@@ -511,7 +511,7 @@ export function ReportInsights({
                 아닙니다. 현재 입력과 독립된 두 가지 기준 비교입니다.
               </p>
             </details>
-          </>
+          </div>
         )}
         {tab === 4 && (
           <>
