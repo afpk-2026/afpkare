@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useId, useRef, useState } from "react";
 
 export type TrustSource = {
   id: string;
@@ -158,6 +158,12 @@ export function TrustChat({
   const [message, setMessage] = useState("");
   const controller = useRef<AbortController | null>(null);
   const searchInput = useRef<HTMLInputElement>(null);
+  const suggestions = useRef<HTMLDivElement>(null);
+  const suggestionsId = useId();
+  function scrollSuggestions(direction: number) {
+    const row = suggestions.current;
+    if (row) row.scrollBy({ left: direction * row.clientWidth });
+  }
   useEffect(() => () => controller.current?.abort(), []);
   async function ask(ids: string[]) {
     controller.current?.abort();
@@ -227,8 +233,32 @@ export function TrustChat({
       >
         {sources.length > 0 && (
           <div>
-            <div className="suggestions-heading">이렇게 물어보세요</div>
+            <div className="suggestions-heading">
+              <span>이렇게 물어보세요</span>
+              {sources.length > 1 && (
+                <div>
+                  <button
+                    type="button"
+                    aria-label="이전 예시 질문"
+                    aria-controls={suggestionsId}
+                    onClick={() => scrollSuggestions(-1)}
+                  >
+                    ‹
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="다음 예시 질문"
+                    aria-controls={suggestionsId}
+                    onClick={() => scrollSuggestions(1)}
+                  >
+                    ›
+                  </button>
+                </div>
+              )}
+            </div>
             <div
+              id={suggestionsId}
+              ref={suggestions}
               className="chat-suggestions"
               role="group"
               aria-label="공식 자료 예시 질문"

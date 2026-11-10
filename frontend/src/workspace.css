@@ -360,7 +360,13 @@ html[data-patterns] .diagnosis.risk {
 }
 .care-source-search {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 7px;
+}
+.care-source-search .chat-suggestions button {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .care-source-search input {
   min-width: 0;
