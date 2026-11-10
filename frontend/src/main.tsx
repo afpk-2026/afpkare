@@ -296,7 +296,7 @@ function Workspace({ onExit }: { onExit: () => void }) {
       const stored = persist(ref, inputs, s);
       setNotice(
         stored
-          ? "가상 사례 설정을 적용했습니다. 설정은 이 브라우저에만 저장됩니다."
+          ? "가상 사례를 적용했습니다."
           : "가상 사례를 적용했지만 저장소가 차단되어 현재 탭에서만 사용합니다.",
       );
       return true;
@@ -328,7 +328,7 @@ function Workspace({ onExit }: { onExit: () => void }) {
     } catch {}
     setNotice(
       ok
-        ? "기준 사례로 초기화하고 이 브라우저의 설정을 삭제했습니다."
+        ? "기준 사례로 초기화했습니다."
         : "현재 탭을 초기화했습니다. 저장소 접근이 차단되어 보관값 삭제를 확인할 수 없습니다.",
     );
     setBusy(true);
@@ -435,8 +435,9 @@ function Workspace({ onExit }: { onExit: () => void }) {
                 <span className="tag">슬롯 {activeSlot} · 적용 사례</span>
               )}
               <p>
-                가상 사례에서 가정을 바꾸고 적용 결과를 확인하세요. 모르는
-                용어를 선택하면 연결된 공식 자료를 볼 수 있어요.
+                {page === "trusts"
+                  ? "은행 홈페이지와 신탁 상품 공식 문서를 한곳에서 찾아보세요."
+                  : "가상 사례에서 가정을 바꾸고 적용 결과를 확인하세요. 모르는 용어를 선택하면 연결된 공식 자료를 볼 수 있어요."}
               </p>
               <button
                 className="care-rail-jump"

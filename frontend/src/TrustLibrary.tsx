@@ -61,10 +61,13 @@ export function TrustLibrary({
 }) {
   return (
     <>
-      <section className="card">
-        <h2>관련 기관 소개</h2>
+      <section className="card care-directory">
+        <div className="directory-heading">
+          <h2>은행 바로가기</h2>
+          <span>8개 기관</span>
+        </div>
         <p>은행 로고를 선택하면 공식 홈페이지가 열립니다.</p>
-        <div className="care-library-grid">
+        <div className="care-library-grid bank-grid">
           {banks.map(([name, image, url]) => (
             <a
               className="care-bank-card"
@@ -81,8 +84,11 @@ export function TrustLibrary({
           ))}
         </div>
       </section>
-      <section className="card">
-        <h2>신탁 상품 살펴보기</h2>
+      <section className="card care-directory">
+        <div className="directory-heading">
+          <h2>신탁 자료</h2>
+          <span>공식 문서</span>
+        </div>
         <p>
           상품을 선택하면 공식 자료가 열립니다. 자세한 내용은 공식 문서 기반 AI
           도우미에게 물어보세요.
@@ -95,7 +101,7 @@ export function TrustLibrary({
         {!loadError && !sources.length && (
           <p role="status">신탁 자료를 불러오고 있습니다.</p>
         )}
-        <div className="care-library-grid">
+        <div className="care-library-grid trust-grid">
           {sources
             .filter((source) => source.bank)
             .map((source) => (
@@ -104,16 +110,21 @@ export function TrustLibrary({
                 key={source.id}
                 data-source-id={source.id}
               >
-                <span className="tag">{source.category}</span>
-                <h3>
-                  <a href={source.url} target="_blank" rel="noreferrer">
-                    {source.title} ↗
-                  </a>
-                </h3>
-                <p>{source.bank}</p>
-                <button onClick={() => onAsk([source.id])}>
-                  AI로 자료 읽기
-                  <span className="sr-only"> · {source.title}</span>
+                <div className="trust-item-copy">
+                  <p>
+                    {source.bank} · {source.category}
+                  </p>
+                  <h3>
+                    <a href={source.url} target="_blank" rel="noreferrer">
+                      {source.title} <span aria-hidden="true">↗</span>
+                    </a>
+                  </h3>
+                </div>
+                <button
+                  aria-label={`${source.title} AI로 자료 읽기`}
+                  onClick={() => onAsk([source.id])}
+                >
+                  <span aria-hidden="true">✦</span> AI 설명
                 </button>
               </article>
             ))}

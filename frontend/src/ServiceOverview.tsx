@@ -16,18 +16,27 @@ const strategies = [
   },
 ];
 const steps = [
-  [
-    "가정을 입력하세요",
-    "자녀 생활비와 유족연금, 신탁 수익률, 부모의 재취업 소득과 설계 종료 나이를 조정합니다. 어느 값을 바꿨는지 입력 화면에서 확인하고 적용할 수 있습니다.",
-  ],
-  [
-    "시간을 따라 결과를 읽으세요",
-    "부모 금융자산과 자녀 신탁의 연도별 경로를 함께 살펴봅니다. 부족액이 처음 생기는 시기, 65세 급여 전환, 두 전략의 예상 잔액을 차례대로 확인합니다.",
-  ],
-  [
-    "사례를 저장하고 근거를 확인하세요",
-    "오른쪽 A/B/C/D에 가정을 저장해 한 번에 불러옵니다. 보고서 진단과 대안에서 동일한 사례의 부족액과 B/B′ 비교를 읽고, 계산산식에서 숫자가 나온 과정을 확인합니다.",
-  ],
+  {
+    title: "생활비 가정 바꾸기",
+    description:
+      "오른쪽의 ‘전략과 가정 편집’을 누르세요. 예를 들어 부모 사후 월 생활비를 180만 원에서 185만 원으로 바꾸고 ‘변경 적용’을 누릅니다.",
+    image: "edit.webp",
+    alt: "가정 편집 화면의 부모 사후 월 생활비 입력과 변경 적용 버튼",
+  },
+  {
+    title: "저장한 사례 다시 비교하기",
+    description:
+      "오른쪽 슬롯을 선택해 ‘현재 적용값 저장’을 누릅니다. 저장한 슬롯을 클릭하면 시뮬레이터와 보고서가 같은 가정으로 바뀝니다. ‘보고서 진단과 대안’의 대안 비교에서 B와 B′의 부족액을 비교해 보세요.",
+    image: "compare.webp",
+    alt: "보고서 대안 비교 표와 오른쪽 A, B, C, D 사례 슬롯",
+  },
+  {
+    title: "공식 문서에서 답 찾기",
+    description:
+      "‘은행과 신탁 상품’에서 상품 이름을 누르면 원문이 열립니다. ‘AI 설명’을 누르면 공식 자료 요약과 출처 링크를 함께 볼 수 있습니다.",
+    image: "sources.webp",
+    alt: "신탁 자료 목록과 공식 출처를 제시하는 AI 도우미",
+  },
 ];
 
 export function LandingPreview() {
@@ -140,21 +149,63 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
           </dl>
         </div>
       </section>
-      <section id="workflow" className="landing-section">
-        <p className="eyebrow">02 / 이용 방법</p>
-        <h2>입력에서 비교까지 세 단계</h2>
+      <section className="landing-section landing-differences">
+        <p className="eyebrow">02 / 케어 파트너스의 차별점</p>
+        <h2>같은 가족, 다른 가정. 무엇이 달라질까요?</h2>
         <div className="landing-steps">
-          {steps.map(([title, description], index) => (
-            <article key={title}>
+          <article>
+            <h3>두 세대의 자금 흐름을 함께</h3>
+            <p>
+              자녀에게 남길 재원을 늘렸을 때 부모의 금융자산이 얼마나 남는지,
+              부모 사후에는 자녀가 언제 부족을 겪는지 두 경로에서 확인합니다.
+            </p>
+          </article>
+          <article>
+            <h3>월 생활비 5만 원 차이도 비교</h3>
+            <p>
+              기준 사례와 생활비를 높인 사례를 각각 슬롯에 담아 번갈아 보세요.
+              같은 입력을 시뮬레이터와 보고서가 공유하므로 숫자가 바뀐 이유를
+              따라가기 쉽습니다.
+            </p>
+          </article>
+          <article>
+            <h3>계산에서 원문까지</h3>
+            <p>
+              보고서 숫자는 계산산식에서, 신탁 상품 설명은 은행의 공식 자료에서
+              근거를 확인할 수 있습니다.
+            </p>
+          </article>
+        </div>
+      </section>
+      <section id="workflow" className="landing-section landing-guide">
+        <p className="eyebrow">03 / 화면으로 보는 사용 가이드</p>
+        <h2>어떻게 사용할 수 있나요?</h2>
+        <p>
+          로그인 후 지훈 씨 가족의 가상 사례에서 아래 순서대로 따라해 보세요.
+        </p>
+        {steps.map(({ title, description, image, alt }, index) => (
+          <article className="landing-guide-step" key={image}>
+            <div>
               <span className="landing-step-number">0{index + 1}</span>
               <h3>{title}</h3>
               <p>{description}</p>
-            </article>
-          ))}
-        </div>
+            </div>
+            <figure>
+              <a
+                href={`/guide/${image}`}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={`${title} 화면 크게 보기 (새 창)`}
+              >
+                <img src={`/guide/${image}`} alt={alt} loading="lazy" />
+              </a>
+              <figcaption>실제 서비스 화면 · 선택하면 확대</figcaption>
+            </figure>
+          </article>
+        ))}
       </section>
       <section id="evidence" className="landing-section landing-evidence">
-        <p className="eyebrow">03 / 근거를 읽는 방법</p>
+        <p className="eyebrow">04 / 근거를 읽는 방법</p>
         <h2>결과 옆에서 산식과 자료를 확인하세요</h2>
         <div className="landing-evidence-grid">
           <article>
@@ -191,7 +242,7 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
         </div>
       </section>
       <section id="faq" className="landing-section landing-faq">
-        <p className="eyebrow">04 / 자주 묻는 질문</p>
+        <p className="eyebrow">05 / 자주 묻는 질문</p>
         <h2>시작하기 전에 확인하세요</h2>
         <details>
           <summary>로그인하려면 무엇이 필요한가요?</summary>
