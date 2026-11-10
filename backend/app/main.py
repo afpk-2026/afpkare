@@ -4,7 +4,7 @@ from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field
 from . import auth, trust
 import os
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from .contracts import (
@@ -18,7 +18,7 @@ from .contracts import (
     supported_sentence,
 )
 from .proposals import propose, ProposalUnavailable
-from .engine import simulate as run_simulation, CONFIG
+from .engine import benefits, simulate as run_simulation, CONFIG
 
 app = FastAPI(title="부모가 없는 날 · 가상 사례 API", version="0.3.0")
 llm_gate = asyncio.Semaphore(2)
@@ -233,6 +233,29 @@ def simulate(body: SimulationRequest):
         **run_simulation({**DEFAULTS, **changes}, body.strategy),
         "case_id": CASE_ID,
         "source_version": SOURCE_VERSION,
+    }
+
+
+@app.get("/api/benefit-curves")
+def benefit_curves(
+    survivor_monthly: int = Query(
+        ge=FIELDS["monthly_survivor_pension"]["min"],
+        le=FIELDS["monthly_survivor_pension"]["max"],
+    ),
+):
+    return {
+        "survivor_monthly": survivor_monthly,
+        "assumption_version": CONFIG["version"],
+        "curves": [
+            {
+                "age": age,
+                "points": [
+                    [balance, sum(benefits(age, balance, survivor_monthly).values())]
+                    for balance in range(0, 600_000_001, 1_000_000)
+                ],
+            }
+            for age in (64, 65)
+        ],
     }
 
 

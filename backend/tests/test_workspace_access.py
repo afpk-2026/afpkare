@@ -1,6 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 from app import auth
+from app.engine import benefits
 from app.main import app
 
 
@@ -38,6 +39,25 @@ def test_login_requires_https_and_configured_secret(demo, monkeypatch):
     assert client.post("http://testserver/api/session/login", json={"password": password}).status_code == 403
     monkeypatch.delenv("CARE_DEMO_PASSWORD_HASH")
     assert client.post("/api/session/login", json={"password": password}).status_code == 503
+
+
+def test_benefit_curves_use_selected_survivor_pension(demo):
+    client, password = demo
+    url = "/api/benefit-curves"
+    assert client.get(url, params={"survivor_monthly": 0}).status_code == 401
+    assert client.post("/api/session/login", json={"password": password}).status_code == 200
+    assert client.get(url, params={"survivor_monthly": -1}).status_code == 422
+    zero = client.get(url, params={"survivor_monthly": 0}).json()
+    pension = 800_000
+    selected = client.get(url, params={"survivor_monthly": pension}).json()
+    assert selected["survivor_monthly"] == pension
+    assert selected["assumption_version"] == client.get("/api/health").json()["assumption_version"]
+    assert [curve["age"] for curve in selected["curves"]] == [64, 65]
+    for curve in selected["curves"]:
+        balance, monthly = curve["points"][100]
+        assert balance == 100_000_000
+        assert monthly == sum(benefits(curve["age"], balance, pension).values())
+    assert selected["curves"][0]["points"][0] != zero["curves"][0]["points"][0]
 
 
 def test_sources_allowlist_keeps_unreviewed_text_out_of_provider(demo, monkeypatch):

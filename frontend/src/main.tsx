@@ -577,6 +577,7 @@ function Workspace({
                   result={result}
                   comparison={comparison}
                   activeSlot={activeSlot}
+                  snapshots={snapshots}
                 >
                   <span className="tag">표 9 · 보고서 고정값</span>
                   <p className="fine">

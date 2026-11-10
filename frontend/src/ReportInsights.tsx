@@ -1,6 +1,7 @@
-import React, { useId, useState } from "react";
+import React, { useEffect, useId, useState } from "react";
 import data from "./report-baseline.json";
 import { money } from "./Chart.tsx";
+import type { Snapshot } from "./analysis.ts";
 import type { Result } from "./simulation.ts";
 import { StepTitle } from "./StepTitle.tsx";
 
@@ -9,6 +10,11 @@ type Series = {
   points: number[][];
   color: string;
   dashed?: boolean;
+};
+type BenefitCurves = {
+  survivor_monthly: number;
+  assumption_version: string;
+  curves: { age: number; points: number[][] }[];
 };
 const won = (value: number) => `${value.toLocaleString("ko-KR")}원`;
 function ReferenceChart({
@@ -231,13 +237,53 @@ export function ReportInsights({
   result,
   comparison,
   activeSlot,
+  snapshots,
 }: {
   children: React.ReactNode;
   result: Result | null;
   comparison: Result | null;
   activeSlot: string | null;
+  snapshots: Snapshot[];
 }) {
   const [tab, setTab] = useState(0);
+  const [curves, setCurves] = useState<BenefitCurves | null>(null);
+  const [curveError, setCurveError] = useState(false);
+  const pension = result?.effective_inputs.monthly_survivor_pension;
+  const assumptionVersion = result?.assumption_version;
+  const currentCurves =
+    curves?.survivor_monthly === pension &&
+    curves?.assumption_version === assumptionVersion
+      ? curves
+      : null;
+  useEffect(() => {
+    if (tab !== 3 || pension == null) return;
+    const controller = new AbortController();
+    setCurveError(false);
+    void (async () => {
+      try {
+        const response = await fetch(
+          `/api/benefit-curves?survivor_monthly=${pension}`,
+          {
+            signal: AbortSignal.any([
+              controller.signal,
+              AbortSignal.timeout(15000),
+            ]),
+          },
+        );
+        if (!response.ok) throw new Error();
+        const data: BenefitCurves = await response.json();
+        if (
+          data.survivor_monthly !== pension ||
+          data.assumption_version !== assumptionVersion
+        )
+          throw new Error();
+        if (!controller.signal.aborted) setCurves(data);
+      } catch {
+        if (!controller.signal.aborted) setCurveError(true);
+      }
+    })();
+    return () => controller.abort();
+  }, [tab, pension, assumptionVersion]);
   const id = useId();
   const percent = (n: number) => `${(n / 1e8).toFixed(1)}`;
   const label = (item: Result) =>
@@ -246,6 +292,17 @@ export function ReportInsights({
     (item): item is Result => item !== null,
   );
   const summary = result?.summary;
+  const firstWithdrawal = result?.child_timeline.find(
+    (row) => row.phase === "withdrawal",
+  );
+  const monthlyCost = result?.effective_inputs.monthly_child_cost ?? 0;
+  const monthlyShortfall = (firstWithdrawal?.shortfall ?? 0) / 12;
+  const firstShortfall = summary?.child_shortfall_years[0];
+  const transitionRows = cases.flatMap((item) =>
+    item.child_timeline
+      .filter((row) => row.child_age === 64 || row.child_age === 65)
+      .map((row) => ({ item, row })),
+  );
   const benefits = cases
     .map((item, index) => ({
       label: label(item),
@@ -332,6 +389,17 @@ export function ReportInsights({
                         : `${Math.round((summary.projected_trust_at_56 / summary.required_trust_at_56) * 100)}%`}
                   </strong>
                 </div>
+                {firstWithdrawal && (
+                  <div>
+                    <span>56세 생활비 충당률</span>
+                    <strong>
+                      {monthlyCost === 0
+                        ? "생활비 0원"
+                        : `${Math.round(((monthlyCost - monthlyShortfall) / monthlyCost) * 100)}%`}
+                    </strong>
+                    <span>(생활비 − 부족액) ÷ 생활비</span>
+                  </div>
+                )}
               </div>
             )}
             <details>
@@ -422,6 +490,45 @@ export function ReportInsights({
                 </table>
               </div>
             )}
+            {snapshots.length > 0 && (
+              <>
+                <h3>저장한 사례 슬롯 비교</h3>
+                <p className="fine">
+                  각 슬롯에 저장된 전략과 가정으로 계산한 결과입니다.
+                </p>
+                <div className="table-scroll">
+                  <table aria-label="저장한 사례 슬롯 비교">
+                    <thead>
+                      <tr>
+                        <th scope="col">슬롯</th>
+                        <th scope="col">저장 전략</th>
+                        <th scope="col">56세 필요 잔액</th>
+                        <th scope="col">생활비 부족액</th>
+                        <th scope="col">부모 금융자산 최저</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {snapshots.map(
+                        ({ id, label: slotLabel, result: saved }) => (
+                          <tr
+                            key={id}
+                            className={id === activeSlot ? "selected" : ""}
+                          >
+                            <th scope="row">{slotLabel}</th>
+                            <td>{label(saved)}</td>
+                            <td>{money(saved.summary.required_trust_at_56)}</td>
+                            <td>
+                              {money(saved.summary.child_shortfall_total)}
+                            </td>
+                            <td>{money(saved.summary.parent_asset_min)}</td>
+                          </tr>
+                        ),
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
             <details>
               <summary>표 9 · 보고서 대안 비용과 최대 후회</summary>
               {children}
@@ -465,6 +572,42 @@ export function ReportInsights({
         )}
         {tab === 3 && (
           <div className="benefit-charts">
+            {currentCurves ? (
+              <>
+                <div className="reference-pair">
+                  {currentCurves.curves.map(({ age, points }) => (
+                    <ReferenceChart
+                      key={age}
+                      title={`${age}세 · 선택 사례의 급여 문턱`}
+                      series={[
+                        {
+                          label: `유족연금 월 ${money(pension)}`,
+                          points,
+                          color: "#004EA2",
+                        },
+                      ]}
+                      xLabel="연초 신탁 잔액 (억 원)"
+                      yLabel="월 공적급여 (만 원)"
+                      xFormat={percent}
+                      xValueFormat={won}
+                      yFormat={(n) => (n / 1e4).toFixed(0)}
+                    />
+                  ))}
+                </div>
+                <p className="fine">
+                  연초 신탁 잔액 0~6억 원을 100만 원 간격으로 바꿔 본 보고서
+                  모형입니다.
+                </p>
+              </>
+            ) : (
+              result && (
+                <p className="fine" role="status">
+                  {curveError
+                    ? "급여 문턱을 불러오지 못했습니다. 다른 탭으로 이동한 뒤 다시 열어 주세요."
+                    : "선택 사례의 급여 문턱을 계산하고 있어요."}
+                </p>
+              )
+            )}
             {benefits.length > 0 && (
               <ReferenceChart
                 title="현재 가정의 월평균 공적급여 경로"
@@ -474,6 +617,43 @@ export function ReportInsights({
                 xFormat={(n) => `${Math.round(n)}세`}
                 yFormat={(n) => (n / 1e4).toFixed(0)}
               />
+            )}
+            {benefits.length > 0 && (
+              <p className="fine">
+                선택 사례의 유족연금{" "}
+                {money(result?.effective_inputs.monthly_survivor_pension)}/월을
+                반영합니다. 공적급여 합계에는 유족연금 자체를 포함하지 않습니다.
+              </p>
+            )}
+            {transitionRows.length > 0 && (
+              <div className="table-scroll">
+                <table aria-label="선택 사례의 65세 전후 급여 비교">
+                  <thead>
+                    <tr>
+                      <th scope="col">전략</th>
+                      <th scope="col">나이</th>
+                      <th scope="col">연초 신탁 잔액</th>
+                      <th scope="col">월 공적급여</th>
+                      <th scope="col">월 신탁 인출</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {transitionRows.map(({ item, row }) => (
+                      <tr key={`${item.strategy}-${row.child_age}`}>
+                        <th scope="row">{label(item)}</th>
+                        <td>{row.child_age}세</td>
+                        <td>{money(row.start_balance)}</td>
+                        <td>
+                          {row.benefits == null
+                            ? "—"
+                            : money(row.benefits / 12)}
+                        </td>
+                        <td>{money(row.outflows / 12)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
             <details>
               <summary>그림 5 · 기준 급여 문턱 보기</summary>
@@ -519,6 +699,28 @@ export function ReportInsights({
               그림 9 · 착수 후 180일 실행 일정 예시. 보고서 도식의 기간을 옮긴
               것으로 개인별 법정 기한·실행 확정을 계산하지 않습니다.
             </p>
+            {summary && (
+              <div className="report-summary">
+                <strong>
+                  {activeSlot ? `슬롯 ${activeSlot}` : "현재 적용"} · 재계산과
+                  첫 납입 상담에 가져갈 값
+                </strong>
+                <span>
+                  56세 필요 잔액 {money(summary.required_trust_at_56)} · 예상
+                  잔액 {money(summary.projected_trust_at_56)}
+                </span>
+                <span>
+                  자녀 생활비{" "}
+                  {firstShortfall == null
+                    ? "선택 기간 내 부족 없음"
+                    : `${firstShortfall}년 첫 부족`}{" "}
+                  · 부모 금융자산{" "}
+                  {summary.parent_first_negative_year == null
+                    ? "모형 기간 내 음수 없음"
+                    : `${summary.parent_first_negative_year}년 처음 음수`}
+                </span>
+              </div>
+            )}
             <div className="schedule-legend">
               {categories.map((c, i) => (
                 <span key={c}>
