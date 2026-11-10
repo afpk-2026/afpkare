@@ -15,20 +15,23 @@ export function SimulationPaths({
   comparison,
   baseline,
   changed,
+  motionDisabled = false,
 }: {
   result: Result;
   comparison: Result | null;
   baseline: Result | null;
   changed: boolean;
+  motionDisabled?: boolean;
 }) {
   const first = result.parent_timeline[0]?.year ?? 2026;
   const last = result.child_timeline.at(-1)?.year ?? first;
   const [year, setYear] = useState(last);
   const [playing, setPlaying] = useState(false);
   const [playbackRun, setPlaybackRun] = useState(0);
-  const [reduced, setReduced] = useState(
+  const [systemReduced, setReduced] = useState(
     () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
+  const reduced = motionDisabled || systemReduced;
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => {
@@ -85,6 +88,7 @@ export function SimulationPaths({
       <div className="simulation-player" aria-label="자금 경로 재생">
         <button
           className="play-button"
+          disabled={reduced}
           aria-label={playing ? "경로 일시정지" : "경로 재생"}
           aria-pressed={playing}
           onClick={() => {
@@ -93,7 +97,13 @@ export function SimulationPaths({
           }}
         >
           <span aria-hidden="true">{playing ? "Ⅱ" : "▶"}</span>
-          {playing ? "일시정지" : year >= last ? "다시 재생" : "재생"}
+          {reduced
+            ? "재생 꺼짐"
+            : playing
+              ? "일시정지"
+              : year >= last
+                ? "다시 재생"
+                : "재생"}
         </button>
         <div className="playback-year">
           <strong>{Math.floor(year)}</strong>

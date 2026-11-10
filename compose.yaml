@@ -5,6 +5,7 @@ services:
     build: ./backend
     restart: unless-stopped
     environment:
+      CARE_DEMO_PASSWORD_HASH: ${CARE_DEMO_PASSWORD_HASH:-}
       APP_VERSION: ${APP_VERSION:-local}
       UPSTAGE_LLM_API_KEY: ${UPSTAGE_LLM_API_KEY:-}
       UPSTAGE_MODEL: ${UPSTAGE_MODEL:-solar-mini4}

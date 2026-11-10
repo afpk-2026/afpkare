@@ -14,9 +14,10 @@ if path.exists():
             continue
         key, value = line.split("=", 1)
         key = key.strip()
-        if key in {"UPSTAGE_LLM_API_KEY", "UPSTAGE_MODEL"}:
+        if key in {"UPSTAGE_LLM_API_KEY", "UPSTAGE_MODEL", "CARE_DEMO_PASSWORD_HASH"}:
             parts = shlex.split(value, comments=True)
             env.setdefault(key, parts[0] if parts else "")
+env["CARE_DEMO_LOCAL_HTTP"] = "1"
 raise SystemExit(
     subprocess.call(
         [
@@ -27,7 +28,7 @@ raise SystemExit(
             "--host",
             "127.0.0.1",
             "--port",
-            "8000",
+            os.getenv("CARE_API_PORT", "8000"),
             "--no-access-log",
         ],
         env=env,

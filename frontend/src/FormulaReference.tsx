@@ -7,7 +7,7 @@ export function FormulaReference() {
     <aside className="evidence formula-reference" aria-label="계산 산식">
       <section className="card" id="formula-panel">
         <p className="eyebrow">HOW IT IS CALCULATED</p>
-        <StepTitle step="06">계산 산식</StepTitle>
+        <StepTitle step="03">계산 산식</StepTitle>
         <p className="fine">보고서 v1.5 · 2026년 실질 가격 · 금액 단위 원</p>
         <article>
           <span className="formula-index">식 1</span>

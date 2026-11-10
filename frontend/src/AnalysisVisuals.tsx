@@ -113,11 +113,9 @@ export function SensitivityBars({
 export function SnapshotCards({
   current,
   snapshots,
-  remove,
 }: {
   current: Result;
   snapshots: Snapshot[];
-  remove: (id: string) => void;
 }) {
   return (
     <div className="snapshot-grid" aria-label="사례 요약 카드">
@@ -159,11 +157,6 @@ export function SnapshotCards({
               <dd>{money(s.result.summary.parent_asset_min)}</dd>
             </div>
           </dl>
-          {s.id !== "current" && (
-            <button aria-label={`${s.label} 삭제`} onClick={() => remove(s.id)}>
-              삭제
-            </button>
-          )}
         </article>
       ))}
     </div>

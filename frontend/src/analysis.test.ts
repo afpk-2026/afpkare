@@ -2,7 +2,6 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { reference, result } from "../tests/fixtures.ts";
 import {
-  addSnapshot,
   defaultRange,
   inputKey,
   resultKey,
@@ -72,63 +71,6 @@ test("context identity changes with applied inputs, strategy or assumption versi
     }),
   );
 });
-test("snapshots keep old inputs, reject duplicates and stop at three cards", () => {
-  let cards = addSnapshot([], reference, result, "1", "date");
-  assert.throws(
-    () => addSnapshot(cards, reference, { ...result }, "2", "date"),
-    /이미/,
-  );
-  cards = addSnapshot(
-    cards,
-    reference,
-    { ...result, strategy: "B_PRIME" },
-    "2",
-    "date",
-  );
-  cards = addSnapshot(
-    cards,
-    reference,
-    {
-      ...result,
-      effective_inputs: {
-        ...result.effective_inputs,
-        monthly_child_cost: 1850000,
-      },
-    },
-    "3",
-    "date",
-  );
-  assert.equal(cards[0].result.effective_inputs.monthly_child_cost, 1800000);
-  assert.throws(
-    () =>
-      addSnapshot(
-        cards,
-        reference,
-        {
-          ...result,
-          effective_inputs: {
-            ...result.effective_inputs,
-            monthly_child_cost: 2200000,
-          },
-        },
-        "4",
-        "date",
-      ),
-    /최대 3/,
-  );
-  assert.throws(
-    () =>
-      addSnapshot(
-        [],
-        reference,
-        { ...result, assumption_version: "other" },
-        "1",
-        "date",
-      ),
-    /다른 버전/,
-  );
-});
-
 test("all five supported inputs produce valid ranges around the current value", () => {
   for (const field of Object.keys(reference.fields)) {
     const range = defaultRange(

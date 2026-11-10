@@ -10,7 +10,6 @@ import {
   type Result,
 } from "./simulation.ts";
 import {
-  addSnapshot,
   defaultRange,
   formatInput,
   INPUT_KEYS,
@@ -44,12 +43,14 @@ export function AnalysisWorkspace({
   alternative,
   disabled,
   exportTarget,
+  snapshots,
 }: {
   reference: Reference;
   current: Result;
   alternative: Result;
   disabled: boolean;
   exportTarget: HTMLElement | null;
+  snapshots: Snapshot[];
 }) {
   const [field, setField] = useState("monthly_child_cost");
   const [lower, setLower] = useState(""),
@@ -57,10 +58,6 @@ export function AnalysisWorkspace({
   const [analysis, setAnalysis] = useState<Sensitivity | null>(null),
     [loading, setLoading] = useState(false),
     [analysisError, setAnalysisError] = useState("");
-  const [snapshots, setSnapshots] = useState<Snapshot[]>([]),
-    [sequence, setSequence] = useState(1),
-    [message, setMessage] = useState(""),
-    [cardError, setCardError] = useState("");
   const [exportMessage, setExportMessage] = useState("");
   const requestId = useRef(0),
     controller = useRef<AbortController | null>(null);
@@ -133,29 +130,6 @@ export function AnalysisWorkspace({
       if (id === requestId.current) setLoading(false);
     }
   }
-  function pin() {
-    setCardError("");
-    setMessage("");
-    try {
-      setSnapshots(
-        addSnapshot(
-          snapshots,
-          reference,
-          current,
-          String(sequence),
-          new Date().toISOString(),
-        ),
-      );
-      setSequence(sequence + 1);
-      setMessage(
-        "적용한 계산을 비교 카드에 고정했습니다. 새로고침하면 삭제됩니다.",
-      );
-    } catch (e) {
-      setCardError(
-        e instanceof Error ? e.message : "비교 카드를 추가하지 못했습니다.",
-      );
-    }
-  }
   function exportFile(kind: "json" | "csv" | "html") {
     const date = new Date().toISOString(),
       bundle = evidenceBundle(
@@ -202,47 +176,14 @@ export function AnalysisWorkspace({
           <StepTitle step="04" id="scenario-title">
             가상 사례 나란히 보기
           </StepTitle>
-          <span className="badge">{snapshots.length}/3개 고정</span>
+          <span className="badge">{snapshots.length}/4개 저장</span>
         </div>
         <p className="muted">
-          적용한 사례를 고정하고 입력이나 전략을 바꿔 차이를 살펴보세요.
+          오른쪽 사례 슬롯에 저장한 가정을 다시 계산해 현재 결과와 비교합니다.
         </p>
-        <div className="scenario-actions">
-          <button disabled={disabled} onClick={pin}>
-            현재 계산을 비교 카드에 고정
-          </button>
-          {snapshots.length > 0 && (
-            <button
-              disabled={disabled}
-              onClick={() => {
-                setSnapshots([]);
-                setCardError("");
-                setMessage("비교 카드를 모두 삭제했습니다.");
-              }}
-            >
-              비교 카드 모두 삭제
-            </button>
-          )}
-        </div>
-        <p className="fine">
-          현재 탭에서만 유지됩니다. 새로고침·초기화 시 비교 카드는 삭제되며,
-          브라우저 저장소에 계산 결과를 보관하지 않습니다.
-        </p>
-        {cardError && (
-          <p role="alert" className="error">
-            {cardError}
-          </p>
-        )}
         {snapshots.length > 0 ? (
           <>
-            <SnapshotCards
-              current={current}
-              snapshots={snapshots}
-              remove={(id) => {
-                setSnapshots(snapshots.filter((s) => s.id !== id));
-                setCardError("");
-              }}
-            />
+            <SnapshotCards current={current} snapshots={snapshots} />
             <details>
               <summary>입력·지표 전체 비교 표</summary>
               <div className="table-scroll">
@@ -258,7 +199,6 @@ export function AnalysisWorkspace({
                       <th>56세 예상</th>
                       <th>자녀 부족액</th>
                       <th>부모 최저</th>
-                      <th>관리</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -284,21 +224,6 @@ export function AnalysisWorkspace({
                         <td>{money(s.result.summary.projected_trust_at_56)}</td>
                         <td>{money(s.result.summary.child_shortfall_total)}</td>
                         <td>{money(s.result.summary.parent_asset_min)}</td>
-                        <td>
-                          {s.id !== "current" && (
-                            <button
-                              aria-label={`${s.label} 삭제`}
-                              onClick={() => {
-                                setSnapshots(
-                                  snapshots.filter((x) => x.id !== s.id),
-                                );
-                                setCardError("");
-                              }}
-                            >
-                              삭제
-                            </button>
-                          )}
-                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -308,7 +233,8 @@ export function AnalysisWorkspace({
           </>
         ) : (
           <p className="empty-comparison">
-            아직 고정한 사례가 없습니다. 현재 계산을 추가해 비교를 시작하세요.
+            아직 고정한 사례가 없습니다. 오른쪽 슬롯에 가정을 저장해 비교를
+            시작하세요.
           </p>
         )}
       </section>
@@ -483,11 +409,6 @@ export function AnalysisWorkspace({
           )}
         </section>
       </details>
-      {message && (
-        <p className="notice" role="status">
-          {message}
-        </p>
-      )}
       {exportTarget &&
         createPortal(
           <>

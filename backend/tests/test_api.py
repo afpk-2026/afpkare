@@ -3,9 +3,18 @@ import pytest
 from fastapi.testclient import TestClient
 from app.main import app
 from app.contracts import DEFAULTS, FIELDS
-from app import proposals
+from app import auth, proposals
 
-client = TestClient(app)
+client = TestClient(app, base_url="https://testserver")
+
+
+@pytest.fixture(autouse=True)
+def demo_session(monkeypatch):
+    monkeypatch.setenv("CARE_DEMO_PASSWORD_HASH", "00" * 16 + ":" + "00" * 64)
+    client.cookies.set(auth.COOKIE, auth.issue_session())
+    yield
+    client.cookies.clear()
+    auth.sessions.clear()
 
 
 def simulation(overrides=None, strategy="B"):

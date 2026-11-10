@@ -1,5 +1,5 @@
 import type { Inputs, Fields } from "./storage.ts";
-import type { Reference, Result } from "./simulation.ts";
+import type { Result } from "./simulation.ts";
 
 export type Snapshot = {
   id: string;
@@ -78,37 +78,6 @@ export function variantInputs(
   return [...new Set([lower, inputs[field], upper])]
     .sort((a, b) => a - b)
     .map((value) => ({ ...inputs, [field]: value }));
-}
-export function addSnapshot(
-  snapshots: Snapshot[],
-  reference: Reference,
-  result: Result,
-  id: string,
-  date: string,
-): Snapshot[] {
-  if (
-    result.case_id !== reference.case_id ||
-    result.source_version !== reference.source_version ||
-    result.assumption_version !== reference.assumptions.version
-  )
-    throw new Error("다른 버전의 결과는 현재 사례와 고정 비교할 수 없습니다.");
-  if (snapshots.some((s) => resultKey(s.result) === resultKey(result)))
-    throw new Error("같은 입력과 전략이 이미 비교 카드에 있습니다.");
-  if (snapshots.length >= 3)
-    throw new Error(
-      "비교 카드는 최대 3개입니다. 기존 카드를 삭제한 뒤 추가해 주세요.",
-    );
-  return [
-    ...snapshots,
-    {
-      id,
-      label: `사례 ${id} · ${result.strategy === "B" ? "B" : "B′"}`,
-      captured_at: date,
-      case_id: reference.case_id,
-      source_version: reference.source_version,
-      result,
-    },
-  ];
 }
 export const formatInput = (key: string, value: number) =>
   key === "net_real_return"

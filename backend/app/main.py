@@ -1,4 +1,8 @@
 import asyncio
+import hmac
+from starlette.concurrency import run_in_threadpool
+from pydantic import BaseModel, ConfigDict, Field
+from . import auth, trust
 import os
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -18,6 +22,7 @@ from .engine import simulate as run_simulation, CONFIG
 
 app = FastAPI(title="부모가 없는 날 · 가상 사례 API", version="0.3.0")
 llm_gate = asyncio.Semaphore(2)
+login_gate = asyncio.Semaphore(2)
 BLOCKERS = [
     "제공된 persona_v3.txt의 핵심 경로·입력 변경은 대조했으나 전체 기능 동등성 미검증",
     "급여·예금의 실제 자산조사 반영은 기관 확인 전 가상 사례 규칙",
@@ -28,6 +33,12 @@ BLOCKERS = [
 
 @app.middleware("http")
 async def boundaries(request: Request, call_next):
+    public = {"/api/health", "/api/session", "/api/session/login", "/api/session/logout"}
+    if request.url.path.startswith("/api/") and request.url.path not in public and not auth.authenticated(request):
+        return api_status(401, "로그인이 필요합니다.")
+    if request.url.path in {"/api/session/login", "/api/session/logout"} and request.method == "POST":
+        if request.headers.get("content-type", "").split(";")[0] != "application/json":
+            return api_status(415, "요청 형식을 확인해 주세요.")
     if request.method == "POST":
         body = bytearray()
         async for chunk in request.stream():
@@ -56,7 +67,7 @@ async def invalid(request, exc):
             "status": "invalid_input",
             "field_errors": [
                 {
-                    "field": ".".join(str(x) for x in e["loc"][1:]),
+                    "field": "request" if e["type"] == "extra_forbidden" else ".".join(str(x) for x in e["loc"][1:]),
                     "message": "지원 필드·형식·허용 범위를 확인해 주세요.",
                 }
                 for e in exc.errors()
@@ -65,10 +76,62 @@ async def invalid(request, exc):
     )
 
 
+def api_status(code, message):
+    return JSONResponse(
+        status_code=code, content={"message": message},
+        headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"},
+    )
+
+
+class DemoLogin(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    password: str = Field(min_length=1, max_length=128)
+
+
+@app.get("/api/session")
+def session_status(request: Request):
+    return {"authenticated": auth.authenticated(request)}
+
+
+@app.post("/api/session/login")
+async def login(data: DemoLogin, request: Request):
+    secure = auth.secure_transport(request)
+    if not (secure or auth.local_http()):
+        return api_status(403, "HTTPS에서 로그인해 주세요.")
+    credentials = auth.credentials()
+    if credentials is None:
+        return api_status(503, "운영자가 데모 로그인을 준비 중입니다.")
+    salt, expected = credentials
+    if login_gate.locked():
+        return api_status(429, "로그인 요청이 많습니다. 잠시 후 다시 시도해 주세요.")
+    async with login_gate:
+        actual = await run_in_threadpool(auth.password_hash, data.password, salt)
+    if not hmac.compare_digest(actual, expected):
+        return api_status(401, "데모 비밀번호를 확인해 주세요.")
+    auth.revoke(request)
+    token = auth.issue_session()
+    if token is None:
+        return api_status(503, "접속이 많습니다. 잠시 후 다시 시도해 주세요.")
+    response = JSONResponse({"authenticated": True})
+    response.set_cookie(auth.COOKIE, token, max_age=auth.LIFETIME, httponly=True,
+                        secure=secure, samesite="strict")
+    return response
+
+
+@app.post("/api/session/logout")
+async def logout(request: Request):
+    auth.revoke(request)
+    response = JSONResponse({"authenticated": False})
+    response.delete_cookie(auth.COOKIE, httponly=True, secure=auth.secure_transport(request),
+                           samesite="strict")
+    return response
+
+
 @app.get("/api/health")
 def health():
     return {
         "status": "ok",
+        "demo_login_ready": auth.credentials() is not None,
         "version": "0.3.0",
         "release": os.getenv("APP_VERSION", "local"),
         "assumption_version": CONFIG["version"],
@@ -208,3 +271,24 @@ async def parse_change(body: ParseRequest):
                 status_code=503, content={"status": "unavailable", "message": str(exc)}
             )
     return {"status": "proposal", "changes": changes, "requires_confirmation": True}
+
+
+@app.get("/api/trust-sources")
+def trust_sources():
+    return {"sources": trust.SOURCES}
+
+
+@app.post("/api/trust-explain")
+async def trust_explain(question: trust.TrustQuestion):
+    ids = list(dict.fromkeys(question.source_ids))
+    if any(value not in trust.BY_ID for value in ids):
+        return api_status(422, "등록된 신탁 자료를 선택해 주세요.")
+    sources = [trust.BY_ID[value] for value in ids]
+    chosen = None
+    if not llm_gate.locked():
+        async with llm_gate:
+            chosen = await trust.choose_sources(sources)
+    return {
+        "mode": "llm_sources" if chosen else "official_sources",
+        "sources": chosen or sources,
+    }

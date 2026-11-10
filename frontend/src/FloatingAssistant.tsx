@@ -1,7 +1,20 @@
 import React, { useEffect, useRef, useState } from "react";
 
-export function FloatingAssistant({ children }: { children: React.ReactNode }) {
-  const [open, setOpen] = useState(true);
+export function FloatingAssistant({
+  children,
+  initiallyOpen = true,
+  title = "케어 파트너스 도우미",
+  openRequest = 0,
+}: {
+  children: React.ReactNode;
+  initiallyOpen?: boolean;
+  title?: string;
+  openRequest?: number;
+}) {
+  const [open, setOpen] = useState(initiallyOpen);
+  useEffect(() => {
+    if (openRequest) setOpen(true);
+  }, [openRequest]);
   const launcher = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLElement>(null);
   const initial = useRef(true);
@@ -44,7 +57,7 @@ export function FloatingAssistant({ children }: { children: React.ReactNode }) {
         <header className="assistant-header">
           <div>
             <span>AI INPUT ASSISTANT</span>
-            <h2 id="assistant-title">말로 바꾸는 가정</h2>
+            <h2 id="assistant-title">{title}</h2>
           </div>
           <button aria-label="AI 입력 도우미 닫기" onClick={close}>
             ×
@@ -60,7 +73,7 @@ export function FloatingAssistant({ children }: { children: React.ReactNode }) {
         onClick={() => (open ? close() : setOpen(true))}
       >
         <span aria-hidden="true">✦</span>
-        {open ? "도우미 접기" : "AI로 입력 바꾸기"}
+        {open ? "도우미 접기" : "AI 도우미 열기"}
       </button>
     </div>
   );

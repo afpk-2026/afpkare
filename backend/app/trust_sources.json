@@ -1,0 +1,155 @@
+[
+  {
+    "id": "kb-care",
+    "bank": "KB국민은행",
+    "title": "KB 장애인평생케어신탁",
+    "category": "장애인 재산관리",
+    "url": "https://img2.kbstar.com/obj/ocommon/230817_lifecare_terms_compared1.pdf",
+    "document": "KB국민은행 계약서 개정대비표",
+    "terms": [
+      "장애인평생케어",
+      "평생케어신탁"
+    ],
+    "summary": "장애인 재산을 신탁으로 관리하는 상품입니다. 공개 개정대비표에서 계약 기간과 법정대리인·후견인 관련 조항을 확인할 수 있습니다."
+  },
+  {
+    "id": "kb-inheritance",
+    "bank": "KB국민은행",
+    "title": "특정금전신탁 상속인 지정 계약",
+    "category": "유언대용신탁",
+    "url": "https://img2.kbstar.com/obj/ocommon/beneficiary_designation.pdf",
+    "document": "KB국민은행 유언대용신탁 계약서",
+    "terms": [
+      "특정금전신탁",
+      "상속인 지정",
+      "유언대용신탁"
+    ],
+    "summary": "특정금전신탁의 재산 승계를 위해 수익자를 지정하는 계약입니다. 은행의 공식 양식에서 사후 수익자와 계약 변경 조항을 확인할 수 있습니다."
+  },
+  {
+    "id": "shinhan-care",
+    "bank": "신한은행",
+    "title": "신한 S Life Care 장애인신탁",
+    "category": "장애인 재산관리",
+    "url": "https://img.shinhan.com/sbank2016/form/20220502000000680001WF00001000000001.PDF",
+    "document": "신한은행 장애인신탁 자익형 계약서",
+    "terms": [
+      "S Life Care",
+      "자익신탁",
+      "장애인신탁",
+      "후견인"
+    ],
+    "summary": "자익형 계약서에서는 장애인 위탁자 본인을 수익자로 정합니다. 법정대리인이나 후견인이 계약하는 경우 제출하는 증빙 서류가 안내되어 있습니다."
+  },
+  {
+    "id": "shinhan-sol",
+    "bank": "신한은행",
+    "title": "신한 SOL메이트 유언대용신탁",
+    "category": "유언대용신탁",
+    "url": "https://solgit.shinhan.com/sc26090101.html",
+    "document": "신한은행 공식 콘텐츠의 유언대용신탁 안내",
+    "terms": [
+      "SOL메이트",
+      "유언대용신탁",
+      "보험금청구권신탁"
+    ],
+    "summary": "생전 계약으로 사후 자산을 받을 사람과 지급 방식을 정하는 신탁입니다. 공식 안내는 보험금청구권신탁의 지급 설계 사례도 소개합니다."
+  },
+  {
+    "id": "hana-living",
+    "bank": "하나은행",
+    "title": "하나 리빙트러스트",
+    "category": "유언대용신탁",
+    "url": "https://m.hanabank.com/cont/hidden/livingtrust/html/custom/personalized_01.html",
+    "document": "하나은행 개인 맞춤형 Living Trust 안내",
+    "terms": [
+      "리빙트러스트",
+      "연속상속",
+      "유언대용신탁",
+      "사후수익자"
+    ],
+    "summary": "생전 재산 관리와 사후 지급 대상을 정하는 하나은행 유언대용신탁입니다. 공식 안내에는 배우자에게 먼저 지급하고 이후 자녀에게 이전하는 설계 예시가 있습니다."
+  },
+  {
+    "id": "hana-grouphome",
+    "bank": "하나은행",
+    "title": "그룹홈 지킴이 신탁",
+    "category": "공동생활 재산관리",
+    "url": "https://m.hanabank.com/cont/hidden/livingtrust/html/livingtrust/livingtrust02.html",
+    "document": "하나은행 신탁 활용 방법 안내",
+    "terms": [
+      "그룹홈",
+      "그룹홈 지킴이",
+      "공동생활"
+    ],
+    "summary": "하나은행이 장애인 공동생활 가정이나 시설 등의 재산을 관리하는 신탁 활용 방식으로 소개합니다. 구체적인 취급 조건은 은행에 확인할 수 있습니다."
+  },
+  {
+    "id": "woori-care",
+    "bank": "우리은행",
+    "title": "장애인사랑신탁",
+    "category": "장애인 재산관리",
+    "url": "https://spot.wooribank.com/pot/Dream?withyou=POTRT0063",
+    "document": "우리은행 장애인사랑신탁 공식 안내",
+    "terms": [
+      "장애인사랑신탁",
+      "장애인신탁",
+      "신탁 이익"
+    ],
+    "summary": "공식 상품 안내에서 장애인이 신탁 이익 전부를 받는 수익자여야 한다고 안내합니다. 운용 및 인출 조건은 원문에서 확인할 수 있습니다."
+  },
+  {
+    "id": "woori-inheritance",
+    "bank": "우리은행",
+    "title": "우리내리사랑 유언대용신탁",
+    "category": "유언대용신탁",
+    "url": "https://spot.wooribank.com/pot/Dream?withyou=POTRT0043",
+    "document": "우리은행 내리사랑 유언대용신탁 공식 안내",
+    "terms": [
+      "우리내리사랑",
+      "유언대용신탁",
+      "자산 승계"
+    ],
+    "summary": "미리 정한 수익자에게 재산을 승계하는 상품입니다. 공식 안내에 신탁 유형과 점자 상품설명서 신청 방법이 있습니다."
+  },
+  {
+    "id": "report-return",
+    "bank": "",
+    "title": "신탁 순실질수익률",
+    "category": "보고서 용어",
+    "url": "#formulas",
+    "document": "보고서 계산산식 보기",
+    "terms": [
+      "순실질수익률",
+      "실질수익률"
+    ],
+    "summary": "시뮬레이터는 보수를 차감한 연 실질수익률 가정을 사용합니다. 연말 잔액은 해당 연도의 인출 후 잔액에 수익률을 반영해 계산합니다."
+  },
+  {
+    "id": "report-required",
+    "bank": "",
+    "title": "최소 필요 잔액",
+    "category": "보고서 용어",
+    "url": "#formulas",
+    "document": "보고서 계산산식 보기",
+    "terms": [
+      "필요 잔액",
+      "필요액"
+    ],
+    "summary": "선택 기간 동안 매년 생활비 부족이 없도록 하는 최소 시작 신탁액입니다. 현재 모형은 56세부터 종료 나이까지 500만 원 간격으로 검토합니다."
+  },
+  {
+    "id": "report-benefits",
+    "bank": "",
+    "title": "소득인정액과 급여",
+    "category": "보고서 용어",
+    "url": "#formulas",
+    "document": "보고서 계산산식 보기",
+    "terms": [
+      "소득인정액",
+      "유족연금",
+      "급여 문턱"
+    ],
+    "summary": "이 가상 사례의 급여 모형은 해 초 신탁 잔액과 유족연금 등을 반영하며 65세 해에 급여 모형을 전환합니다. 실제 수급 판정은 해당 기관에 확인해야 합니다."
+  }
+]

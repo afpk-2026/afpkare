@@ -18,16 +18,18 @@ Python3.12와 Node22 이상, uv 또는 pip를 사용한다.
 uv venv backend/.venv --python 3.12
 uv pip install --python backend/.venv/bin/python -r backend/requirements-dev.txt
 npm ci --prefix frontend
-python3 scripts/run_api.py
+# 생성한 해시 행을 로컬 .env에 추가
+PYTHONPATH=backend backend/.venv/bin/python -m app.auth
+backend/.venv/bin/python scripts/run_api.py
 # 다른 터미널
 npm run dev --prefix frontend
 ```
 
-개발 화면은 `http://127.0.0.1:5173/`, API는8000 포트다. `.env`의 `UPSTAGE_LLM_API_KEY`를 서버에서만 읽는다. `UPSTAGE_MODEL` 기본값은 `solar-mini4`다. 키가 없어도 수동 계산은 동작한다.
+개발 화면은 `http://127.0.0.1:5173/`, API는 8000 포트다. 운영자가 정한 공용 데모 비밀번호로 로그인한다. 로컬 실행기는 루프백에서 개발용 HTTP 로그인을 허용하며 운영 로그인에는 HTTPS가 필요하다. `.env`의 `UPSTAGE_LLM_API_KEY`를 서버에서만 읽는다. `UPSTAGE_MODEL` 기본값은 `solar-mini4`다. 키가 없어도 수동 계산은 동작한다.
 
 ```bash
 docker compose up -d --build --wait
-# http://127.0.0.1/
+# 컨테이너 상태 확인. 운영 로그인에는 HTTPS 구성이 필요하다.
 backend/.venv/bin/python -m pytest -q
 npm test --prefix frontend
 npm run build --prefix frontend
@@ -38,7 +40,7 @@ terraform -chdir=infra test
 
 ## 계산의 의미
 
-가상 사례의 B/B′를 가정 기반으로 직접 계산한다. 보고서 고정값과 기관 해석 미확인 내용을 화면에서 구별한다. 상세 계산 계약은 `.agents/docs/arithmetic.md` 6절과 `backend/app/assumptions.json`, 남은 보강은 `.agents/docs/todo.md`를 참고한다. 개인정보·계정·서버DB는 없고 적용 입력/전략만 브라우저에 보관한다.
+가상 사례의 B/B′를 가정 기반으로 직접 계산한다. 보고서 고정값과 기관 해석 미확인 내용을 화면에서 구별한다. 상세 계산 계약은 `.agents/docs/arithmetic.md` 6절과 `backend/app/assumptions.json`, 남은 보강은 `.agents/docs/todo.md`를 참고한다. 공용 데모 로그인은 가입 정보를 받지 않는다. 적용 입력과 전략, 사례 슬롯, 접근성 설정은 브라우저에 보관한다. 서버 세션은 8시간 뒤 만료되며 로그아웃이나 서버 재시작 시 폐기한다.
 
 ## Vultr 배포
 
@@ -52,7 +54,7 @@ python3 scripts/infra.py apply ~/.config/no-named/vultr.env
 
 Vultr 키는 파일에서 읽어 프로세스 환경으로만 전달한다. Terraform state/plan 및 SSH 비밀키는 `~/.local/state/no-named/`, API 키는 저장소 밖 권한600 파일에 둔다. state에는 서버 기본 비밀번호 등 민감 값이 들어가므로 공유하지 않는다.
 
-서버 최초 SSH 호스트키는 생성된 서버 IP에 TOFU(`StrictHostKeyChecking=accept-new`)로 등록하고 이후에는 strict 검증으로 변경된 키를 거부한다. 최초 지문은 별도로 보관한다. 콘솔과의 독립 지문 대조는 운영 후속 확인 사항이다. 앱 전용 env 파일에는 Upstage 키/모델/APP_VERSION만 담고 Vultr 키를 넣지 않는다.
+서버 최초 SSH 호스트키는 생성된 서버 IP에 TOFU(`StrictHostKeyChecking=accept-new`)로 등록하고 이후에는 strict 검증으로 변경된 키를 거부한다. 최초 지문은 별도로 보관한다. 콘솔과의 독립 지문 대조는 운영 후속 확인 사항이다. 앱 전용 env에 Upstage 설정과 데모 비밀번호 해시를 둔다. Vultr 키는 별도 파일로 관리한다.
 
 ```bash
 scripts/deploy.sh SERVER_IPV4 ~/.local/state/no-named/deploy_ed25519 ~/.config/no-named/app.env RELEASE_ID
@@ -80,3 +82,8 @@ scripts/deploy.sh SERVER_IPV4 ~/.local/state/no-named/deploy_ed25519 ~/.config/n
 ## main 자동 배포
 
 사용자 승인으로 현재 코드와 보고서 재현 엔진을 원격 main에 직접 반영한다. 이후 main push는 GitHub Actions 시험(백엔드76개·프론트19개·빌드·Terraform 검증) 통과 후 기존 Vultr 서버에 자동 배포된다. `.github/workflows/checks.yml`과 `.agents/docs/cicd.md` 참조. 업스테이지 키는 서버에만 유지하며 SSH 공개 범위를 추가로 열지 않는다. 공개 health의 release는 `main-커밋앞12자리`로 확인한다. 앞선 P0/P1의 수치·계약·배포 기록은 당시 버전의 이력이다.
+
+
+## 0.5.0 데모 로그인 배포 준비
+
+운영자가 별도로 정한 비밀번호를 해시로 생성한 뒤 서버의 권한 600인 `/opt/family-finance/runtime/app.env`에 `CARE_DEMO_PASSWORD_HASH`를 설정한다. 비밀번호는 운영자가 승인한 시연 참여자에게 전달한다. CI 공개 점검은 해시 설정 여부와 비로그인 API 차단을 확인한다. 로그인한 B/B′ 공개 점검에는 운영자가 임시 실행 환경으로 `CARE_SMOKE_PASSWORD`를 전달해 `scripts/check_deployment.py`를 실행한다.

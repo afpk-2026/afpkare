@@ -231,12 +231,12 @@ export function ReportInsights({ children }: { children: React.ReactNode }) {
   return (
     <section className="card comparison report-insights" id="comparison-panel">
       <div className="section-title">
-        <StepTitle step="05">보고서 진단과 대안</StepTitle>
+        <StepTitle step="02">보고서 기준 사례</StepTitle>
         <span className="tag">기준 사례 참고</span>
       </div>
       <p className="fine">
-        보고서 v1.5의 진단·실행 흐름입니다. 현재 입력의 재계산 결과는 03
-        결과에서 확인하세요.
+        보고서 v1.5의 진단과 실행 흐름입니다. 지금 적용한 가정의 결과는
+        오른쪽 패널에서 확인하세요.
       </p>
       <div className="report-tabs" role="tablist" aria-label="보고서 참고 자료">
         {tabs.map((label, i) => (

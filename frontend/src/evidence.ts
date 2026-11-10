@@ -67,7 +67,7 @@ export function evidenceBundle(
 ) {
   return {
     export_schema_version: 1,
-    app_version: "0.4.0",
+    app_version: "0.5.0",
     exported_at: exportedAt,
     title: "부모가 없는 날 · 가상 계산 근거",
     base_year: reference.base_year,

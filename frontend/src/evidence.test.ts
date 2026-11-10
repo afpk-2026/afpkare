@@ -1,20 +1,28 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { reference, result } from "../tests/fixtures.ts";
-import { addSnapshot, resultKey, type Sensitivity } from "./analysis.ts";
+import { resultKey, type Sensitivity, type Snapshot } from "./analysis.ts";
 import {
   csvCell,
   evidenceBundle,
   evidenceHtml,
   timelineCsv,
 } from "./evidence.ts";
+const cards: Snapshot[] = [{
+  id: "A",
+  label: "슬롯 A",
+  captured_at: "date",
+  case_id: reference.case_id,
+  source_version: reference.source_version,
+  result,
+}];
+
 test("evidence includes exact applied data, provenance and comparisons but no unrelated state", () => {
   const extra = {
     ...result,
     api_key: "private-key",
     text: "private natural input",
   };
-  const cards = addSnapshot([], reference, result, "1", "date");
   const sensitivity: Sensitivity = {
     field: "monthly_child_cost",
     context_key: resultKey(result),
@@ -79,7 +87,6 @@ test("CSV preserves negative numbers, nulls, provenance and spreadsheet quoting"
 });
 
 test("every exported HTML table has matching column counts", () => {
-  const cards = addSnapshot([], reference, result, "1", "date");
   const sensitivity: Sensitivity = {
     field: "monthly_child_cost",
     context_key: resultKey(result),
