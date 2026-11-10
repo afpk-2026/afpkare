@@ -81,7 +81,7 @@ export function Entrance({ onEnter }: { onEnter: () => void }) {
     }
   }
   return (
-    <>
+    <div className="care-home">
       <header className="care-header">
         <a href="#" className="brand">
           <span className="brandmark" aria-hidden="true">
@@ -164,6 +164,6 @@ export function Entrance({ onEnter }: { onEnter: () => void }) {
           </button>
         </div>
       </FloatingAssistant>
-    </>
+    </div>
   );
 }

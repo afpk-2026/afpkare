@@ -310,7 +310,7 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
           </dl>
         </div>
       </section>
-      <section className="landing-section landing-differences">
+      <section className="landing-section">
         <p className="eyebrow">02 / 케어 파트너스의 차별점</p>
         <h2>같은 가족, 다른 가정. 무엇이 달라질까요?</h2>
         <div className="landing-steps">
@@ -365,7 +365,7 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
           </article>
         ))}
       </section>
-      <section id="checkpoints" className="landing-section landing-journey">
+      <section id="checkpoints" className="landing-section">
         <p className="eyebrow">04 / 가상 가족의 타임라인</p>
         <h2>가족의 자금 흐름이 바뀌는 세 시점</h2>
         <div className="landing-checkpoints">
@@ -421,7 +421,7 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
           ))}
         </dl>
       </section>
-      <section id="evidence" className="landing-section landing-evidence">
+      <section id="evidence" className="landing-section">
         <p className="eyebrow">07 / 자료와 계산 근거</p>
         <h2>결과가 어디에서 나왔는지 확인하세요</h2>
         <div className="landing-evidence-grid">
@@ -523,7 +523,7 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
           상담 창구와 다시 검토할지 정리할 수 있습니다.
         </p>
       </section>
-      <section className="landing-section landing-evidence">
+      <section className="landing-section">
         <p className="eyebrow">09 / 기능 소개</p>
         <h2>사례 설정부터 근거 내보내기까지</h2>
         <div className="landing-evidence-grid">

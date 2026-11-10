@@ -230,10 +230,7 @@ html[data-patterns] .diagnosis.risk {
   margin: 28px auto 100px;
 }
 .care-hero {
-  background: #eaf2ff;
-  border: 1px solid #dce4ef;
-  border-radius: 20px;
-  padding: clamp(24px, 6vw, 76px);
+  padding-block: clamp(36px, 7vw, 108px);
   display: grid;
   grid-template-columns: 1.4fr 1fr;
   align-items: center;
@@ -476,30 +473,15 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
   margin-top: 14px;
 }
 
+.care-home {
+  background: #fff;
+}
 .care-landing {
-  width: min(1280px, calc(100% - 48px));
-  margin-bottom: 56px;
+  width: min(1280px, calc(100% - clamp(40px, 10vw, 144px)));
+  margin-bottom: 0;
 }
 .care-hero {
-  background: radial-gradient(
-    ellipse at 82% 10%,
-    #224f76 0%,
-    #102d4a 45%,
-    #091e34 90%
-  );
-  color: #fff;
   gap: clamp(24px, 5vw, 68px);
-  border: 0;
-}
-.care-hero .eyebrow,
-.care-hero-actions a {
-  color: #b8dcff;
-}
-.care-hero .primary,
-.landing-start .primary {
-  color: #112a45;
-  background: #a7d9ff;
-  border-color: #a7d9ff;
 }
 .landing-demo {
   margin: 0;
@@ -558,11 +540,8 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
   color: #d8e9f7;
 }
 .landing-section {
-  padding: clamp(26px, 5vw, 58px);
-  margin-top: 24px;
-  background: #fff;
-  border: 1px solid #dce4ef;
-  border-radius: 16px;
+  padding-block: clamp(40px, 6vw, 88px);
+  border-top: 1px solid #dce4ef;
   scroll-margin-top: 16px;
 }
 .landing-section h2,
@@ -605,9 +584,8 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
   margin-bottom: 0;
 }
 .landing-facts div {
-  background: #eef5fd;
-  padding: 10px;
-  border-radius: 8px;
+  border-inline-start: 1px solid #dce4ef;
+  padding-inline-start: 12px;
 }
 .landing-facts dd {
   margin: 4px 0 0;
@@ -618,7 +596,8 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
 .landing-steps,
 .landing-evidence-grid {
   display: grid;
-  gap: 14px;
+  gap: clamp(16px, 3vw, 40px);
+  margin-top: 24px;
 }
 .landing-steps {
   grid-template-columns: repeat(3, 1fr);
@@ -628,9 +607,8 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
 }
 .landing-steps article,
 .landing-evidence-grid article {
-  padding: 18px;
-  background: #f2f7fd;
-  border-radius: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #dce4ef;
 }
 .landing-steps h3,
 .landing-evidence-grid h3 {
@@ -645,23 +623,14 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
   color: #004ea2;
   font-weight: 750;
 }
-.landing-evidence {
-  background: #eaf2fc;
-}
-.landing-evidence-grid article {
-  background: white;
-}
 .landing-start {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
-  margin-top: 24px;
-  padding: clamp(20px, 4vw, 48px);
-  border-radius: 16px;
-  background: #102d4a;
-  color: white;
+  padding-block: clamp(40px, 6vw, 88px);
+  border-top: 1px solid #dce4ef;
 }
 .landing-start p {
   margin-bottom: 0;
@@ -679,7 +648,7 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
     display: none;
   }
   .care-landing {
-    width: calc(100% - 24px);
+    width: calc(100% - 40px);
   }
   .landing-story-media,
   .landing-story-outcome,
@@ -768,12 +737,6 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
   padding: 7px 9px;
   color: #004ea2;
   background: #f0f6fe;
-}
-.landing-differences {
-  background: #edf4ff;
-}
-.landing-differences .landing-steps article {
-  background: #fff;
 }
 .landing-guide-step {
   display: grid;
@@ -1063,13 +1026,6 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
   }
 }
 
-.landing-journey {
-  background: #102b46;
-  color: #fff;
-}
-.landing-journey .eyebrow {
-  color: #b6e1ff;
-}
 .landing-checkpoints {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1083,9 +1039,6 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
 .landing-checkpoints h3 {
   font-size: 1.25em;
   margin: 8px 0;
-}
-.landing-checkpoints p {
-  color: #deebf8;
 }
 .landing-impact {
   display: grid;
