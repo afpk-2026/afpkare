@@ -1,5 +1,7 @@
 import React, { useId, useState } from "react";
 import data from "./report-baseline.json";
+import { money } from "./Chart.tsx";
+import type { Result } from "./simulation.ts";
 import { StepTitle } from "./StepTitle.tsx";
 
 type Series = {
@@ -224,19 +226,50 @@ const tabs = [
   "급여 문턱",
   "180일 일정",
 ];
-export function ReportInsights({ children }: { children: React.ReactNode }) {
+export function ReportInsights({
+  children,
+  result,
+  comparison,
+  activeSlot,
+}: {
+  children: React.ReactNode;
+  result: Result | null;
+  comparison: Result | null;
+  activeSlot: string | null;
+}) {
   const [tab, setTab] = useState(0);
   const id = useId();
   const percent = (n: number) => `${(n / 1e8).toFixed(1)}`;
+  const label = (item: Result) =>
+    item.strategy === "B" ? "B · 단계 적립" : "B′ · 사후 보충";
+  const cases = [result, comparison].filter(
+    (item): item is Result => item !== null,
+  );
+  const summary = result?.summary;
+  const benefits = cases
+    .map((item, index) => ({
+      label: label(item),
+      points: item.child_timeline.flatMap((row) =>
+        row.benefits == null || row.child_age == null
+          ? []
+          : [[row.child_age, row.benefits / 12]],
+      ),
+      color: index ? "#B38944" : "#004EA2",
+      dashed: index === 1,
+    }))
+    .filter((series) => series.points.length);
   return (
     <section className="card comparison report-insights" id="comparison-panel">
       <div className="section-title">
-        <StepTitle step="02">보고서 기준 사례</StepTitle>
-        <span className="tag">기준 사례 참고</span>
+        <StepTitle step="02">적용 사례 진단</StepTitle>
+        <span className="tag">
+          {activeSlot ? `슬롯 ${activeSlot}` : "현재 적용"}
+        </span>
       </div>
       <p className="fine">
-        보고서 v1.5의 진단과 실행 흐름입니다. 지금 적용한 가정의 결과는
-        오른쪽 패널에서 확인하세요.
+        {result
+          ? `${label(result)} · 생활비 ${money(result.effective_inputs.monthly_child_cost)}/월 · 연 ${Number((result.effective_inputs.net_real_return * 100).toFixed(2))}% · ${result.effective_inputs.child_end_age}세까지`
+          : "계산 결과를 불러오고 있어요."}
       </p>
       <div className="report-tabs" role="tablist" aria-label="보고서 참고 자료">
         {tabs.map((label, i) => (
@@ -274,141 +307,210 @@ export function ReportInsights({ children }: { children: React.ReactNode }) {
       >
         {tab === 0 && (
           <>
-            <div className="report-summary">
-              <strong>부채·비상자금은 안정적</strong>
-              <span>저축과 부모 사후 준비는 보강이 필요해요.</span>
-              <b>표 7 · 설계 전 보고서 고정값</b>
-            </div>
-            <div className="table-scroll">
-              <table>
-                <thead>
-                  <tr>
-                    {["지표", "산식", "기준 (50대)", "이 가족", "판정"].map(
-                      (h) => (
-                        <th key={h}>{h}</th>
-                      ),
-                    )}
-                  </tr>
-                </thead>
-                <tbody>
-                  {ratios.map((row) => (
-                    <tr key={row[0]}>
-                      {row.map((v, i) =>
-                        i === 0 ? (
-                          <th key={i} scope="row">
-                            {v}
-                          </th>
-                        ) : (
-                          <td
-                            key={i}
-                            className={
-                              i === 4
-                                ? `diagnosis ${v === "양호" ? "good" : v === "주의" ? "caution" : "risk"}`
-                                : undefined
-                            }
-                          >
-                            {v}
-                          </td>
+            {summary && (
+              <div className="report-stat-row">
+                <div>
+                  <span>56세 필요 잔액</span>
+                  <strong>{money(summary.required_trust_at_56)}</strong>
+                </div>
+                <div>
+                  <span>생활비 부족</span>
+                  <strong>{money(summary.child_shortfall_total)}</strong>
+                  <span>{summary.child_shortfall_years.length}년</span>
+                </div>
+                <div>
+                  <span>부모 금융자산 최저</span>
+                  <strong>{money(summary.parent_asset_min)}</strong>
+                </div>
+                <div>
+                  <span>56세 필요 잔액 충당률</span>
+                  <strong>
+                    {summary.required_trust_at_56 == null
+                      ? "계산 미지원"
+                      : summary.required_trust_at_56 === 0
+                        ? "필요액 0원"
+                        : `${Math.round((summary.projected_trust_at_56 / summary.required_trust_at_56) * 100)}%`}
+                  </strong>
+                </div>
+              </div>
+            )}
+            <details>
+              <summary>표 7 · 설계 전 재무비율 원문 보기</summary>
+              <div className="report-summary">
+                <strong>부채·비상자금은 안정적</strong>
+                <span>저축과 부모 사후 준비는 보강이 필요해요.</span>
+                <b>표 7 · 설계 전 보고서 고정값</b>
+              </div>
+              <div className="table-scroll">
+                <table>
+                  <thead>
+                    <tr>
+                      {["지표", "산식", "기준 (50대)", "이 가족", "판정"].map(
+                        (h) => (
+                          <th key={h}>{h}</th>
                         ),
                       )}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <p className="fine">
-              상위 네 지표는 보고서가 인용한 한국형 가계재무비율의 50대
-              기준입니다. 부채상환·저축성향은 세전 근로소득, 가계수지는 세후
-              소득 기준입니다. 아래 두 지표는 이 가족을 위한 진단입니다. 보장
-              충족률은 설계 전 법정상속 몫 2.81억 ÷ 필요 3.50억의 반올림값이며,
-              B/B′ 적용 결과가 아닙니다.
-            </p>
+                  </thead>
+                  <tbody>
+                    {ratios.map((row) => (
+                      <tr key={row[0]}>
+                        {row.map((v, i) =>
+                          i === 0 ? (
+                            <th key={i} scope="row">
+                              {v}
+                            </th>
+                          ) : (
+                            <td
+                              key={i}
+                              className={
+                                i === 4
+                                  ? `diagnosis ${v === "양호" ? "good" : v === "주의" ? "caution" : "risk"}`
+                                  : undefined
+                              }
+                            >
+                              {v}
+                            </td>
+                          ),
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="fine">
+                상위 네 지표는 보고서가 인용한 한국형 가계재무비율의 50대
+                기준입니다. 부채상환·저축성향은 세전 근로소득, 가계수지는 세후
+                소득 기준입니다. 아래 두 지표는 이 가족을 위한 진단입니다. 보장
+                충족률은 설계 전 법정상속 몫 2.81억 ÷ 필요 3.50억의
+                반올림값이며, B/B′ 적용 결과가 아닙니다.
+              </p>
+            </details>
           </>
         )}
-        {tab === 1 && children}
-        {tab === 2 && (
+        {tab === 1 && (
           <>
-            <div className="reference-pair">
-              {(["accumulation", "withdrawal"] as const).map((phase) => (
-                <ReferenceChart
-                  key={phase}
-                  title={
-                    phase === "accumulation"
-                      ? "부모 생전 적립 · 연말 잔액"
-                      : "부모 사후 신탁 · 연말 잔액"
-                  }
-                  series={data.trust.map((s, i) => ({
-                    label:
-                      s.strategy === "B" ? "B · 단계 적립" : "B′ · 사후 보충",
-                    points: s[phase],
-                    color: i === 0 ? "#004EA2" : "#B38944",
-                    dashed: i === 1,
-                  }))}
-                  xLabel="지훈 씨 나이"
-                  yLabel="억 원"
-                  xFormat={(n) => `${Math.round(n)}세`}
-                  yFormat={percent}
-                />
-              ))}
-            </div>
-            <div className="report-stat-row">
-              {data.trust.map((s) => (
-                <div key={s.strategy}>
-                  <b>{s.strategy === "B" ? "B" : "B′"} · 56세 연초</b>
-                  <span>
-                    {won(s.pre_supplement)}
-                    {s.supplement > 0
-                      ? ` + 사후 보충 ${won(s.supplement)}`
-                      : ""}
-                  </span>
-                  <strong>{won(s.projected)}</strong>
-                </div>
-              ))}
-            </div>
-            <p className="fine">
-              그림 8 참고 · 기준 입력·보고서 산식 재현. 사후 그래프는 56세 연초
-              보충 후 인출·수익을 반영한 연말 값입니다. 보고서의 반올림된 그림
-              숫자에 맞춰 경로를 조정하지 않았습니다. ‘조기 사망 공백 0.44억 →
-              25세부터 0’은 보고서의 별도 보장 사례 설명이며 이 경로의 동적
-              계산값이 아닙니다.
-            </p>
+            {cases.length > 0 && (
+              <div className="table-scroll">
+                <table aria-label="같은 가정으로 계산한 전략 비교">
+                  <thead>
+                    <tr>
+                      <th>전략</th>
+                      <th>56세 필요 잔액</th>
+                      <th>56세 예상 잔액</th>
+                      <th>생활비 부족액</th>
+                      <th>부모 금융자산 최저</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {cases.map((item) => (
+                      <tr
+                        key={item.strategy}
+                        className={item === result ? "selected" : ""}
+                      >
+                        <th scope="row">
+                          {label(item)}
+                          {item === result && <small>현재 적용</small>}
+                        </th>
+                        <td>{money(item.summary.required_trust_at_56)}</td>
+                        <td>{money(item.summary.projected_trust_at_56)}</td>
+                        <td>{money(item.summary.child_shortfall_total)}</td>
+                        <td>{money(item.summary.parent_asset_min)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <details>
+              <summary>표 9 · 보고서 대안 비용과 최대 후회</summary>
+              {children}
+            </details>
           </>
+        )}
+        {tab === 2 && cases.length > 0 && (
+          <div className="reference-pair">
+            {["accumulation", "withdrawal"].map((phase) => {
+              const series = cases
+                .map((item, index) => ({
+                  label: label(item),
+                  points: item.child_timeline.flatMap((row) =>
+                    row.phase === phase && row.child_age != null
+                      ? [[row.child_age, row.end_balance]]
+                      : [],
+                  ),
+                  color: index ? "#B38944" : "#004EA2",
+                  dashed: index === 1,
+                }))
+                .filter((item) => item.points.length);
+              return (
+                series.length > 0 && (
+                  <ReferenceChart
+                    key={phase}
+                    title={
+                      phase === "accumulation"
+                        ? "부모 생전 적립 · 연말 잔액"
+                        : "부모 사후 신탁 · 연말 잔액"
+                    }
+                    series={series}
+                    xLabel="지훈 씨 나이"
+                    yLabel="억 원"
+                    xFormat={(n) => `${Math.round(n)}세`}
+                    yFormat={percent}
+                  />
+                )
+              );
+            })}
+          </div>
         )}
         {tab === 3 && (
           <>
-            <div className="reference-pair">
-              {[64, 65].map((age) => (
-                <ReferenceChart
-                  key={age}
-                  title={
-                    age === 64
-                      ? "64세 · 장애인연금 구간"
-                      : "65세 · 기초연금 전환"
-                  }
-                  series={data.benefit_curves
-                    .filter((c) => c.age === age)
-                    .map((c) => ({
-                      label:
-                        c.survivor_monthly === 0
-                          ? "유족연금 없음"
-                          : "유족연금 월 107만 원",
-                      points: c.points,
-                      color: c.survivor_monthly === 0 ? "#004EA2" : "#B38944",
-                    }))}
-                  xLabel="신탁 잔액 (억 원)"
-                  yLabel="월 공적급여 (만 원)"
-                  xFormat={(n) => (n / 1e8).toFixed(1)}
-                  xValueFormat={won}
-                  yFormat={(n) => (n / 1e4).toFixed(0)}
-                />
-              ))}
-            </div>
-            <p className="fine">
-              그림 5 참고 · 장애인연금·기초연금·부가급여·생계급여 합계이며
-              유족연금 자체는 합계에서 제외합니다. 기존 계산 엔진의 100만 원
-              간격과 전환 경계 표본을 표시합니다. 실제 기관 수급 판정이
-              아닙니다. 현재 입력과 독립된 두 가지 기준 비교입니다.
-            </p>
+            {benefits.length > 0 && (
+              <ReferenceChart
+                title="현재 가정의 월평균 공적급여 경로"
+                series={benefits}
+                xLabel="지훈 씨 나이"
+                yLabel="만 원 / 월"
+                xFormat={(n) => `${Math.round(n)}세`}
+                yFormat={(n) => (n / 1e4).toFixed(0)}
+              />
+            )}
+            <details>
+              <summary>그림 5 · 기준 급여 문턱 보기</summary>
+              <div className="reference-pair">
+                {[64, 65].map((age) => (
+                  <ReferenceChart
+                    key={age}
+                    title={
+                      age === 64
+                        ? "64세 · 장애인연금 구간"
+                        : "65세 · 기초연금 전환"
+                    }
+                    series={data.benefit_curves
+                      .filter((c) => c.age === age)
+                      .map((c) => ({
+                        label:
+                          c.survivor_monthly === 0
+                            ? "유족연금 없음"
+                            : "유족연금 월 107만 원",
+                        points: c.points,
+                        color: c.survivor_monthly === 0 ? "#004EA2" : "#B38944",
+                      }))}
+                    xLabel="신탁 잔액 (억 원)"
+                    yLabel="월 공적급여 (만 원)"
+                    xFormat={(n) => (n / 1e8).toFixed(1)}
+                    xValueFormat={won}
+                    yFormat={(n) => (n / 1e4).toFixed(0)}
+                  />
+                ))}
+              </div>
+              <p className="fine">
+                그림 5 참고 · 장애인연금·기초연금·부가급여·생계급여 합계이며
+                유족연금 자체는 합계에서 제외합니다. 기존 계산 엔진의 100만 원
+                간격과 전환 경계 표본을 표시합니다. 실제 기관 수급 판정이
+                아닙니다. 현재 입력과 독립된 두 가지 기준 비교입니다.
+              </p>
+            </details>
           </>
         )}
         {tab === 4 && (
@@ -476,9 +578,9 @@ export function ReportInsights({ children }: { children: React.ReactNode }) {
             </div>
           </>
         )}
-        {(tab === 2 || tab === 3) && (
+        {result && (
           <p className="fine reference-version">
-            {data.source_version} · {data.assumption_version} · 기준 입력 고정
+            {result.source_version} · {result.assumption_version}
           </p>
         )}
       </div>

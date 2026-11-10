@@ -16,7 +16,7 @@ import {
   type TrustSource,
   type SourceRequest,
 } from "./TrustLibrary.tsx";
-import { CaseSlots } from "./CaseSlots.tsx";
+import { CaseSlots, type SlotName } from "./CaseSlots.tsx";
 import type { Snapshot } from "./analysis.ts";
 import { Entrance, sessionRequest } from "./Entrance.tsx";
 import {
@@ -51,7 +51,7 @@ const strategies: Record<Strategy, string> = {
 function App() {
   const [entered, setEntered] = useState(false);
   const enter = useCallback(() => {
-    if (location.hash === "#about")
+    if (!Object.hasOwn(pages, location.hash.slice(1)))
       history.replaceState(null, "", "#simulation");
     setEntered(true);
   }, []);
@@ -173,6 +173,8 @@ function Workspace({ onExit }: { onExit: () => void }) {
     [notice, setNotice] = useState(""),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
+  const [activeSlot, setActiveSlot] = useState<SlotName | null>(null);
+  const [showAssumptions, setShowAssumptions] = useState(false);
   const [retry, setRetry] = useState(0);
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [analysisReset, setAnalysisReset] = useState(0);
@@ -266,7 +268,11 @@ function Workspace({ onExit }: { onExit: () => void }) {
       return false;
     }
   }
-  async function apply(values?: Inputs, s: Strategy = strategy) {
+  async function apply(
+    values?: Inputs,
+    s: Strategy = strategy,
+    slot: SlotName | null = null,
+  ) {
     if (!ref || busy) return false;
     setError("");
     const inputs =
@@ -283,6 +289,7 @@ function Workspace({ onExit }: { onExit: () => void }) {
     setBusy(true);
     try {
       await calculate(ref, inputs, s);
+      setActiveSlot(slot);
       setApplied(inputs);
       setStrategy(s);
       setDraft(fill(inputs, ref));
@@ -307,6 +314,7 @@ function Workspace({ onExit }: { onExit: () => void }) {
   async function reset() {
     if (!ref || busy) return;
     setError("");
+    setActiveSlot(null);
     setAnalysisReset((v) => v + 1);
     setResult(null);
     setComparison(null);
@@ -350,8 +358,15 @@ function Workspace({ onExit }: { onExit: () => void }) {
   const hasUnappliedDraft = Object.entries(fill(applied, ref)).some(
     ([key, value]) => value !== draft[key],
   );
+  function openAssumptions() {
+    setShowAssumptions(true);
+    requestAnimationFrame(() =>
+      document.getElementById("settings-panel")?.focus(),
+    );
+  }
   const preview = (changes: Inputs) => {
     setDraft(fill({ ...applied, ...changes }, ref));
+    openAssumptions();
     setNotice("변경안을 입력에 옮겼습니다. 확인 후 변경 적용을 눌러 주세요.");
   };
   const display = (key: string, v: number) =>
@@ -394,26 +409,31 @@ function Workspace({ onExit }: { onExit: () => void }) {
       </a>
       <main className="care-main">
         <div className="care-workspace">
-          <nav className="care-nav" aria-label="작업 화면">
-            {Object.entries(pages).map(([id, label], index) => (
-              <a
-                key={id}
-                href={`#${id}`}
-                aria-current={page === id ? "page" : undefined}
-              >
-                <span aria-hidden="true">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-                {label}
-              </a>
-            ))}
-          </nav>
+          <div className="care-sidebar">
+            <nav className="care-nav" aria-label="작업 화면">
+              {Object.entries(pages).map(([id, label], index) => (
+                <a
+                  key={id}
+                  href={`#${id}`}
+                  aria-current={page === id ? "page" : undefined}
+                >
+                  <span aria-hidden="true">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  {label}
+                </a>
+              ))}
+            </nav>
+          </div>
           <div className="care-content">
             <div className="care-page-heading">
               <p className="eyebrow">FAMILY FINANCIAL PLANNER</p>
               <h1 id="workspace-title" tabIndex={-1}>
                 {pages[page]}
               </h1>
+              {activeSlot && page === "simulation" && (
+                <span className="tag">슬롯 {activeSlot} · 적용 사례</span>
+              )}
               <p>
                 가상 사례에서 가정을 바꾸고 적용 결과를 확인하세요. 모르는
                 용어를 선택하면 연결된 공식 자료를 볼 수 있어요.
@@ -427,6 +447,99 @@ function Workspace({ onExit }: { onExit: () => void }) {
                 현재 사례와 가정으로 이동
               </button>
             </div>
+            <section
+              className="card care-assumptions"
+              id="settings-panel"
+              tabIndex={-1}
+              hidden={!showAssumptions}
+            >
+              <StepTitle step="01">전략과 가정</StepTitle>
+              <div className="strategy-tabs">
+                {(Object.keys(strategies) as Strategy[]).map((s) => (
+                  <button
+                    key={s}
+                    aria-pressed={strategy === s}
+                    disabled={busy}
+                    onClick={() => apply(applied, s)}
+                  >
+                    {strategies[s]}
+                  </button>
+                ))}
+              </div>
+              <p className="fine">
+                {strategy === "B"
+                  ? "지금 5천만 + 연 600만 × 5년 + 정년 5천만"
+                  : "지금·정년 합계 1억 + 사후 필요액 보충"}{" "}
+                · 상품 조건 미확인
+              </p>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void apply();
+                }}
+              >
+                <div className="care-assumptions-fields">
+                  {Object.entries(ref.fields).map(([key, f]) => (
+                    <label className="input-field" key={key}>
+                      <span>{f.label}</span>
+                      <div>
+                        <input
+                          type="number"
+                          required
+                          aria-label={f.label}
+                          value={draft[key] ?? ""}
+                          min={
+                            key === "net_real_return"
+                              ? -10
+                              : f.min / (key === "child_end_age" ? 1 : 10000)
+                          }
+                          max={
+                            key === "net_real_return"
+                              ? 10
+                              : f.max / (key === "child_end_age" ? 1 : 10000)
+                          }
+                          step={
+                            key === "net_real_return"
+                              ? 0.01
+                              : key === "child_end_age"
+                                ? 1
+                                : 0.0001
+                          }
+                          onChange={(e) => {
+                            setDraft({ ...draft, [key]: e.target.value });
+                          }}
+                        />
+                        <span>
+                          {key === "net_real_return"
+                            ? "% / 연"
+                            : key === "child_end_age"
+                              ? "세"
+                              : "만 원 / 월"}
+                        </span>
+                      </div>
+                      <small>{f.source}</small>
+                    </label>
+                  ))}
+                </div>
+                <p className="fine">
+                  월 금액 0~1,000만 원 · 수익률 -10~10% · 종료 나이 56~110세
+                </p>
+                <button className="primary full" type="submit" disabled={busy}>
+                  {busy ? "요청 중…" : "변경 적용"}
+                </button>
+              </form>
+              <button
+                className="text-button full"
+                disabled={busy}
+                onClick={reset}
+              >
+                현재 가정 초기화
+              </button>
+              <p className="fine">
+                설정은 이 브라우저에만 저장됨 · 결과와 자연어 원문은 저장하지
+                않습니다.
+              </p>
+            </section>
             {page === "simulation" && (
               <>
                 <section className="card family">
@@ -537,7 +650,11 @@ function Workspace({ onExit }: { onExit: () => void }) {
             )}
             {page === "report" && (
               <div className="results">
-                <ReportInsights>
+                <ReportInsights
+                  result={result}
+                  comparison={comparison}
+                  activeSlot={activeSlot}
+                >
                   <span className="tag">표 9 · 보고서 고정값</span>
                   <p className="fine">
                     2026년 기준 · 비용/최대 후회 단위: 억 원 · 새로운 권고를
@@ -651,7 +768,7 @@ function Workspace({ onExit }: { onExit: () => void }) {
               id="current-case-summary"
               tabIndex={-1}
             >
-              <h2>현재 적용</h2>
+              <h2>{activeSlot ? `슬롯 ${activeSlot} 적용 중` : "현재 적용"}</h2>
               <span>{strategies[strategy]}</span>
             </div>
             <p className="care-applied-inputs">
@@ -705,7 +822,19 @@ function Workspace({ onExit }: { onExit: () => void }) {
                 </p>
               )}
             </div>
-            <div className="care-rail-scroll">
+            <div>
+              <button
+                className="care-assumptions-toggle"
+                aria-expanded={showAssumptions}
+                aria-controls="settings-panel"
+                onClick={() =>
+                  showAssumptions
+                    ? setShowAssumptions(false)
+                    : openAssumptions()
+                }
+              >
+                {showAssumptions ? "가정 입력 닫기" : "전략과 가정 편집"}
+              </button>
               <CaseSlots
                 reference={ref}
                 disabled={busy}
@@ -724,101 +853,20 @@ function Workspace({ onExit }: { onExit: () => void }) {
                       }
                     : null
                 }
-                onLoad={(slot) =>
-                  apply({ ...ref.defaults, ...slot.overrides }, slot.strategy)
+                activeSlot={activeSlot}
+                onLoad={(name, slot) =>
+                  apply(
+                    { ...ref.defaults, ...slot.overrides },
+                    slot.strategy,
+                    name,
+                  )
                 }
+                onSave={(name, saved) => {
+                  if (saved) setActiveSlot(name);
+                  else if (activeSlot === name) setActiveSlot(null);
+                }}
                 onCompare={setSnapshots}
               />
-              <section className="card" id="settings-panel">
-                <StepTitle step="01">전략과 가정</StepTitle>
-                <div className="strategy-tabs">
-                  {(Object.keys(strategies) as Strategy[]).map((s) => (
-                    <button
-                      key={s}
-                      aria-pressed={strategy === s}
-                      disabled={busy}
-                      onClick={() => apply(applied, s)}
-                    >
-                      {strategies[s]}
-                    </button>
-                  ))}
-                </div>
-                <p className="fine">
-                  {strategy === "B"
-                    ? "지금 5천만 + 연 600만 × 5년 + 정년 5천만"
-                    : "지금·정년 합계 1억 + 사후 필요액 보충"}{" "}
-                  · 상품 조건 미확인
-                </p>
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    void apply();
-                  }}
-                >
-                  {Object.entries(ref.fields).map(([key, f]) => (
-                    <label className="input-field" key={key}>
-                      <span>{f.label}</span>
-                      <div>
-                        <input
-                          type="number"
-                          required
-                          aria-label={f.label}
-                          value={draft[key] ?? ""}
-                          min={
-                            key === "net_real_return"
-                              ? -10
-                              : f.min / (key === "child_end_age" ? 1 : 10000)
-                          }
-                          max={
-                            key === "net_real_return"
-                              ? 10
-                              : f.max / (key === "child_end_age" ? 1 : 10000)
-                          }
-                          step={
-                            key === "net_real_return"
-                              ? 0.01
-                              : key === "child_end_age"
-                                ? 1
-                                : 0.0001
-                          }
-                          onChange={(e) => {
-                            setDraft({ ...draft, [key]: e.target.value });
-                          }}
-                        />
-                        <span>
-                          {key === "net_real_return"
-                            ? "% / 연"
-                            : key === "child_end_age"
-                              ? "세"
-                              : "만 원 / 월"}
-                        </span>
-                      </div>
-                      <small>{f.source}</small>
-                    </label>
-                  ))}
-                  <p className="fine">
-                    월 금액 0~1,000만 원 · 수익률 -10~10% · 종료 나이 56~110세
-                  </p>
-                  <button
-                    className="primary full"
-                    type="submit"
-                    disabled={busy}
-                  >
-                    {busy ? "요청 중…" : "변경 적용"}
-                  </button>
-                </form>
-                <button
-                  className="text-button full"
-                  disabled={busy}
-                  onClick={reset}
-                >
-                  현재 가정 초기화
-                </button>
-                <p className="fine">
-                  설정은 이 브라우저에만 저장됨 · 결과와 자연어 원문은 저장하지
-                  않습니다.
-                </p>
-              </section>
             </div>
           </aside>
         </div>

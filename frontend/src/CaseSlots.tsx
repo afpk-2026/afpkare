@@ -5,7 +5,7 @@ import { validInputs, type Saved } from "./storage.ts";
 
 const key = "family-finance:case-slots";
 const names = ["A", "B", "C", "D"] as const;
-type SlotName = (typeof names)[number];
+export type SlotName = (typeof names)[number];
 type Slots = Partial<Record<SlotName, Saved>>;
 
 function readSlots(reference: Reference): Slots {
@@ -41,13 +41,17 @@ export function CaseSlots({
   reference,
   current,
   disabled,
+  activeSlot,
   onLoad,
+  onSave,
   onCompare,
 }: {
   reference: Reference;
   current: Saved | null;
   disabled: boolean;
-  onLoad: (slot: Saved) => Promise<boolean>;
+  activeSlot: SlotName | null;
+  onLoad: (name: SlotName, slot: Saved) => Promise<boolean>;
+  onSave: (name: SlotName, saved: boolean) => void;
   onCompare: (snapshots: Snapshot[]) => void;
 }) {
   const [slots, setSlots] = useState(() => readSlots(reference));
@@ -110,6 +114,7 @@ export function CaseSlots({
         localStorage.setItem(key, JSON.stringify(next));
       else localStorage.removeItem(key);
       setSlots(next);
+      onSave(selected, !!value);
       setNotice(
         `슬롯 ${selected}${value ? "에 적용한 가정을 저장했습니다." : "를 비웠습니다."}`,
       );
@@ -121,19 +126,24 @@ export function CaseSlots({
   return (
     <section className="card care-slots" aria-label="가상 사례 저장 슬롯">
       <h2>사례 슬롯</h2>
-      <p>
-        오른쪽에서 적용한 가정을 저장하고, 샘플 사건과 민감도 화면에서
-        비교하세요.
-      </p>
       <div className="care-slot-buttons" aria-label="슬롯 선택">
         {names.map((name) => (
           <button
             key={name}
             aria-pressed={selected === name}
+            aria-current={activeSlot === name ? "true" : undefined}
+            disabled={disabled}
             aria-label={`슬롯 ${name} · ${slots[name] ? "저장됨" : "비어 있음"}`}
-            onClick={() => {
-              setSelected(name);
+            onClick={async () => {
+              const saved = slots[name];
               setNotice("");
+              if (saved && !(await onLoad(name, saved))) return;
+              setSelected(name);
+              setNotice(
+                saved
+                  ? `슬롯 ${name} 적용 완료`
+                  : `슬롯 ${name}에 현재 가정을 저장할 수 있어요.`,
+              );
             }}
           >
             {name}
@@ -162,15 +172,6 @@ export function CaseSlots({
         </button>
         <button
           disabled={disabled || !slot}
-          onClick={async () => {
-            if (slot && (await onLoad(slot)))
-              setNotice(`슬롯 ${selected}를 불러왔습니다.`);
-          }}
-        >
-          불러오기
-        </button>
-        <button
-          disabled={disabled || !slot}
           onClick={() => {
             if (window.confirm(`슬롯 ${selected}의 가상 사례를 삭제할까요?`))
               write();
@@ -179,7 +180,9 @@ export function CaseSlots({
           비우기
         </button>
       </div>
-      <p role="status">{notice || comparisonNotice}</p>
+      {(notice || comparisonNotice) && (
+        <p role="status">{notice || comparisonNotice}</p>
+      )}
     </section>
   );
 }

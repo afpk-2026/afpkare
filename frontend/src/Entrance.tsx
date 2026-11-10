@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { LandingPreview, ServiceOverview } from "./ServiceOverview.tsx";
 import { FloatingAssistant } from "./FloatingAssistant.tsx";
 
 export async function sessionRequest(path: string, body?: object) {
@@ -29,7 +30,16 @@ export function Entrance({ onEnter }: { onEnter: () => void }) {
       .then((value) => {
         if (!active || !value) return;
         setSignedIn(true);
-        if (window.location.hash && window.location.hash !== "#about")
+        if (
+          [
+            "#simulation",
+            "#report",
+            "#formulas",
+            "#events",
+            "#trusts",
+            "#settings",
+          ].includes(window.location.hash)
+        )
           onEnter();
       })
       .catch(() => {});
@@ -81,6 +91,8 @@ export function Entrance({ onEnter }: { onEnter: () => void }) {
         </a>
         <nav aria-label="홈 메뉴">
           <a href="#about">서비스 소개</a>
+          <a href="#workflow">이용 방법</a>
+          <a href="#faq">자주 묻는 질문</a>
           <button className="primary" onClick={start}>
             {signedIn ? "시뮬레이터 열기" : "로그인"}
           </button>
@@ -106,34 +118,7 @@ export function Entrance({ onEnter }: { onEnter: () => void }) {
               <a href="#about">서비스 알아보기</a>
             </div>
           </div>
-          <aside className="care-hero-preview" aria-label="서비스 사용 순서">
-            <span>재무 설계 워크스페이스</span>
-            <svg viewBox="0 0 290 110" aria-hidden="true">
-              <path
-                d="M10 102H280 M10 63H280 M10 24H280"
-                stroke="#dce4ef"
-                fill="none"
-              />
-              <path
-                d="M10 85C55 84 78 34 126 42S191 90 280 32"
-                stroke="#004ea2"
-                strokeWidth="4"
-                fill="none"
-              />
-              <path
-                d="M10 97C66 94 84 72 128 76S218 53 280 67"
-                stroke="#b38944"
-                strokeWidth="4"
-                strokeDasharray="8 5"
-                fill="none"
-              />
-            </svg>
-            <ol>
-              <li>가정 바꾸기</li>
-              <li>자금 경로 비교하기</li>
-              <li>보고서와 신탁 자료 살펴보기</li>
-            </ol>
-          </aside>
+          <LandingPreview />
         </section>
         {showLogin && (
           <section className="card care-login" aria-labelledby="login-title">
@@ -161,34 +146,12 @@ export function Entrance({ onEnter }: { onEnter: () => void }) {
             )}
           </section>
         )}
-        <section id="about" className="care-about">
-          <p className="eyebrow">ABOUT THE SERVICE</p>
-          <h2>케어 파트너스 소개</h2>
-          <div className="care-option-grid">
-            <article className="card">
-              <h3>가정으로 비교하기</h3>
-              <p>
-                생활비·유족연금·수익률을 바꿔 B와 B′의 자금 경로를 비교합니다.
-              </p>
-            </article>
-            <article className="card">
-              <h3>근거까지 확인하기</h3>
-              <p>
-                재무비율과 보고서 산식, 은행의 공식 신탁 자료를 한 곳에서
-                살펴봅니다.
-              </p>
-            </article>
-            <article className="card">
-              <h3>브라우저에 가상 사례 보관</h3>
-              <p>적용한 입력을 네 개 슬롯에 저장하고 필요할 때 불러옵니다.</p>
-            </article>
-            <article className="card">
-              <h3>읽기 환경 조정</h3>
-              <p>글자 크기, 고대비, 색약 모드와 그래프 움직임을 설정합니다.</p>
-            </article>
-          </div>
-        </section>
+        <ServiceOverview onStart={start} />
       </main>
+      <footer className="landing-footer">
+        <strong>케어 파트너스</strong>
+        <p>AFPK 영 플래너 챌린지 2026 제출작</p>
+      </footer>
       <FloatingAssistant initiallyOpen={false} title="케어 파트너스 안내">
         <div className="chat-thread">
           <p>

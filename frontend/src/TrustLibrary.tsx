@@ -12,26 +12,15 @@ export type TrustSource = {
 };
 export type SourceRequest = { ids: string[]; sequence: number };
 const banks = [
-  ["KB국민은행", "KB", "https://www.kbstar.com/"],
-  ["신한은행", "SH", "https://www.shinhan.com/"],
-  ["하나은행", "HA", "https://www.hanabank.com/"],
-  ["우리은행", "WR", "https://www.wooribank.com/"],
-  ["NH농협은행", "NH", "https://banking.nonghyup.com/"],
-  ["IBK기업은행", "IBK", "https://www.ibk.co.kr/"],
-  ["카카오뱅크", "K", "https://www.kakaobank.com/"],
-  ["토스뱅크", "T", "https://www.tossbank.com/"],
+  ["KB국민은행", "kb.png", "https://www.kbstar.com/"],
+  ["신한은행", "sh.ico", "https://www.shinhan.com/"],
+  ["하나은행", "ha.png", "https://www.hanabank.com/"],
+  ["우리은행", "wr.png", "https://www.wooribank.com/"],
+  ["NH농협은행", "nh.png", "https://banking.nonghyup.com/"],
+  ["IBK기업은행", "ibk.gif", "https://www.ibk.co.kr/"],
+  ["카카오뱅크", "k.svg", "https://www.kakaobank.com/"],
+  ["토스뱅크", "t.png", "https://www.tossbank.com/"],
 ];
-
-const bankTopics: Record<string, string> = {
-  KB: "개인·기업 금융과 신탁",
-  SH: "개인·기업 금융과 자산관리",
-  HA: "자산관리와 재산 승계 신탁",
-  WR: "상속·증여와 재산관리 신탁",
-  NH: "농업인과 개인을 위한 금융",
-  IBK: "중소기업과 개인 금융",
-  K: "모바일 인터넷전문은행",
-  T: "모바일 인터넷전문은행",
-};
 
 const normalize = (value: string) =>
   value.toLowerCase().replace(/[^가-힣a-z0-9]/g, "");
@@ -74,27 +63,29 @@ export function TrustLibrary({
     <>
       <section className="card">
         <h2>관련 기관 소개</h2>
-        <p>은행별 공식 홈페이지에서 서비스와 상담 창구를 확인하세요.</p>
+        <p>은행 로고를 선택하면 공식 홈페이지가 열립니다.</p>
         <div className="care-library-grid">
-          {banks.map(([name, short, url]) => (
-            <article className="care-library-item" key={name}>
-              <div className="care-bank-initial" aria-hidden="true">
-                {short}
-              </div>
-              <h3>{name}</h3>
-              <p>{bankTopics[short]}</p>
-              <a href={url} target="_blank" rel="noreferrer">
-                {name} 공식 사이트 ↗
-              </a>
-            </article>
+          {banks.map(([name, image, url]) => (
+            <a
+              className="care-bank-card"
+              key={name}
+              href={url}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={`${name} 공식 홈페이지 (새 창)`}
+            >
+              <img src={`/banks/${image}`} alt="" loading="lazy" />
+              <strong>{name}</strong>
+              <span aria-hidden="true">↗</span>
+            </a>
           ))}
         </div>
       </section>
       <section className="card">
         <h2>신탁 상품 살펴보기</h2>
         <p>
-          은행 공식 안내와 계약서를 모았습니다. 상품명을 선택하거나 설명을
-          드래그하면 AI 도우미에서 근거를 볼 수 있어요.
+          상품을 선택하면 공식 자료가 열립니다. 자세한 내용은 공식 문서 기반 AI
+          도우미에게 물어보세요.
         </p>
         {loadError && (
           <p role="alert">
@@ -114,12 +105,12 @@ export function TrustLibrary({
                 data-source-id={source.id}
               >
                 <span className="tag">{source.category}</span>
-                <h3>{source.title}</h3>
+                <h3>
+                  <a href={source.url} target="_blank" rel="noreferrer">
+                    {source.title} ↗
+                  </a>
+                </h3>
                 <p>{source.bank}</p>
-                <p>{source.summary}</p>
-                <a href={source.url} target="_blank" rel="noreferrer">
-                  {source.document} ↗
-                </a>
                 <button onClick={() => onAsk([source.id])}>
                   AI로 자료 읽기
                   <span className="sr-only"> · {source.title}</span>

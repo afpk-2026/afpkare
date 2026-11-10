@@ -1,0 +1,237 @@
+import React, { useState } from "react";
+import baseline from "./report-baseline.json";
+import { money } from "./Chart.tsx";
+
+const strategies = [
+  {
+    title: "B · 단계 적립",
+    description: "부모 생전에 여러 차례 나누어 적립하는 보고서의 대안입니다.",
+    color: "#65c4ff",
+  },
+  {
+    title: "B′ · 사후 보충",
+    description:
+      "부모 생전 적립과 사후 보충을 함께 검토하는 보고서의 대안입니다.",
+    color: "#ffcb7b",
+  },
+];
+const steps = [
+  [
+    "가정을 입력하세요",
+    "자녀 생활비와 유족연금, 신탁 수익률, 부모의 재취업 소득과 설계 종료 나이를 조정합니다. 어느 값을 바꿨는지 입력 화면에서 확인하고 적용할 수 있습니다.",
+  ],
+  [
+    "시간을 따라 결과를 읽으세요",
+    "부모 금융자산과 자녀 신탁의 연도별 경로를 함께 살펴봅니다. 부족액이 처음 생기는 시기, 65세 급여 전환, 두 전략의 예상 잔액을 차례대로 확인합니다.",
+  ],
+  [
+    "사례를 저장하고 근거를 확인하세요",
+    "오른쪽 A/B/C/D에 가정을 저장해 한 번에 불러옵니다. 보고서 진단과 대안에서 동일한 사례의 부족액과 B/B′ 비교를 읽고, 계산산식에서 숫자가 나온 과정을 확인합니다.",
+  ],
+];
+
+export function LandingPreview() {
+  const [selected, setSelected] = useState(0);
+  const x = (age: number) => 30 + ((age - 56) / 39) * 360;
+  const y = (balance: number) => 133 - (balance / 200_000_000) * 110;
+  return (
+    <figure className="landing-demo">
+      <figcaption>
+        <span>보고서 기준 사례</span>
+        <strong>부모 사후 신탁 경로</strong>
+      </figcaption>
+      <div className="landing-demo-controls" aria-label="전략 예시 선택">
+        {strategies.map((strategy, index) => (
+          <button
+            key={strategy.title}
+            aria-pressed={selected === index}
+            onClick={() => setSelected(index)}
+          >
+            {strategy.title}
+          </button>
+        ))}
+      </div>
+      <svg
+        viewBox="0 0 420 165"
+        role="img"
+        aria-label="56세에서 95세까지의 기준 사례 신탁 잔액 경로"
+      >
+        {[0, 50_000_000, 100_000_000, 150_000_000, 200_000_000].map((value) => (
+          <line
+            key={value}
+            x1="30"
+            x2="390"
+            y1={y(value)}
+            y2={y(value)}
+            stroke="#345673"
+          />
+        ))}
+        {baseline.trust.map((item, index) => (
+          <polyline
+            key={item.strategy}
+            points={item.withdrawal
+              .map(([age, balance]) => `${x(age)},${y(balance)}`)
+              .join(" ")}
+            fill="none"
+            stroke={strategies[index].color}
+            strokeWidth={selected === index ? 4 : 2}
+            strokeDasharray={index ? "6 4" : undefined}
+          />
+        ))}
+        {[56, 65, 83, 95].map((age) => (
+          <text
+            key={age}
+            x={x(age)}
+            y="153"
+            textAnchor="middle"
+            fill="#dcecff"
+            fontSize="13"
+          >
+            {age}세
+          </text>
+        ))}
+      </svg>
+      <div className="landing-demo-stat">
+        <span>56세 연초 예상 잔액</span>
+        <strong>{money(baseline.trust[selected].projected)}</strong>
+      </div>
+      <p>{strategies[selected].description}</p>
+    </figure>
+  );
+}
+
+export function ServiceOverview({ onStart }: { onStart: () => void }) {
+  return (
+    <>
+      <section id="about" className="landing-section landing-story">
+        <div>
+          <p className="eyebrow">01 / 서비스 배경</p>
+          <h2>
+            부모의 노후부터
+            <br />
+            자녀의 생활까지
+          </h2>
+        </div>
+        <div>
+          <p>
+            한 가족의 재무설계에는 부모가 생활비를 충당하는 기간과 자녀가 부모
+            사후에 생활을 이어가는 기간이 함께 들어 있습니다. 적립액만 봐서는
+            어느 시점에 자금이 부족해지고, 무엇을 조정하면 달라지는지 파악하기
+            어렵습니다.
+          </p>
+          <p>
+            케어 파트너스는 보고서 속 지훈 씨 가족을 가상 사례로 옮겼습니다.
+            같은 사례에 서로 다른 가정을 적용해 장기간의 자금 흐름을 살펴보고,
+            가족과 전문가에게 어떤 질문을 가져갈지 정리할 수 있습니다.
+          </p>
+          <dl className="landing-facts">
+            <div>
+              <dt>계산 전략</dt>
+              <dd>B / B′</dd>
+            </div>
+            <div>
+              <dt>저장 슬롯</dt>
+              <dd>A–D</dd>
+            </div>
+            <div>
+              <dt>공식 신탁 자료</dt>
+              <dd>8건</dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+      <section id="workflow" className="landing-section">
+        <p className="eyebrow">02 / 이용 방법</p>
+        <h2>입력에서 비교까지 세 단계</h2>
+        <div className="landing-steps">
+          {steps.map(([title, description], index) => (
+            <article key={title}>
+              <span className="landing-step-number">0{index + 1}</span>
+              <h3>{title}</h3>
+              <p>{description}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+      <section id="evidence" className="landing-section landing-evidence">
+        <p className="eyebrow">03 / 근거를 읽는 방법</p>
+        <h2>결과 옆에서 산식과 자료를 확인하세요</h2>
+        <div className="landing-evidence-grid">
+          <article>
+            <h3>보고서 진단과 대안</h3>
+            <p>
+              선택한 가정에서 계산된 필요 잔액, 생활비 부족액, 신탁과 급여
+              경로를 확인할 수 있습니다. 보고서의 설계 전 진단과 180일 일정도
+              별도로 열어볼 수 있습니다.
+            </p>
+          </article>
+          <article>
+            <h3>은행과 신탁 상품</h3>
+            <p>
+              은행 8곳의 홈페이지와 신탁 자료 8건의 원문 링크를 모았습니다.
+              상품이나 용어가 궁금하면 AI 도우미에서 관련 공식 문서 요약을
+              확인할 수 있습니다.
+            </p>
+          </article>
+          <article>
+            <h3>입력 변경 도우미</h3>
+            <p>
+              예시 문장으로 생활비나 설계 종료 나이 등을 제안받을 수 있습니다.
+              제안 내용을 확인하고 적용을 눌러야 계산에 반영됩니다.
+            </p>
+          </article>
+          <article>
+            <h3>비교와 내보내기</h3>
+            <p>
+              저장한 사례를 현재 결과와 비교하고, 샘플 사건과 민감도 화면에서 한
+              가지 가정의 영향을 살펴봅니다. 계산 근거를 JSON, CSV, HTML로
+              내려받을 수 있습니다.
+            </p>
+          </article>
+        </div>
+      </section>
+      <section id="faq" className="landing-section landing-faq">
+        <p className="eyebrow">04 / 자주 묻는 질문</p>
+        <h2>시작하기 전에 확인하세요</h2>
+        <details>
+          <summary>로그인하려면 무엇이 필요한가요?</summary>
+          <p>
+            운영자에게 받은 공용 데모 비밀번호로 로그인합니다. 소개와 기준 사례
+            미리보기는 공개되어 있습니다.
+          </p>
+        </details>
+        <details>
+          <summary>저장한 슬롯은 어디에 보관되나요?</summary>
+          <p>
+            슬롯의 가정과 전략은 이 브라우저에 보관됩니다. 다른 브라우저에서
+            같은 비밀번호로 로그인하더라도 각 브라우저에 저장한 사례를 따로
+            사용합니다.
+          </p>
+        </details>
+        <details>
+          <summary>결과와 상품 자료를 어떻게 활용하나요?</summary>
+          <p>
+            결과는 가상 사례의 가정에 따른 비교입니다. 실제 급여 수급과 신탁
+            계약 조건은 해당 기관의 공식 문서나 상담 창구에서 확인하세요.
+          </p>
+        </details>
+        <details>
+          <summary>화면을 읽기 편하게 바꿀 수 있나요?</summary>
+          <p>
+            환경설정에서 글자 크기, 고대비, 색약 패턴, 화면 읽기 초점 이동,
+            애니메이션 설정을 조정할 수 있습니다.
+          </p>
+        </details>
+      </section>
+      <section className="landing-start">
+        <div>
+          <h2>지훈 씨 가족의 사례로 시작하세요</h2>
+          <p>한 가지 가정을 바꾸고 두 세대의 자금 경로를 비교해 보세요.</p>
+        </div>
+        <button className="primary" onClick={onStart}>
+          시뮬레이터 시작하기 ↗
+        </button>
+      </section>
+    </>
+  );
+}
