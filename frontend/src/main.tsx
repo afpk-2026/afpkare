@@ -864,10 +864,6 @@ function Workspace({
               >
                 현재 가정 초기화
               </button>
-              <p className="fine">
-                설정은 이 브라우저에만 저장됨 · 결과와 자연어 원문은 저장하지
-                않습니다.
-              </p>
             </section>
           </aside>
         </div>
