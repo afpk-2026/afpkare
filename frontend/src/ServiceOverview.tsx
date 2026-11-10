@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import baseline from "./report-baseline.json";
 import { money } from "./Chart.tsx";
 
@@ -149,9 +149,103 @@ export function LandingPreview() {
   );
 }
 
-export function ServiceOverview({ onStart }: { onStart: () => void }) {
+const livingCostExamples = [
+  { monthly: 180, required: 175_000_000, shortage: 0 },
+  { monthly: 185, required: 195_000_000, shortage: 16_030_692 },
+];
+
+function LivingCostPreview() {
+  const [selected, setSelected] = useState(0);
+  const example = livingCostExamples[selected];
+
   return (
-    <>
+    <div className="landing-impact">
+      <div>
+        <h3>월 생활비를 골라 보세요</h3>
+        <p>두 예시 모두 B안 · 연 순실질수익률 1% · 95세까지</p>
+        <div
+          className="landing-impact-options"
+          role="group"
+          aria-label="월 생활비 예시"
+        >
+          {livingCostExamples.map(({ monthly }, index) => (
+            <button
+              key={monthly}
+              type="button"
+              aria-pressed={selected === index}
+              onClick={() => setSelected(index)}
+            >
+              월 {monthly}만 원
+            </button>
+          ))}
+        </div>
+      </div>
+      <dl aria-live="polite" className="landing-impact-results">
+        <div>
+          <dt>56세 필요 잔액</dt>
+          <dd>{money(example.required)}</dd>
+        </div>
+        <div>
+          <dt>자녀 평생 생활비 부족액</dt>
+          <dd>
+            {example.shortage > 0 && "약 "}
+            {money(example.shortage)}
+          </dd>
+        </div>
+      </dl>
+    </div>
+  );
+}
+
+const checkpoints = [
+  [
+    "부모가 일하는 동안",
+    "노후 생활비를 남기면서 자녀를 위해 얼마를 적립할 수 있을까요?",
+    "부모 금융자산 그래프에서 정년 전후의 연도별 잔액을 확인하세요.",
+  ],
+  [
+    "부모가 떠난 뒤",
+    "적립금과 유족연금으로 자녀의 생활비를 얼마나 오래 충당할 수 있을까요?",
+    "B의 단계 적립과 B′의 사후 보충을 비교하고, 신탁 인출로도 부족한 해가 있는지 살펴보세요.",
+  ],
+  [
+    "자녀가 65세가 되는 해",
+    "급여가 바뀌면 신탁에서 매달 꺼내야 하는 금액은 어떻게 달라질까요?",
+    "급여 문턱 그래프에서 65세 전후를 나눠 보고, 실제 적용 조건은 상담할 때 확인하세요.",
+  ],
+];
+
+export function ServiceOverview({ onStart }: { onStart: () => void }) {
+  const overview = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!overview.current || typeof IntersectionObserver === "undefined")
+      return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const { target, isIntersecting } of entries) {
+          if (!isIntersecting) continue;
+          target.classList.add("landing-entered");
+          observer.unobserve(target);
+        }
+      },
+      { threshold: 0.12 },
+    );
+
+    overview.current
+      .querySelectorAll(
+        ".landing-story-media > figure, .landing-steps > article, .landing-guide-step, " +
+          ".landing-safeguards > header, .landing-safeguards dl > div, .landing-evidence-grid > article, " +
+          ".landing-checkpoints > article, .landing-impact, .landing-start",
+      )
+      .forEach((item) => observer.observe(item));
+
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div className="landing-overview" ref={overview}>
       <section id="about" className="landing-section landing-story">
         <header className="landing-story-heading">
           <p className="eyebrow">01 / 서비스 배경</p>
@@ -271,9 +365,27 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
           </article>
         ))}
       </section>
+      <section id="checkpoints" className="landing-section landing-journey">
+        <p className="eyebrow">04 / 가상 가족의 타임라인</p>
+        <h2>가족의 자금 흐름이 바뀌는 세 시점</h2>
+        <div className="landing-checkpoints">
+          {checkpoints.map(([title, question, detail], index) => (
+            <article key={title}>
+              <span className="landing-step-number" aria-hidden="true">
+                0{index + 1}
+              </span>
+              <h3>{title}</h3>
+              <p>
+                <strong>{question}</strong>
+              </p>
+              <p>{detail}</p>
+            </article>
+          ))}
+        </div>
+      </section>
       <section id="privacy" className="landing-section landing-safeguards">
         <header>
-          <p className="eyebrow">04 / 개인정보 보호</p>
+          <p className="eyebrow">05 / 개인정보 보호</p>
           <h2>개인정보를 보호하는 방법</h2>
           <p>
             가상 사례를 중심으로 서비스에 필요한 정보만 처리합니다. 현재 보호
@@ -294,7 +406,7 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
         className="landing-section landing-safeguards"
       >
         <header>
-          <p className="eyebrow">05 / 접근성</p>
+          <p className="eyebrow">06 / 접근성</p>
           <h2>읽고 쓰기 편한 화면</h2>
           <p>
             로그인한 뒤 왼쪽 메뉴의 ‘환경설정’에서 화면을 나에게 맞춰 보세요.
@@ -310,7 +422,7 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
         </dl>
       </section>
       <section id="evidence" className="landing-section landing-evidence">
-        <p className="eyebrow">06 / 자료와 계산 근거</p>
+        <p className="eyebrow">07 / 자료와 계산 근거</p>
         <h2>결과가 어디에서 나왔는지 확인하세요</h2>
         <div className="landing-evidence-grid">
           <article>
@@ -345,44 +457,74 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
             </p>
           </article>
         </div>
+        <div className="landing-method">
+          <h3>계산 모형이 반영하는 범위</h3>
+          <details>
+            <summary>한 해의 신탁 잔액은 어떻게 계산하나요?</summary>
+            <p>
+              연초 잔액으로 그해 급여를 계산합니다. 월 생활비에서 유족연금과
+              공적급여를 뺀 뒤, 월 150만 원 한도 안에서 신탁을 인출합니다.
+              12개월 인출을 반영한 잔액에 연 순실질수익률을 적용합니다.
+            </p>
+          </details>
+          <details>
+            <summary>65세에는 무엇이 달라지나요?</summary>
+            <p>
+              보고서 모형에서는 65세부터 장애인연금 기초급여 대신 기초연금을
+              반영합니다. 자녀 신탁 잔액과 유족연금에 따른 급여 변화는 ‘보고서
+              진단과 대안’의 급여 문턱에서 살펴볼 수 있습니다.
+            </p>
+          </details>
+          <details>
+            <summary>기준 사례와 내가 바꾼 사례는 어떻게 구분하나요?</summary>
+            <p>
+              A·D는 보고서 기준 사례의 고정 비교입니다. 월 생활비·수익률 등을
+              바꾸면 B·B′의 연도별 경로, 필요 잔액과 부족액을 다시 계산합니다.
+            </p>
+          </details>
+        </div>
       </section>
-      <section className="landing-section">
-        <p className="eyebrow">07 / 활용 효과</p>
+      <section id="impact" className="landing-section">
+        <p className="eyebrow">08 / 활용 효과</p>
         <h2>한 가지 가정을 바꾸고 차이를 살펴보세요</h2>
         <p>
           같은 가족 사례에서 B안, 연 순실질수익률 1%, 95세까지를 유지하고 부모
           사후 월 생활비만 바꾼 예시입니다.
         </p>
-        <div className="table-scroll">
-          <table aria-label="월 생활비에 따른 가상 사례 계산 비교">
-            <thead>
-              <tr>
-                <th scope="col">월 생활비</th>
-                <th scope="col">56세 필요 잔액</th>
-                <th scope="col">자녀 평생 생활비 부족액</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <th scope="row">180만 원</th>
-                <td>1.75억 원</td>
-                <td>0원</td>
-              </tr>
-              <tr>
-                <th scope="row">185만 원</th>
-                <td>1.95억 원</td>
-                <td>약 1,603만 원</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <LivingCostPreview />
+        <details className="landing-impact-table">
+          <summary>예시 두 가지를 표로 보기</summary>
+          <div className="table-scroll">
+            <table aria-label="월 생활비에 따른 가상 사례 계산 비교">
+              <thead>
+                <tr>
+                  <th scope="col">월 생활비</th>
+                  <th scope="col">56세 필요 잔액</th>
+                  <th scope="col">자녀 평생 생활비 부족액</th>
+                </tr>
+              </thead>
+              <tbody>
+                {livingCostExamples.map(({ monthly, required, shortage }) => (
+                  <tr key={monthly}>
+                    <th scope="row">{monthly}만 원</th>
+                    <td>{money(required)}</td>
+                    <td>
+                      {shortage > 0 && "약 "}
+                      {money(shortage)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </details>
         <p>
           필요 잔액과 부족액이 얼마나 달라지는지 확인하고, 어떤 가정을 가족이나
           상담 창구와 다시 검토할지 정리할 수 있습니다.
         </p>
       </section>
       <section className="landing-section landing-evidence">
-        <p className="eyebrow">08 / 기능 소개</p>
+        <p className="eyebrow">09 / 기능 소개</p>
         <h2>사례 설정부터 근거 내보내기까지</h2>
         <div className="landing-evidence-grid">
           <article>
@@ -425,6 +567,6 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
           시뮬레이터 시작하기 ↗
         </button>
       </section>
-    </>
+    </div>
   );
 }

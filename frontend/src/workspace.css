@@ -1043,16 +1043,123 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
     transform: translateX(0);
   }
 }
-@supports (animation-timeline: view()) {
-  @media (prefers-reduced-motion: no-preference) {
-    html:not([data-no-motion]) .landing-section {
-      animation: landing-appear linear both;
-      animation-timeline: view();
-      animation-range: entry 0% entry 70%;
-    }
+@keyframes landing-scroll-in {
+  from {
+    opacity: 0.25;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes landing-fill-bar {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0);
+  }
+}
+
+.landing-journey {
+  background: #102b46;
+  color: #fff;
+}
+.landing-journey .eyebrow {
+  color: #b6e1ff;
+}
+.landing-checkpoints {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(18px, 3vw, 40px);
+  margin-top: 28px;
+}
+.landing-checkpoints > article {
+  border-top: 2px solid #b38944;
+  padding-top: 18px;
+}
+.landing-checkpoints h3 {
+  font-size: 1.25em;
+  margin: 8px 0;
+}
+.landing-checkpoints p {
+  color: #deebf8;
+}
+.landing-impact {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(16px, 4vw, 48px);
+  padding: clamp(16px, 3vw, 36px);
+  align-items: center;
+  margin: 24px 0 16px;
+  background: #eaf2ff;
+  border: 1px solid #dce4ef;
+  border-radius: 16px;
+}
+.landing-impact-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.landing-impact-options button[aria-pressed="true"] {
+  background: #004ea2;
+  border-color: #004ea2;
+  color: #fff;
+}
+.landing-impact-results {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+.landing-impact-results > div {
+  padding: 12px 16px;
+  border: 1px solid #dce4ef;
+  border-radius: 12px;
+  background: #fff;
+}
+.landing-impact-results dd {
+  margin: 4px 0 0;
+  color: #004ea2;
+  font-size: clamp(1.35em, 3vw, 2em);
+  font-weight: 750;
+}
+.landing-impact-table summary {
+  cursor: pointer;
+  font-weight: 650;
+}
+.landing-impact-table .table-scroll {
+  margin-top: 12px;
+}
+.landing-method {
+  margin-top: 28px;
+}
+.landing-method details {
+  padding: 12px 0;
+  border-top: 1px solid #dce4ef;
+}
+.landing-method summary {
+  cursor: pointer;
+  font-weight: 650;
+}
+.landing-method details p {
+  max-width: 72ch;
+  margin: 8px 0 0;
+}
+@media (max-width: 720px) {
+  .landing-checkpoints,
+  .landing-impact {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 @media (prefers-reduced-motion: no-preference) {
+  html:not([data-no-motion]) .landing-entered:not(:focus-within) {
+    animation: landing-scroll-in 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  html:not([data-no-motion]) .landing-entered meter {
+    animation: landing-fill-bar 0.9s ease-out;
+  }
   html:not([data-no-motion]) .care-hero > div {
     animation: landing-appear 0.55s ease-out both;
   }
