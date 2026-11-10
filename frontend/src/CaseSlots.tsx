@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import type { Snapshot } from "./analysis.ts";
 import { requestSimulation, type Reference } from "./simulation.ts";
 import { validInputs, type Saved } from "./storage.ts";
@@ -42,6 +43,7 @@ export function CaseSlots({
   current,
   disabled,
   activeSlot,
+  actionsTarget,
   onLoad,
   onSave,
   onCompare,
@@ -50,6 +52,7 @@ export function CaseSlots({
   current: Saved | null;
   disabled: boolean;
   activeSlot: SlotName | null;
+  actionsTarget: HTMLDivElement | null;
   onLoad: (name: SlotName, slot: Saved) => Promise<boolean>;
   onSave: (name: SlotName, saved: boolean) => void;
   onCompare: (snapshots: Snapshot[]) => void;
@@ -139,11 +142,6 @@ export function CaseSlots({
               setNotice("");
               if (saved && !(await onLoad(name, saved))) return;
               setSelected(name);
-              setNotice(
-                saved
-                  ? `슬롯 ${name} 적용 완료`
-                  : `슬롯 ${name}에 현재 가정을 저장할 수 있어요.`,
-              );
             }}
           >
             {name}
@@ -151,38 +149,52 @@ export function CaseSlots({
           </button>
         ))}
       </div>
-      <p>
-        {slot
-          ? `${selected} · 전략 ${slot.strategy === "B" ? "B" : "B′"} · ${slot.overrides.child_end_age ?? reference.defaults.child_end_age}세까지`
-          : `슬롯 ${selected}가 비어 있어요.`}
-      </p>
-      <div className="care-slot-actions">
-        <button
-          disabled={disabled || !current}
-          onClick={() => {
-            if (
-              current &&
-              (!slot ||
-                window.confirm(`슬롯 ${selected}의 기존 가정을 덮어쓸까요?`))
-            )
-              write(current);
-          }}
-        >
-          현재 적용값 저장
-        </button>
-        <button
-          disabled={disabled || !slot}
-          onClick={() => {
-            if (window.confirm(`슬롯 ${selected}의 가상 사례를 삭제할까요?`))
-              write();
-          }}
-        >
-          비우기
-        </button>
-      </div>
-      {(notice || comparisonNotice) && (
-        <p role="status">{notice || comparisonNotice}</p>
-      )}
+      {actionsTarget &&
+        createPortal(
+          <section
+            className="card care-slot-management"
+            aria-label="사례 슬롯 관리"
+          >
+            <h2>사례 슬롯 관리</h2>
+            <p>
+              {slot
+                ? `${selected} · 전략 ${slot.strategy === "B" ? "B" : "B′"} · ${slot.overrides.child_end_age ?? reference.defaults.child_end_age}세까지`
+                : `슬롯 ${selected}가 비어 있어요.`}
+            </p>
+            <div className="care-slot-actions">
+              <button
+                disabled={disabled || !current}
+                onClick={() => {
+                  if (
+                    current &&
+                    (!slot ||
+                      window.confirm(
+                        `슬롯 ${selected}의 기존 가정을 덮어쓸까요?`,
+                      ))
+                  )
+                    write(current);
+                }}
+              >
+                현재 적용값 저장
+              </button>
+              <button
+                disabled={disabled || !slot}
+                onClick={() => {
+                  if (
+                    window.confirm(`슬롯 ${selected}의 가상 사례를 삭제할까요?`)
+                  )
+                    write();
+                }}
+              >
+                비우기
+              </button>
+            </div>
+            {(notice || comparisonNotice) && (
+              <p role="status">{notice || comparisonNotice}</p>
+            )}
+          </section>,
+          actionsTarget,
+        )}
     </section>
   );
 }

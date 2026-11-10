@@ -185,7 +185,8 @@ function Workspace({
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
   const [activeSlot, setActiveSlot] = useState<SlotName | null>(null);
-  const [showAssumptions, setShowAssumptions] = useState(false);
+  const [slotActionsTarget, setSlotActionsTarget] =
+    useState<HTMLDivElement | null>(null);
   const [retry, setRetry] = useState(0);
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [analysisReset, setAnalysisReset] = useState(0);
@@ -307,7 +308,7 @@ function Workspace({
       const stored = persist(ref, inputs, s);
       setNotice(
         stored
-          ? "가상 사례를 적용했습니다."
+          ? ""
           : "가상 사례를 적용했지만 저장소가 차단되어 현재 탭에서만 사용합니다.",
       );
       return true;
@@ -370,7 +371,6 @@ function Workspace({
     ([key, value]) => value !== draft[key],
   );
   function openAssumptions() {
-    setShowAssumptions(true);
     requestAnimationFrame(() =>
       document.getElementById("settings-panel")?.focus(),
     );
@@ -461,101 +461,9 @@ function Workspace({
                 현재 사례와 가정으로 이동
               </button>
             </div>
-            <section
-              className="card care-assumptions"
-              id="settings-panel"
-              tabIndex={-1}
-              hidden={!showAssumptions}
-            >
-              <StepTitle step="01">전략과 가정</StepTitle>
-              <div className="strategy-tabs">
-                {(Object.keys(strategies) as Strategy[]).map((s) => (
-                  <button
-                    key={s}
-                    aria-pressed={strategy === s}
-                    disabled={busy}
-                    onClick={() => apply(applied, s)}
-                  >
-                    {strategies[s]}
-                  </button>
-                ))}
-              </div>
-              <p className="fine">
-                {strategy === "B"
-                  ? "지금 5천만 + 연 600만 × 5년 + 정년 5천만"
-                  : "지금·정년 합계 1억 + 사후 필요액 보충"}{" "}
-                · 상품 조건 미확인
-              </p>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  void apply();
-                }}
-              >
-                <div className="care-assumptions-fields">
-                  {Object.entries(ref.fields).map(([key, f]) => (
-                    <label className="input-field" key={key}>
-                      <span>{f.label}</span>
-                      <div>
-                        <input
-                          type="number"
-                          required
-                          aria-label={f.label}
-                          value={draft[key] ?? ""}
-                          min={
-                            key === "net_real_return"
-                              ? -10
-                              : f.min / (key === "child_end_age" ? 1 : 10000)
-                          }
-                          max={
-                            key === "net_real_return"
-                              ? 10
-                              : f.max / (key === "child_end_age" ? 1 : 10000)
-                          }
-                          step={
-                            key === "net_real_return"
-                              ? 0.01
-                              : key === "child_end_age"
-                                ? 1
-                                : 0.0001
-                          }
-                          onChange={(e) => {
-                            setDraft({ ...draft, [key]: e.target.value });
-                          }}
-                        />
-                        <span>
-                          {key === "net_real_return"
-                            ? "% / 연"
-                            : key === "child_end_age"
-                              ? "세"
-                              : "만 원 / 월"}
-                        </span>
-                      </div>
-                      <small>{f.source}</small>
-                    </label>
-                  ))}
-                </div>
-                <p className="fine">
-                  월 금액 0~1,000만 원 · 수익률 -10~10% · 종료 나이 56~110세
-                </p>
-                <button className="primary full" type="submit" disabled={busy}>
-                  {busy ? "요청 중…" : "변경 적용"}
-                </button>
-              </form>
-              <button
-                className="text-button full"
-                disabled={busy}
-                onClick={reset}
-              >
-                현재 가정 초기화
-              </button>
-              <p className="fine">
-                설정은 이 브라우저에만 저장됨 · 결과와 자연어 원문은 저장하지
-                않습니다.
-              </p>
-            </section>
             {page === "simulation" && (
               <>
+                <div ref={setSlotActionsTarget} />
                 <section className="card family">
                   <div className="section-title">
                     <StepTitle step="00">지훈 씨 가족</StepTitle>
@@ -797,6 +705,7 @@ function Workspace({
                   : null
               }
               activeSlot={activeSlot}
+              actionsTarget={slotActionsTarget}
               onLoad={(name, slot) =>
                 apply(
                   { ...ref.defaults, ...slot.overrides },
@@ -869,20 +778,98 @@ function Workspace({
                 </p>
               )}
             </div>
-            <div>
-              <button
-                className="care-assumptions-toggle"
-                aria-expanded={showAssumptions}
-                aria-controls="settings-panel"
-                onClick={() =>
-                  showAssumptions
-                    ? setShowAssumptions(false)
-                    : openAssumptions()
-                }
+            <section
+              className="card care-assumptions"
+              id="settings-panel"
+              tabIndex={-1}
+            >
+              <StepTitle step="01">전략과 가정</StepTitle>
+              <div className="strategy-tabs">
+                {(Object.keys(strategies) as Strategy[]).map((s) => (
+                  <button
+                    key={s}
+                    aria-pressed={strategy === s}
+                    disabled={busy}
+                    onClick={() => apply(applied, s)}
+                  >
+                    {strategies[s]}
+                  </button>
+                ))}
+              </div>
+              <p className="fine">
+                {strategy === "B"
+                  ? "지금 5천만 + 연 600만 × 5년 + 정년 5천만"
+                  : "지금·정년 합계 1억 + 사후 필요액 보충"}{" "}
+                · 상품 조건 미확인
+              </p>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void apply();
+                }}
               >
-                {showAssumptions ? "가정 입력 닫기" : "전략과 가정 편집"}
+                <div className="care-assumptions-fields">
+                  {Object.entries(ref.fields).map(([key, f]) => (
+                    <label className="input-field" key={key}>
+                      <span>{f.label}</span>
+                      <div>
+                        <input
+                          type="number"
+                          required
+                          aria-label={f.label}
+                          value={draft[key] ?? ""}
+                          min={
+                            key === "net_real_return"
+                              ? -10
+                              : f.min / (key === "child_end_age" ? 1 : 10000)
+                          }
+                          max={
+                            key === "net_real_return"
+                              ? 10
+                              : f.max / (key === "child_end_age" ? 1 : 10000)
+                          }
+                          step={
+                            key === "net_real_return"
+                              ? 0.01
+                              : key === "child_end_age"
+                                ? 1
+                                : 0.0001
+                          }
+                          onChange={(e) => {
+                            setDraft({ ...draft, [key]: e.target.value });
+                          }}
+                        />
+                        <span>
+                          {key === "net_real_return"
+                            ? "% / 연"
+                            : key === "child_end_age"
+                              ? "세"
+                              : "만 원 / 월"}
+                        </span>
+                      </div>
+                      <small>{f.source}</small>
+                    </label>
+                  ))}
+                </div>
+                <p className="fine">
+                  월 금액 0~1,000만 원 · 수익률 -10~10% · 종료 나이 56~110세
+                </p>
+                <button className="primary full" type="submit" disabled={busy}>
+                  {busy ? "요청 중…" : "변경 적용"}
+                </button>
+              </form>
+              <button
+                className="text-button full"
+                disabled={busy}
+                onClick={reset}
+              >
+                현재 가정 초기화
               </button>
-            </div>
+              <p className="fine">
+                설정은 이 브라우저에만 저장됨 · 결과와 자연어 원문은 저장하지
+                않습니다.
+              </p>
+            </section>
           </aside>
         </div>
         <footer className="contest-footer">
