@@ -1520,16 +1520,10 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
 }
 
 .guided-trial {
-  width: min(36rem, calc(100% - 2rem));
-  max-height: calc(100dvh - 2rem);
-  margin: auto;
-  padding: clamp(18px, 4vw, 28px);
-  overflow: auto;
-  color: #172b45;
-  background: #fff;
-}
-.guided-trial::backdrop {
-  background: rgb(11 28 53 / 63%);
+  position: relative;
+  z-index: 60;
+  /* Keep the guide in the grid and shade the page around its edges. */
+  box-shadow: 0 0 0 200vmax rgb(11 28 53 / 58%);
 }
 .guided-trial .section-title {
   gap: 12px;
