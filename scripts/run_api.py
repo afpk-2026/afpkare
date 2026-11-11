@@ -14,7 +14,7 @@ if path.exists():
             continue
         key, value = line.split("=", 1)
         key = key.strip()
-        if key in {"UPSTAGE_LLM_API_KEY", "UPSTAGE_MODEL", "CARE_DEMO_PASSWORD_HASH"}:
+        if key in {"UPSTAGE_LLM_API_KEY", "UPSTAGE_MODEL", "CARE_AUTH_DB"}:
             parts = shlex.split(value, comments=True)
             env.setdefault(key, parts[0] if parts else "")
 env["CARE_DEMO_LOCAL_HTTP"] = "1"

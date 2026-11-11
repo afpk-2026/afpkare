@@ -22,6 +22,10 @@ export async function sessionRequest(path: string, body?: object) {
 
 export function SessionControl() {
   const [signedIn, setSignedIn] = useState(false);
+  const [registering, setRegistering] = useState(false);
+  const [confirmation, setConfirmation] = useState("");
+  const [notice, setNotice] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -55,10 +59,33 @@ export function SessionControl() {
       setError("HTTPS 주소에서 로그인해 주세요.");
       return;
     }
+    if (registering && password !== confirmation) {
+      setError("비밀번호 확인 값이 다릅니다.");
+      return;
+    }
     setBusy(true);
     setError("");
+    setNotice("");
     try {
-      if (await sessionRequest("/login", { password })) {
+      if (registering) {
+        const response = await fetch("/api/session/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password }),
+          signal: AbortSignal.timeout(10000),
+        });
+        const data = await response.json();
+        if (!response.ok || data.registered !== true)
+          throw new Error(data.message ?? "입력 형식을 확인해 주세요.");
+        setRegistering(false);
+        setPassword("");
+        setConfirmation("");
+        setNotice(
+          "가입이 완료되었습니다. 아이디와 비밀번호로 로그인해 주세요.",
+        );
+        return;
+      }
+      if (await sessionRequest("/login", { username, password })) {
         setPassword("");
         setSignedIn(true);
         dialog.current?.close();
@@ -84,11 +111,14 @@ export function SessionControl() {
     <>
       <button
         type="button"
+        className={signedIn ? undefined : "primary"}
         disabled={busy}
         onClick={() => {
           if (signedIn) void logout();
           else {
             setError("");
+            setNotice("");
+            setRegistering(false);
             dialog.current?.showModal();
           }
         }}
@@ -100,28 +130,99 @@ export function SessionControl() {
         className="card care-session-dialog"
         ref={dialog}
         aria-labelledby="login-title"
-        onClose={() => setPassword("")}
+        aria-describedby="login-help"
+        onClose={() => {
+          setPassword("");
+          setConfirmation("");
+        }}
       >
-        <h2 id="login-title">데모 로그인</h2>
-        <p>운영자에게 받은 공용 데모 비밀번호를 입력하세요.</p>
+        <div className="login-heading">
+          <h2 id="login-title">{registering ? "회원가입" : "로그인"}</h2>
+          <button
+            type="button"
+            aria-label="로그인 창 닫기"
+            onClick={() => dialog.current?.close()}
+          >
+            ×
+          </button>
+        </div>
+        <p id="login-help">
+          로그인 없이도 시뮬레이터와 신탁 자료 검색을 이용할 수 있습니다.
+        </p>
         <form onSubmit={submit}>
-          <label htmlFor="demo-password">데모 비밀번호</label>
+          <label htmlFor="login-username">아이디</label>
+          <input
+            id="login-username"
+            name="username"
+            autoComplete="username"
+            pattern={
+              registering ? "[a-zA-Z0-9][a-zA-Z0-9_.-]{2,31}" : undefined
+            }
+            required
+            maxLength={128}
+            placeholder="아이디를 입력하세요"
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
+          />
+          {registering && (
+            <p className="fine">
+              아이디는 영문·숫자로 시작하는 3~32자입니다. 점·밑줄·하이픈을
+              사용할 수 있으며 대소문자를 구분하지 않습니다.
+            </p>
+          )}
+          <label htmlFor="demo-password">비밀번호</label>
           <input
             id="demo-password"
+            name="password"
+            placeholder="비밀번호를 입력하세요"
             type="password"
-            autoComplete="current-password"
+            autoComplete={registering ? "new-password" : "current-password"}
+            minLength={registering ? 12 : undefined}
             required
             maxLength={128}
             value={password}
             onChange={(event) => setPassword(event.target.value)}
           />
+          {registering && (
+            <>
+              <p className="fine">비밀번호는 12~128자로 입력하세요.</p>
+              <label htmlFor="password-confirmation">비밀번호 확인</label>
+              <input
+                id="password-confirmation"
+                type="password"
+                autoComplete="new-password"
+                required
+                maxLength={128}
+                value={confirmation}
+                onChange={(event) => setConfirmation(event.target.value)}
+              />
+            </>
+          )}
           <button className="primary" disabled={busy}>
-            {busy ? "확인 중…" : "로그인"}
+            {busy ? "확인 중…" : registering ? "가입하기" : "로그인"}
           </button>
-          <button type="button" onClick={() => dialog.current?.close()}>
-            닫기
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => {
+              setRegistering(!registering);
+              setPassword("");
+              setConfirmation("");
+              setError("");
+              setNotice("");
+            }}
+          >
+            {registering ? "로그인으로 돌아가기" : "계정 만들기"}
+          </button>
+          <button
+            className="login-guest"
+            type="button"
+            onClick={() => dialog.current?.close()}
+          >
+            로그인 없이 계속하기
           </button>
         </form>
+        {notice && <p role="status">{notice}</p>}
         {error && (
           <p role="alert" className="error">
             {error}
@@ -216,7 +317,11 @@ export function Entrance({ onEnter }: { onEnter: () => void }) {
             </button>
           </p>
         )}
-        <TrustChat sources={sources} request={null} formulaHref="#formula-panel" />
+        <TrustChat
+          sources={sources}
+          request={null}
+          formulaHref="#formula-panel"
+        />
       </FloatingAssistant>
     </div>
   );

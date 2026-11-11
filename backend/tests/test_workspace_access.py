@@ -6,27 +6,24 @@ from app.main import app
 
 
 @pytest.fixture
-def demo(monkeypatch):
+def demo(monkeypatch, tmp_path):
     password = "test-demo-password-000"
-    salt = bytes(16)
-    monkeypatch.setenv(
-        "CARE_DEMO_PASSWORD_HASH", f"{salt.hex()}:{auth.password_hash(password, salt).hex()}"
-    )
+    monkeypatch.setenv("CARE_AUTH_DB", str(tmp_path / "accounts.sqlite3"))
+    auth.create_account("tester", password)
     monkeypatch.delenv("CARE_DEMO_LOCAL_HTTP", raising=False)
     yield TestClient(app, base_url="https://testserver"), password
-    auth.sessions.clear()
 
 
 def test_guest_simulation_and_optional_session(demo):
     client, password = demo
-    assert client.get("/api/health").json()["demo_login_ready"]
+    assert client.get("/api/health").json()["account_login_enabled"]
     assert client.get("/api/session").json() == {"authenticated": False}
     ref = client.get("/api/reference-case").json()
     calculated = client.post("/api/simulations", json={"case_id": ref["case_id"], "strategy": "B"})
     assert calculated.json()["status"] == "calculated"
     assert client.post("/api/trust-explain", json={"source_ids": ["kb-care"]}).status_code == 200
-    assert client.post("/api/session/login", json={"password": "wrong"}).status_code == 401
-    response = client.post("/api/session/login", json={"password": password})
+    assert client.post("/api/session/login", json={"username": "tester", "password": "wrong"}).status_code == 401
+    response = client.post("/api/session/login", json={"username": "tester", "password": password})
     assert response.json() == {"authenticated": True}
     cookie = response.headers["set-cookie"].lower()
     assert all(flag in cookie for flag in ("httponly", "secure", "samesite=strict"))
@@ -38,11 +35,11 @@ def test_guest_simulation_and_optional_session(demo):
     assert client.get("/api/reference-case").status_code == 200
 
 
-def test_login_requires_https_and_configured_secret(demo, monkeypatch):
+def test_login_requires_https_and_matching_account(demo, monkeypatch):
     client, password = demo
-    assert client.post("http://testserver/api/session/login", json={"password": password}).status_code == 403
-    monkeypatch.delenv("CARE_DEMO_PASSWORD_HASH")
-    assert client.post("/api/session/login", json={"password": password}).status_code == 503
+    assert client.post("http://testserver/api/session/login", json={"username": "tester", "password": password}).status_code == 403
+    assert client.post("/api/session/login", json={"username": "unknown", "password": password}).status_code == 401
+    assert client.post("/api/session/login", json={"password": password}).status_code == 422
 
 
 def test_benefit_curves_use_selected_survivor_pension(demo):
@@ -64,7 +61,7 @@ def test_benefit_curves_use_selected_survivor_pension(demo):
 
 def test_sources_allowlist_keeps_unreviewed_text_out_of_provider(demo, monkeypatch):
     client, password = demo
-    client.post("/api/session/login", json={"password": password})
+    client.post("/api/session/login", json={"username": "tester", "password": password})
     monkeypatch.delenv("UPSTAGE_LLM_API_KEY", raising=False)
     catalog = client.get("/api/trust-sources").json()["sources"]
     assert len([source for source in catalog if source["bank"]]) == 8
@@ -123,3 +120,31 @@ def test_semantic_search_uses_retrieved_source_ids_and_degrades_to_keywords(demo
         "/api/trust-explain", json={"semantic_query": query, "source_ids": ["kb-care"]}
     )
     assert response.json() == {"mode": "official_sources", "sources": [trust.BY_ID["kb-care"]]}
+
+
+def test_registration_persistence_and_independent_sessions(demo, monkeypatch):
+    client, _ = demo
+    other = TestClient(app, base_url="https://testserver")
+    password = "individual-password-123"
+    body = {"username": "Second.User", "password": password}
+    assert client.post("/api/session/register", json=body).status_code == 201
+    assert client.post("/api/session/register", json={**body, "username": "second.user"}).status_code == 422
+    assert client.post("/api/session/register", json={**body, "password": "short"}).status_code == 422
+    assert client.post("/api/session/register", json={**body, "username": "bad name"}).status_code == 422
+    assert client.post("http://testserver/api/session/register", json=body).status_code == 403
+
+    assert client.post("/api/session/login", json=body).json() == {"authenticated": True}
+    assert other.post("/api/session/login", json={"username": "tester", "password": "test-demo-password-000"}).json() == {"authenticated": True}
+    token = client.cookies[auth.COOKIE]
+    # A new client can read a persisted session, with no in-memory authentication state.
+    restored = TestClient(app, base_url="https://testserver")
+    restored.cookies.set(auth.COOKIE, token)
+    assert restored.get("/api/session").json() == {"authenticated": True}
+    client.post("/api/session/logout", json={})
+    assert restored.get("/api/session").json() == {"authenticated": False}
+    assert other.get("/api/session").json() == {"authenticated": True}
+    with auth.database() as connection:
+        row = connection.execute("SELECT password_hash FROM accounts WHERE username = 'second.user'").fetchone()
+        assert row[0] != password.encode()
+        connection.execute("UPDATE sessions SET expires = 0")
+    assert other.get("/api/session").json() == {"authenticated": False}

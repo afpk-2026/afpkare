@@ -1268,3 +1268,34 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
   .care-hero { grid-template-columns: 1fr; }
   .landing-fund-flow { gap: 10px; }
 }
+
+.care-session-dialog { padding: 28px; }
+.login-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+.login-heading h2 { margin: 0; }
+.login-heading button {
+  border: 0;
+  padding: 4px 10px;
+  font-size: 24px;
+  background: transparent;
+}
+.care-session-dialog #login-help {
+  color: #53667e;
+  line-height: 1.7;
+  margin: 16px 0 24px;
+}
+.care-session-dialog form { display: grid; gap: 10px; }
+.care-session-dialog input {
+  padding: 12px;
+  border: 1px solid #a3b3c7;
+  border-radius: 8px;
+  background: white;
+  color: #172b45;
+}
+.care-session-dialog label:not(:first-child) { margin-top: 8px; }
+.care-session-dialog .primary { margin-top: 12px; padding: 12px; }
+.care-session-dialog .login-guest { border: 0; background: transparent; }

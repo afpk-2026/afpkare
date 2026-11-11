@@ -46,7 +46,7 @@ def verify_calculations():
 verify_calculations()
 password = os.getenv("CARE_SMOKE_PASSWORD")
 if password:
-    assert request("/api/session/login", {"password": password})["authenticated"]
+    assert request("/api/session/login", {"username": os.environ["CARE_SMOKE_USERNAME"], "password": password})["authenticated"]
     assert request("/api/session") == {"authenticated": True}
     assert request("/api/session/logout", {}) == {"authenticated": False}
     assert request("/api/session") == {"authenticated": False}

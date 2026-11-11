@@ -25,7 +25,7 @@ backend/.venv/bin/python scripts/run_api.py
 npm run dev --prefix frontend
 ```
 
-개발 화면은 `http://127.0.0.1:5173/`, API는 8000 포트다. 시뮬레이터는 비로그인으로 실행되며 공용 데모 로그인은 헤더에서 선택한다. 로컬 실행기는 루프백에서 개발용 HTTP 로그인을 허용하며 운영 로그인에는 HTTPS가 필요하다. `.env`의 `UPSTAGE_LLM_API_KEY`를 서버에서만 읽는다. `UPSTAGE_MODEL` 기본값은 `solar-mini4`다. 키가 없어도 수동 계산은 동작한다.
+개발 화면은 `http://127.0.0.1:5173/`, API는 8000 포트다. 시뮬레이터는 비로그인으로 실행되며 개인 계정 로그인은 헤더에서 선택한다. 로컬 실행기는 루프백에서 개발용 HTTP 로그인을 허용하며 운영 로그인에는 HTTPS가 필요하다. `.env`의 `UPSTAGE_LLM_API_KEY`를 서버에서만 읽는다. `UPSTAGE_MODEL` 기본값은 `solar-mini4`다. 키가 없어도 수동 계산은 동작한다.
 
 ```bash
 docker compose up -d --build --wait
@@ -40,7 +40,7 @@ terraform -chdir=infra test
 
 ## 계산의 의미
 
-가상 사례의 B/B′를 가정 기반으로 직접 계산한다. 보고서 화면은 v1.5 기준값으로 열리며 현재 가정 및 저장 슬롯 보기에서 83세·95세·선택 종료 나이 비용(생활비 부족액 × 3 + 무신탁 대비 급여 감소분)을 확인할 수 있다. 보고서 고정값과 기관 해석 미확인 내용을 화면에서 구별한다. 상세 계산 계약은 `.agents/docs/arithmetic.md` 6절과 `backend/app/assumptions.json`, 남은 보강은 `.agents/docs/todo.md`를 참고한다. 공용 데모 로그인은 가입 정보를 받지 않는다. 적용 입력과 전략, 사례 슬롯, 접근성 설정은 브라우저에 보관한다. 서버 세션은 8시간 뒤 만료되며 로그아웃이나 서버 재시작 시 폐기한다.
+가상 사례의 B/B′를 가정 기반으로 직접 계산한다. 보고서 화면은 v1.5 기준값으로 열리며 현재 가정 및 저장 슬롯 보기에서 83세·95세·선택 종료 나이 비용(생활비 부족액 × 3 + 무신탁 대비 급여 감소분)을 확인할 수 있다. 보고서 고정값과 기관 해석 미확인 내용을 화면에서 구별한다. 상세 계산 계약은 `.agents/docs/arithmetic.md` 6절과 `backend/app/assumptions.json`, 남은 보강은 `.agents/docs/todo.md`를 참고한다. 회원가입은 아이디와 비밀번호를 받으며 비밀번호는 계정별 salt를 사용한 scrypt 해시로 저장한다. 적용 입력과 전략, 사례 슬롯, 접근성 설정은 브라우저에 보관한다. 계정과 세션은 SQLite에 저장한다. 세션은 8시간 뒤 만료되고 로그아웃 시 폐기되며 서버 재시작 후에도 유지된다. 사례 슬롯은 브라우저 저장소를 사용하므로 같은 브라우저의 다른 계정에서도 공유된다.
 
 ## Vultr 배포
 
@@ -84,8 +84,13 @@ scripts/deploy.sh SERVER_IPV4 ~/.local/state/no-named/deploy_ed25519 ~/.config/n
 사용자 승인으로 현재 코드와 보고서 재현 엔진을 원격 main에 직접 반영한다. 이후 main push는 GitHub Actions 시험(백엔드76개·프론트19개·빌드·Terraform 검증) 통과 후 기존 Vultr 서버에 자동 배포된다. `.github/workflows/checks.yml`과 `.agents/docs/cicd.md` 참조. 업스테이지 키는 서버에만 유지하며 SSH 공개 범위를 추가로 열지 않는다. 공개 health의 release는 `main-커밋앞12자리`로 확인한다. 앞선 P0/P1의 수치·계약·배포 기록은 당시 버전의 이력이다.
 
 
-## 0.5.0 데모 로그인 배포 준비
+## 개인 계정 로그인
 
-운영자가 별도로 정한 비밀번호를 해시로 생성한 뒤 서버의 권한 600인 `/opt/family-finance/runtime/app.env`에 `CARE_DEMO_PASSWORD_HASH`를 설정한다. 비밀번호는 운영자가 승인한 시연 참여자에게 전달한다. CI 공개 점검은 비로그인 B/B′ 계산을 확인한다. 데모 세션 확인이 필요하면 임시 실행 환경으로 `CARE_SMOKE_PASSWORD`를 전달해 `scripts/check_deployment.py`를 실행한다.
+헤더의 로그인 → 계정 만들기에서 가입한다. 아이디는 영문·숫자로 시작하는 3~32자이며 점·밑줄·하이픈을 허용하고 대소문자를 구분하지 않는다. 비밀번호는 12~128자다. 기존 공용 데모 비밀번호는 개인 계정으로 자동 전환되지 않는다.
+
+로컬 계정 DB는 기본적으로 `~/.local/share/care-partners/accounts.sqlite3`에 생성된다. `CARE_AUTH_DB`로 경로를 지정할 수 있다. Docker는 `accounts` named volume의 `/var/lib/care-partners/accounts.sqlite3`를 사용한다. 배포와 컨테이너 재생성 시 이 볼륨을 보존한다. 계정 DB를 삭제하거나 `docker compose down -v`를 실행하면 계정과 세션이 삭제된다.
+
+운영자가 계정을 생성할 때는 컨테이너에서 `python -m app.auth`를 실행해 아이디·비밀번호를 입력할 수 있다. 로그인 공개 점검에는 `CARE_SMOKE_USERNAME`과 `CARE_SMOKE_PASSWORD`를 함께 전달한다. 기본 CI 공개 점검은 비로그인 계산을 확인한다. 회원가입과 로그인에는 HTTPS가 필요하며 로컬 실행기는 루프백 HTTP를 허용한다.
+
 
 신탁 자료의 기본 검색은 브라우저에서 키워드를 대조한다. 사용자가 AI 의미 검색을 선택하면 Upstage Solar Embedding 2로 검토된 은행 상품 자료 및 보고서 용어의 요약을 검색한다. Solar가 검색 후보 안에서 출처를 선택하고 화면은 등록된 요약과 원문 링크를 표시한다. 임베딩이 실패하면 Solar가 검토된 전체 자료에서 출처를 고른다. 외부 검색을 사용할 수 없으면 키워드 검색 결과를 사용한다.
