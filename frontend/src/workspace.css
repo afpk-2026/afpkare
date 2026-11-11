@@ -1519,16 +1519,16 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
   outline-offset: 2px;
 }
 
-.guided-trial {
+.guide-spotlight {
   position: relative;
   z-index: 60;
   /* Keep the guide in the grid and shade the page around its edges. */
   box-shadow: 0 0 0 200vmax rgb(11 28 53 / 58%);
 }
-.guided-trial .section-title {
+.guide-spotlight .section-title {
   gap: 12px;
 }
-.guided-trial .section-title h2 {
+.guide-spotlight .section-title h2 {
   margin: 0;
 }
 .guided-trial button[data-guide-focus]:not(:disabled) {
@@ -1540,3 +1540,6 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
   background: #f2f7fd;
   color: #172b45;
 }
+
+.guide-explore-action { margin-top: 14px; }
+.guide-shortcuts .consumer-links a { border-color: #a6c6e7; }

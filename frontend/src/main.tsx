@@ -474,41 +474,6 @@ function Workspace({
                   disabled={busy}
                   onApply={(inputs) => apply(inputs, "B")}
                 />
-                <nav className="consumer-links" aria-label="다음으로 살펴보기">
-                  {[
-                    [
-                      "#events",
-                      "상황별 사례로 시작",
-                      "생활비 변화나 은퇴 등 우리 가족과 비슷한 상황을 살펴보세요.",
-                      "01",
-                    ],
-                    [
-                      "#report",
-                      "보고서 결과 비교",
-                      "저장한 사례를 골라 진단과 준비 방법을 비교해 보세요.",
-                      "02",
-                    ],
-                    [
-                      "#trusts",
-                      "목적에 맞는 신탁 찾기",
-                      "돌봄과 생활비 준비에 필요한 상품과 공식 자료를 찾아보세요.",
-                      "03",
-                    ],
-                  ].map(([href, title, description, number]) => (
-                    <a href={href} key={href}>
-                      <span className="consumer-link-number" aria-hidden="true">
-                        {number}
-                      </span>
-                      <strong>{title}</strong>
-                      <span className="consumer-link-description">
-                        {description}
-                      </span>
-                      <span className="consumer-link-arrow" aria-hidden="true">
-                        ↗
-                      </span>
-                    </a>
-                  ))}
-                </nav>
                 <div ref={setSlotActionsTarget} />
                 <section className="card family">
                   <div className="section-title">
