@@ -1259,6 +1259,8 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
 }
 .care-session-dialog #login-help {
   text-align: center;
+  word-break: keep-all;
+  text-wrap: balance;
   color: #53667e;
   line-height: 1.7;
   margin: 16px 0 24px;

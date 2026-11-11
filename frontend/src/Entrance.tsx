@@ -118,7 +118,9 @@ export function SessionControl() {
           </button>
         </div>
         <p id="login-help">
-          로그인 없이도 시뮬레이터와 신탁 자료 검색을 이용할 수 있습니다.
+          로그인 없이도 시뮬레이터와
+          <br />
+          신탁 자료 검색을 이용할 수 있습니다.
         </p>
         <form onSubmit={submit}>
           <label htmlFor="login-username">아이디</label>
