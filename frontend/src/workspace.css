@@ -1155,15 +1155,37 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
   width: 100%;
 }
 
-.care-event-options {
+.care-event-types {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 8px;
+  margin-block: 16px 12px;
+}
+.care-event-types button[aria-pressed="true"] {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #fff;
+}
+.care-event-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 175px), 1fr));
+  gap: 8px;
+}
+.care-event-options button {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  text-align: left;
+  padding: 12px;
+  word-break: keep-all;
 }
 .care-event-options button[aria-pressed="true"] {
   border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+.care-event-options button > span {
   color: var(--primary);
-  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 .care-event-preview {
   margin-top: 1rem;

@@ -39,6 +39,7 @@ import { ChatAssistant } from "./ChatAssistant.tsx";
 import { ReportInsights } from "./ReportInsights.tsx";
 import { FormulaReference } from "./FormulaReference.tsx";
 import { AnalysisWorkspace } from "./AnalysisWorkspace.tsx";
+import { sampleEventGroups } from "./sampleEvents.ts";
 
 const PROJECT_NAME = "AFPKare";
 const TEAM_NAME = "OOOO팀";
@@ -49,26 +50,6 @@ const strategies: Record<Strategy, string> = {
   B: "B · 단계 적립",
   B_PRIME: "B′ · 사후 보충",
 };
-type SampleEvent = { label: string; field: string; value: number };
-const sampleEvents: SampleEvent[] = [
-  {
-    label: "재취업하지 못한 경우",
-    field: "monthly_parent_reemployment_income",
-    value: 0,
-  },
-  {
-    label: "재취업 소득이 월 100만 원인 경우",
-    field: "monthly_parent_reemployment_income",
-    value: 1_000_000,
-  },
-  {
-    label: "생활비가 월 185만 원인 경우",
-    field: "monthly_child_cost",
-    value: 1_850_000,
-  },
-  { label: "83세까지 준비하는 경우", field: "child_end_age", value: 83 },
-  { label: "95세까지 준비하는 경우", field: "child_end_age", value: 95 },
-];
 const caseExamples: { title: string; detail: string; changes: Inputs }[] = [
   {
     title: "생활비가 늘어날 때",
@@ -195,7 +176,8 @@ function Workspace({
     [notice, setNotice] = useState(""),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<SampleEvent | null>(null);
+  const [eventGroup, setEventGroup] = useState(sampleEventGroups[0]);
+  const [eventValue, setEventValue] = useState<number | null>(null);
   const [eventApplied, setEventApplied] = useState(false);
   const [editingSlot, setEditingSlot] = useState<SlotName | null>(null);
   const [activeSlot, setActiveSlot] = useState<SlotName | null>(null);
@@ -741,7 +723,7 @@ function Workspace({
             )}
             <div hidden={page !== "events"}>
               <section className="card">
-                <h2>어떤 상황을 살펴볼까요?</h2>
+                <h2>보고서 기준으로 바로 시작</h2>
                 <p>
                   보고서 기준 가정에서 아래 조건을 바꾼 예시입니다. 적용하면
                   현재 입력이 예시의 가정으로 바뀝니다. 비교할 입력은 먼저
@@ -777,38 +759,70 @@ function Workspace({
               </section>
               <section className="card" id="events-panel">
                 <h2>샘플 사건</h2>
-                <p>살펴볼 상황을 고르고 현재 가정과 비교한 뒤 적용하세요.</p>
+                <p>
+                  유형과 상황을 고르면 현재 가정에서 해당 값만 바꿔 계산할 수
+                  있습니다.
+                </p>
                 <div
-                  className="events care-event-options"
+                  className="care-event-types"
                   role="group"
-                  aria-label="샘플 사건 선택"
+                  aria-label="사건 유형"
                 >
-                  {sampleEvents.map((event) => (
+                  {sampleEventGroups.map((group) => (
                     <button
+                      type="button"
+                      key={group.field}
                       disabled={busy}
-                      key={event.label}
-                      aria-pressed={event === selectedEvent}
+                      aria-pressed={group === eventGroup}
                       onClick={() => {
-                        setSelectedEvent(event);
+                        if (group === eventGroup) return;
+                        setEventGroup(group);
+                        setEventValue(null);
                         setEventApplied(false);
                       }}
                     >
-                      {event.label}
+                      {group.title}
                     </button>
                   ))}
                 </div>
-                {selectedEvent && (
+                <div
+                  className="care-event-options"
+                  role="group"
+                  aria-label={`${eventGroup.title} 상황 선택`}
+                >
+                  {eventGroup.options.map((event) => (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      key={event.value}
+                      aria-pressed={event.value === eventValue}
+                      onClick={() => {
+                        setEventValue(event.value);
+                        setEventApplied(false);
+                      }}
+                    >
+                      <strong>{event.label}</strong>
+                      <span>
+                        {eventGroup.monthly && "월 "}
+                        {display(eventGroup.field, event.value)}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                {eventValue !== null && (
                   <div className="care-event-preview">
-                    <h3>{ref.fields[selectedEvent.field].label}</h3>
+                    <h3>{ref.fields[eventGroup.field].label}</h3>
                     <p>
                       현재{" "}
-                      {display(
-                        selectedEvent.field,
-                        applied[selectedEvent.field],
+                      {eventGroup.monthly && "월 "}
+                      {display(eventGroup.field, applied[eventGroup.field])}
+                      {applied[eventGroup.field] !== eventValue && (
+                        <>
+                          {" → 사건 적용 시 "}
+                          {eventGroup.monthly && "월 "}
+                          {display(eventGroup.field, eventValue)}
+                        </>
                       )}
-                      {" → "}
-                      사건 적용 시{" "}
-                      {display(selectedEvent.field, selectedEvent.value)}
                     </p>
                     {hasUnappliedDraft && (
                       <p className="fine">
@@ -819,20 +833,19 @@ function Workspace({
                     <button
                       className="primary"
                       disabled={
-                        busy ||
-                        applied[selectedEvent.field] === selectedEvent.value
+                        busy || applied[eventGroup.field] === eventValue
                       }
                       onClick={async () => {
                         const appliedEvent = await apply({
                           ...applied,
-                          [selectedEvent.field]: selectedEvent.value,
+                          [eventGroup.field]: eventValue,
                         });
                         setEventApplied(appliedEvent);
                       }}
                     >
                       {busy ? "계산 중…" : "사건 적용하고 계산"}
                     </button>
-                    {applied[selectedEvent.field] === selectedEvent.value && (
+                    {applied[eventGroup.field] === eventValue && (
                       <p role="status">
                         {eventApplied
                           ? "사건을 적용했습니다."
