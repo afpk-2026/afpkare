@@ -1256,7 +1256,7 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
   height: min(620px, calc(100dvh - 110px));
 }
 @media (min-width: 1024px) {
-  .care-home:has(.assistant-panel:not([hidden])) .care-hero {
+  .care-home .care-hero {
     /* Allow for the 420px panel at 80% zoom, its right inset, and a gap. */
     padding-inline-end: max(
       0px,
