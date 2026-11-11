@@ -1195,6 +1195,13 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
   border-radius: 0.75rem;
 }
 
+.trust-semantic-option {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85em;
+}
+
 .care-landing > .formula-reference,
 .care-settings + .formula-reference {
   margin-top: 24px;

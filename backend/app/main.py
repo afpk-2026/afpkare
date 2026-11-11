@@ -304,11 +304,23 @@ async def trust_explain(question: trust.TrustQuestion):
     if any(value not in trust.BY_ID for value in ids):
         return api_status(422, "등록된 신탁 자료를 선택해 주세요.")
     sources = [trust.BY_ID[value] for value in ids]
-    chosen = None
-    if not llm_gate.locked():
-        async with llm_gate:
+    if llm_gate.locked():
+        return {"mode": "official_sources", "sources": sources}
+    async with llm_gate:
+        if question.semantic_query:
+            candidates = await trust.retrieve(question.semantic_query, ids)
+            chosen = await trust.choose_sources(
+                candidates or trust.SOURCES, question.semantic_query
+            )
+            if chosen is not None:
+                return {
+                    "mode": "semantic_llm_sources" if candidates else "llm_sources",
+                    "sources": chosen,
+                }
+            if candidates:
+                return {"mode": "semantic_sources", "sources": candidates[:3]}
+        elif len(sources) > 1:
             chosen = await trust.choose_sources(sources)
-    return {
-        "mode": "llm_sources" if chosen else "official_sources",
-        "sources": chosen or sources,
-    }
+            if chosen:
+                return {"mode": "llm_sources", "sources": chosen}
+    return {"mode": "official_sources", "sources": sources}

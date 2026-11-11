@@ -1,6 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
-from app import auth
+from app import auth, trust
 from app.engine import benefits
 from app.main import app
 
@@ -73,3 +73,53 @@ def test_sources_allowlist_keeps_unreviewed_text_out_of_provider(demo, monkeypat
     response = client.post("/api/trust-explain", json={"source_ids": ["kb-care"]}).json()
     assert response["mode"] == "official_sources"
     assert [source["id"] for source in response["sources"]] == ["kb-care"]
+
+
+def test_semantic_search_uses_retrieved_source_ids_and_degrades_to_keywords(demo, monkeypatch):
+    client, _ = demo
+    query = "부모가 떠난 뒤 보험금을 나눠 지급할 수 있나요?"
+    monkeypatch.setenv("UPSTAGE_LLM_API_KEY", "test-key")
+    monkeypatch.setattr(trust, "passage_vectors", None)
+    index = next(i for i, source in enumerate(trust.SOURCES) if source["id"] == "shinhan-sol")
+    calls = []
+
+    async def embed(client, key, texts, role):
+        calls.append((role, texts))
+        if role == "passage":
+            return [[int(i == j) for j in range(len(texts))] for i in range(len(texts))]
+        return [[int(index == i) for i in range(len(trust.SOURCES))]]
+
+    async def choose(sources, text):
+        assert text == query
+        assert sources[0]["id"] == "shinhan-sol"
+        return sources[:1]
+
+    monkeypatch.setattr(trust, "embed", embed)
+    monkeypatch.setattr(trust, "choose_sources", choose)
+    for _ in range(2):
+        response = client.post("/api/trust-explain", json={"semantic_query": query})
+        assert response.json() == {
+            "mode": "semantic_llm_sources", "sources": [trust.BY_ID["shinhan-sol"]],
+        }
+    assert [role for role, _ in calls] == ["passage", "query", "query"]
+    assert query not in calls[0][1]
+    async def unavailable(*args):
+        return None
+
+    async def choose_from_catalog(sources, text):
+        assert sources == trust.SOURCES
+        assert text == query
+        return [trust.BY_ID["shinhan-sol"]]
+
+    monkeypatch.setattr(trust, "retrieve", unavailable)
+    monkeypatch.setattr(trust, "choose_sources", choose_from_catalog)
+    response = client.post("/api/trust-explain", json={"semantic_query": query})
+    assert response.json() == {
+        "mode": "llm_sources", "sources": [trust.BY_ID["shinhan-sol"]],
+    }
+
+    monkeypatch.setattr(trust, "choose_sources", unavailable)
+    response = client.post(
+        "/api/trust-explain", json={"semantic_query": query, "source_ids": ["kb-care"]}
+    )
+    assert response.json() == {"mode": "official_sources", "sources": [trust.BY_ID["kb-care"]]}

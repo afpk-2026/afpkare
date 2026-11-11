@@ -87,3 +87,5 @@ scripts/deploy.sh SERVER_IPV4 ~/.local/state/no-named/deploy_ed25519 ~/.config/n
 ## 0.5.0 데모 로그인 배포 준비
 
 운영자가 별도로 정한 비밀번호를 해시로 생성한 뒤 서버의 권한 600인 `/opt/family-finance/runtime/app.env`에 `CARE_DEMO_PASSWORD_HASH`를 설정한다. 비밀번호는 운영자가 승인한 시연 참여자에게 전달한다. CI 공개 점검은 비로그인 B/B′ 계산을 확인한다. 데모 세션 확인이 필요하면 임시 실행 환경으로 `CARE_SMOKE_PASSWORD`를 전달해 `scripts/check_deployment.py`를 실행한다.
+
+신탁 자료의 기본 검색은 브라우저에서 키워드를 대조한다. 사용자가 AI 의미 검색을 선택하면 Upstage Solar Embedding 2로 검토된 은행 상품 자료 및 보고서 용어의 요약을 검색한다. Solar가 검색 후보 안에서 출처를 선택하고 화면은 등록된 요약과 원문 링크를 표시한다. 임베딩이 실패하면 Solar가 검토된 전체 자료에서 출처를 고른다. 외부 검색을 사용할 수 없으면 키워드 검색 결과를 사용한다.
