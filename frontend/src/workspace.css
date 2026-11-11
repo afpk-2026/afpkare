@@ -1276,3 +1276,12 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
 .care-session-dialog label:not(:first-child) { margin-top: 8px; }
 .care-session-dialog .primary { margin-top: 12px; padding: 12px; }
 .care-session-dialog .login-guest { border: 0; background: transparent; }
+
+.report-result-navigation,
+.report-journey summary {
+  scroll-margin-top: 20px;
+}
+.report-result-navigation {
+  margin-top: 16px;
+  margin-bottom: 8px;
+}

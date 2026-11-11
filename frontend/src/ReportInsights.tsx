@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useState } from "react";
+import React, { useEffect, useId, useRef, useState } from "react";
 import data from "./report-baseline.json";
 import { money } from "./Chart.tsx";
 import type { Snapshot } from "./analysis.ts";
@@ -247,6 +247,26 @@ export function ReportInsights({
   snapshots: Snapshot[];
 }) {
   const [tab, setTab] = useState(0);
+  const resultTabs = useRef<HTMLDivElement>(null);
+  const resultPanel = useRef<HTMLDivElement>(null);
+  const journeySummary = useRef<HTMLElement>(null);
+  function openResult(index: number) {
+    setTab(index);
+    requestAnimationFrame(() => {
+      resultPanel.current?.focus({ preventScroll: true });
+      resultTabs.current?.scrollIntoView({
+        block: "start",
+        behavior: "instant",
+      });
+    });
+  }
+  function returnToJourney() {
+    journeySummary.current?.focus({ preventScroll: true });
+    journeySummary.current?.scrollIntoView({
+      block: "start",
+      behavior: "instant",
+    });
+  }
   const [showApplied, setShowApplied] = useState(false);
   const result = showApplied ? appliedResult : null;
   const comparison = showApplied ? appliedComparison : null;
@@ -330,7 +350,7 @@ export function ReportInsights({
         확인하세요.
       </p>
       <details open className="report-journey">
-        <summary>보고서의 전체 흐름 따라가기</summary>
+        <summary ref={journeySummary}>보고서의 전체 흐름 따라가기</summary>
         <ol>
           <li>
             <strong>가족의 목표와 제약</strong>
@@ -346,7 +366,7 @@ export function ReportInsights({
               소득·지출·재산으로 저축 여력과 준비 수준을 살펴봅니다. 표 7의 설계
               전 지표와 적용 후 결과를 함께 읽어보세요.
             </p>
-            <button onClick={() => setTab(0)}>재무 진단 확인</button>
+            <button onClick={() => openResult(0)}>재무 진단 확인</button>
           </li>
           <li>
             <strong>부족액과 필요 자금 분석</strong>
@@ -354,8 +374,8 @@ export function ReportInsights({
               생활비에서 연금·급여를 빼고 신탁 인출과 수익을 반영합니다. 65세
               급여 전환 전후를 확인하세요.
             </p>
-            <button onClick={() => setTab(2)}>신탁 경로 확인</button>{" "}
-            <button onClick={() => setTab(3)}>급여 변화 확인</button>{" "}
+            <button onClick={() => openResult(2)}>신탁 경로 확인</button>{" "}
+            <button onClick={() => openResult(3)}>급여 변화 확인</button>{" "}
             <a href="#formulas">계산 산식 확인</a>
           </li>
           <li>
@@ -364,7 +384,7 @@ export function ReportInsights({
               단계 적립과 사후 보충의 비용·부족액·부모 자산을 비교합니다. 보고서
               기준 보기에서 네 사건에 대한 표 9의 결론을 확인할 수 있습니다.
             </p>
-            <button onClick={() => setTab(1)}>대안 비교 확인</button>
+            <button onClick={() => openResult(1)}>대안 비교 확인</button>
           </li>
           <li>
             <strong>계약과 실행 준비</strong>
@@ -372,7 +392,7 @@ export function ReportInsights({
               신탁·보험·세무·돌봄 지원의 담당과 일정을 확인하고 상품 공식 문서로
               실행 조건을 대조하세요.
             </p>
-            <button onClick={() => setTab(4)}>실행 일정 확인</button>{" "}
+            <button onClick={() => openResult(4)}>실행 일정 확인</button>{" "}
             <a href="#trusts">신탁 상품 찾아보기</a>
           </li>
           <li>
@@ -405,6 +425,11 @@ export function ReportInsights({
             : "적용 결과를 불러오고 있어요."}
         </p>
       )}
+      <div ref={resultTabs} className="report-result-navigation">
+        <button className="text-button" onClick={returnToJourney}>
+          ↑ 보고서 흐름으로 돌아가기
+        </button>
+      </div>
       <div className="report-tabs" role="tablist" aria-label="보고서 참고 자료">
         {tabs.map((label, i) => (
           <button
@@ -434,6 +459,7 @@ export function ReportInsights({
         ))}
       </div>
       <div
+        ref={resultPanel}
         role="tabpanel"
         id={`${id}-panel`}
         aria-labelledby={`${id}-tab-${tab}`}
