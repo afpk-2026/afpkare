@@ -199,7 +199,7 @@ export function Entrance({ onEnter }: { onEnter: () => void }) {
     <div className="care-home">
       <header className="care-header">
         <a href="#" className="brand">
-          <img className="afpkare-logo" src="/brand/afpkare-logo.png" alt="AFPKare" width="2184" height="710" />
+          <img className="afpkare-logo" src="/brand/afpkare-logo.png" alt="AFPKare" width="2172" height="724" />
         </a>
         <nav aria-label="홈 메뉴">
           <a href="#about">서비스 소개</a>

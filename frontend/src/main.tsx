@@ -413,7 +413,7 @@ function Workspace({
     <>
       <header className="topbar contest-header">
         <a className="brand" href="#simulation">
-          <img className="afpkare-logo" src="/brand/afpkare-logo.png" alt={PROJECT_NAME} width="2184" height="710" />
+          <img className="afpkare-logo" src="/brand/afpkare-logo.png" alt={PROJECT_NAME} width="2172" height="724" />
         </a>
         <p className="contest-heading">{CONTEST_TITLE}</p>
         <div className="header-credit">
