@@ -146,6 +146,8 @@ export function LandingPreview() {
         ))}
       </div>
       <svg
+        key={slide.label}
+        className="landing-slide-chart"
         viewBox="0 0 580 270"
         role="img"
         aria-label={`${slide.label} · 56세부터 95세까지의 연말 신탁 잔액`}
