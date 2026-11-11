@@ -285,15 +285,6 @@ export function GuidedTrial({
             {error}
           </p>
         )}
-        <div className="guide-explore-action">
-          <button
-            type="button"
-            disabled={applying}
-            onClick={() => finish("shortcuts")}
-          >
-            다른 기능 둘러보기
-          </button>
-        </div>
       </section>
       <section
         ref={shortcuts}
