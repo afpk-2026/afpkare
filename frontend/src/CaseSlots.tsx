@@ -5,15 +5,15 @@ import { requestSimulation, type Reference } from "./simulation.ts";
 import { validInputs, type Saved } from "./storage.ts";
 
 const key = "family-finance:case-slots";
-const names = ["A", "B", "C", "D"] as const;
-export type SlotName = (typeof names)[number];
-type Slots = Partial<Record<SlotName, Saved>>;
+export const slotNames = ["A", "B", "C", "D"] as const;
+export type SlotName = (typeof slotNames)[number];
+export type Slots = Partial<Record<SlotName, Saved>>;
 
 function readSlots(reference: Reference): Slots {
   try {
     const data = JSON.parse(localStorage.getItem(key) ?? "{}");
     const slots: Slots = {};
-    for (const name of names) {
+    for (const name of slotNames) {
       const entry = data?.[name];
       if (
         entry &&
@@ -38,8 +38,49 @@ function readSlots(reference: Reference): Slots {
   }
 }
 
+export function useCaseSlots(reference: Reference | null) {
+  const [slots, setSlots] = useState<Slots>({});
+  useEffect(() => {
+    if (!reference) return;
+    setSlots(readSlots(reference));
+    const update = (event: StorageEvent) => {
+      if (!event.key || event.key === key) setSlots(readSlots(reference));
+    };
+    window.addEventListener("storage", update);
+    return () => window.removeEventListener("storage", update);
+  }, [reference]);
+  function write(name: SlotName, value?: Saved): boolean {
+    if (!reference) return false;
+    try {
+      const next = readSlots(reference);
+      if (value) next[name] = value;
+      else delete next[name];
+      localStorage.setItem(key, JSON.stringify(next));
+      setSlots(next);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  function copy(value: Saved): SlotName | null {
+    if (!reference) return null;
+    const fresh = readSlots(reference);
+    const name = slotNames.find((name) => !fresh[name]);
+    return name && write(name, value) ? name : null;
+  }
+  return { slots, write, copy };
+}
+
+export function slotLabel(name: string, saved: Saved, reference: Reference) {
+  const monthly =
+    saved.overrides.monthly_child_cost ?? reference.defaults.monthly_child_cost;
+  return `사례 ${name} · 생활비 ${(monthly / 10000).toLocaleString("ko-KR")}만 원`;
+}
+
 export function CaseSlots({
   reference,
+  slots,
+  onWrite,
   current,
   disabled,
   activeSlot,
@@ -49,6 +90,8 @@ export function CaseSlots({
   onCompare,
 }: {
   reference: Reference;
+  slots: Slots;
+  onWrite: (name: SlotName, value?: Saved) => boolean;
   current: Saved | null;
   disabled: boolean;
   activeSlot: SlotName | null;
@@ -57,22 +100,14 @@ export function CaseSlots({
   onSave: (name: SlotName, saved: boolean) => void;
   onCompare: (snapshots: Snapshot[]) => void;
 }) {
-  const [slots, setSlots] = useState(() => readSlots(reference));
   const [selected, setSelected] = useState<SlotName>("A");
   const [notice, setNotice] = useState("");
   const [comparisonNotice, setComparisonNotice] = useState("");
   useEffect(() => {
-    const update = (event: StorageEvent) => {
-      if (!event.key || event.key === key) setSlots(readSlots(reference));
-    };
-    window.addEventListener("storage", update);
-    return () => window.removeEventListener("storage", update);
-  }, [reference]);
-  useEffect(() => {
     const controller = new AbortController();
     onCompare([]);
     setComparisonNotice("");
-    const active = names.filter((name) => slots[name]);
+    const active = slotNames.filter((name) => slots[name]);
     if (!active.length) return;
     setComparisonNotice("슬롯 비교를 다시 계산하고 있어요.");
     void Promise.allSettled(
@@ -108,29 +143,25 @@ export function CaseSlots({
     });
     return () => controller.abort();
   }, [slots, reference, onCompare]);
+  useEffect(() => {
+    if (activeSlot) setSelected(activeSlot);
+  }, [activeSlot]);
   function write(value?: Saved) {
-    try {
-      const next = readSlots(reference);
-      if (value) next[selected] = value;
-      else delete next[selected];
-      if (Object.keys(next).length)
-        localStorage.setItem(key, JSON.stringify(next));
-      else localStorage.removeItem(key);
-      setSlots(next);
-      onSave(selected, !!value);
-      setNotice(
-        `슬롯 ${selected}${value ? "에 적용한 가정을 저장했습니다." : "를 비웠습니다."}`,
-      );
-    } catch {
+    if (!onWrite(selected, value)) {
       setNotice("브라우저 저장소에 쓸 수 없습니다.");
+      return;
     }
+    onSave(selected, !!value);
+    setNotice(
+      `사례 ${selected}${value ? "에 적용한 가정을 저장했습니다." : "를 비웠습니다."}`,
+    );
   }
   const slot = slots[selected];
   return (
     <section className="card care-slots" aria-label="가상 사례 저장 슬롯">
       <h2>사례 슬롯</h2>
       <div className="care-slot-buttons" aria-label="슬롯 선택">
-        {names.map((name) => (
+        {slotNames.map((name) => (
           <button
             key={name}
             aria-pressed={selected === name}
@@ -145,7 +176,11 @@ export function CaseSlots({
             }}
           >
             {name}
-            <small>{slots[name] ? "저장됨" : "비어 있음"}</small>
+            <small>
+              {slots[name]
+                ? `생활비 ${((slots[name]!.overrides.monthly_child_cost ?? reference.defaults.monthly_child_cost) / 10000).toLocaleString("ko-KR")}만`
+                : "비어 있음"}
+            </small>
           </button>
         ))}
       </div>

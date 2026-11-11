@@ -1285,3 +1285,34 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
   margin-top: 16px;
   margin-bottom: 8px;
 }
+
+.report-case-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0;
+}
+.report-case-picker [aria-pressed="true"] {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+.report-case-actions { margin-bottom: 12px; }
+.report-journey { margin-top: 24px; }
+
+.guide-progress {
+  display: flex;
+  flex-wrap: wrap;
+  list-style-position: inside;
+  gap: 12px;
+  padding: 0;
+}
+.guide-progress li {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #eef4fb;
+  color: #53667e;
+}
+.guide-progress [aria-current="step"] { background: var(--primary); color: white; }
+.guided-trial label { display: grid; gap: 8px; max-width: 320px; }
+.guided-trial input { padding: 10px; width: 100%; }

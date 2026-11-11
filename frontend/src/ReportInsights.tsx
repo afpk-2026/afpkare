@@ -1,4 +1,10 @@
 import React, { useEffect, useId, useRef, useState } from "react";
+import {
+  slotNames,
+  slotLabel,
+  type SlotName,
+  type Slots,
+} from "./CaseSlots.tsx";
 import data from "./report-baseline.json";
 import { money } from "./Chart.tsx";
 import type { Snapshot } from "./analysis.ts";
@@ -233,6 +239,11 @@ const tabs = [
 ];
 export function ReportInsights({
   children,
+  reference,
+  slots,
+  disabled,
+  onSelectSlot,
+  onCopy,
   reportValues,
   appliedResult,
   appliedComparison,
@@ -240,6 +251,11 @@ export function ReportInsights({
   snapshots,
 }: {
   children: React.ReactNode;
+  reference: Reference;
+  slots: Slots;
+  disabled: boolean;
+  onSelectSlot: (name: SlotName) => Promise<boolean>;
+  onCopy: () => SlotName | null;
   reportValues: Reference["report_values"];
   appliedResult: Result | null;
   appliedComparison: Result | null;
@@ -261,6 +277,7 @@ export function ReportInsights({
     });
   }
   function returnToJourney() {
+    journeySummary.current?.parentElement?.setAttribute("open", "");
     journeySummary.current?.focus({ preventScroll: true });
     journeySummary.current?.scrollIntoView({
       block: "start",
@@ -268,6 +285,7 @@ export function ReportInsights({
     });
   }
   const [showApplied, setShowApplied] = useState(false);
+  const [caseNotice, setCaseNotice] = useState("");
   const result = showApplied ? appliedResult : null;
   const comparison = showApplied ? appliedComparison : null;
   const [curves, setCurves] = useState<BenefitCurves | null>(null);
@@ -349,75 +367,64 @@ export function ReportInsights({
         가족의 목표가 어떤 가정과 계산을 거쳐 실행 계획으로 이어지는지
         확인하세요.
       </p>
-      <details open className="report-journey">
-        <summary ref={journeySummary}>보고서의 전체 흐름 따라가기</summary>
-        <ol>
-          <li>
-            <strong>가족의 목표와 제약</strong>
-            <p>
-              부모 노후를 유지하면서 지훈 씨의 95세까지 생활비를 준비하고,
-              누나의 금전 기여는 0원으로 둡니다.
-            </p>
-            <a href="#simulation">가족과 입력 가정 확인</a>
-          </li>
-          <li>
-            <strong>현황 수집과 재무 진단</strong>
-            <p>
-              소득·지출·재산으로 저축 여력과 준비 수준을 살펴봅니다. 표 7의 설계
-              전 지표와 적용 후 결과를 함께 읽어보세요.
-            </p>
-            <button onClick={() => openResult(0)}>재무 진단 확인</button>
-          </li>
-          <li>
-            <strong>부족액과 필요 자금 분석</strong>
-            <p>
-              생활비에서 연금·급여를 빼고 신탁 인출과 수익을 반영합니다. 65세
-              급여 전환 전후를 확인하세요.
-            </p>
-            <button onClick={() => openResult(2)}>신탁 경로 확인</button>{" "}
-            <button onClick={() => openResult(3)}>급여 변화 확인</button>{" "}
-            <a href="#formulas">계산 산식 확인</a>
-          </li>
-          <li>
-            <strong>대안 선택</strong>
-            <p>
-              단계 적립과 사후 보충의 비용·부족액·부모 자산을 비교합니다. 보고서
-              기준 보기에서 네 사건에 대한 표 9의 결론을 확인할 수 있습니다.
-            </p>
-            <button onClick={() => openResult(1)}>대안 비교 확인</button>
-          </li>
-          <li>
-            <strong>계약과 실행 준비</strong>
-            <p>
-              신탁·보험·세무·돌봄 지원의 담당과 일정을 확인하고 상품 공식 문서로
-              실행 조건을 대조하세요.
-            </p>
-            <button onClick={() => openResult(4)}>실행 일정 확인</button>{" "}
-            <a href="#trusts">신탁 상품 찾아보기</a>
-          </li>
-          <li>
-            <strong>정기 점검과 재설계</strong>
-            <p>
-              생활비나 재취업 소득이 달라졌을 때 다시 계산하고 사례를 저장해
-              비교하세요. 실제 급여 판정과 계약 조건은 기관 확인이 필요합니다.
-            </p>
-            <a href="#events">다른 상황으로 점검하기</a>
-          </li>
-        </ol>
-      </details>
-      <div className="strategy-tabs" role="group" aria-label="보고서 결과 기준">
+
+      <div
+        className="report-case-picker"
+        role="group"
+        aria-label="보고서 사례 선택"
+      >
         <button
+          disabled={disabled}
           aria-pressed={!showApplied}
           onClick={() => setShowApplied(false)}
         >
-          보고서 기준
+          보고서 원본
         </button>
-        <button aria-pressed={showApplied} onClick={() => setShowApplied(true)}>
-          {activeSlot
-            ? `슬롯 ${activeSlot} 및 저장 사례`
-            : "현재 가정 및 저장 슬롯"}
+        {slotNames.map((name) => (
+          <button
+            key={name}
+            disabled={disabled || !slots[name]}
+            aria-pressed={showApplied && activeSlot === name}
+            onClick={async () => {
+              if (await onSelectSlot(name)) {
+                setShowApplied(true);
+                setCaseNotice("");
+              }
+            }}
+          >
+            {slots[name]
+              ? slotLabel(name, slots[name]!, reference)
+              : `사례 ${name} · 비어 있음`}
+          </button>
+        ))}
+        <button
+          disabled={disabled}
+          aria-pressed={showApplied && !activeSlot}
+          onClick={() => setShowApplied(true)}
+        >
+          현재 입력
         </button>
       </div>
+      <div className="report-case-actions">
+        <button
+          disabled={disabled || !appliedResult}
+          onClick={() => {
+            const name = onCopy();
+            if (name) {
+              setShowApplied(true);
+              setCaseNotice(
+                `사례 ${name}로 복사했습니다. 오른쪽 가정을 수정하고 변경 적용하면 이 사례에 저장됩니다.`,
+              );
+            } else
+              setCaseNotice(
+                "빈 저장 공간이 없거나 브라우저 저장소에 쓸 수 없습니다. 시뮬레이터의 사례 슬롯 관리에서 공간을 확인하세요.",
+              );
+          }}
+        >
+          현재 입력 복사해서 수정
+        </button>
+      </div>
+      {caseNotice && <p role="status">{caseNotice}</p>}
       {showApplied && (
         <p className="fine">
           {result
@@ -427,7 +434,7 @@ export function ReportInsights({
       )}
       <div ref={resultTabs} className="report-result-navigation">
         <button className="text-button" onClick={returnToJourney}>
-          ↑ 보고서 흐름으로 돌아가기
+          보고서 전체 흐름 보기
         </button>
       </div>
       <div className="report-tabs" role="tablist" aria-label="보고서 참고 자료">
@@ -974,6 +981,62 @@ export function ReportInsights({
           </p>
         )}
       </div>
+      <details className="report-journey">
+        <summary ref={journeySummary}>보고서의 전체 흐름 따라가기</summary>
+        <ol>
+          <li>
+            <strong>가족의 목표와 제약</strong>
+            <p>
+              부모 노후를 유지하면서 지훈 씨의 95세까지 생활비를 준비하고,
+              누나의 금전 기여는 0원으로 둡니다.
+            </p>
+            <a href="#simulation">가족과 입력 가정 확인</a>
+          </li>
+          <li>
+            <strong>현황 수집과 재무 진단</strong>
+            <p>
+              소득·지출·재산으로 저축 여력과 준비 수준을 살펴봅니다. 표 7의 설계
+              전 지표와 적용 후 결과를 함께 읽어보세요.
+            </p>
+            <button onClick={() => openResult(0)}>재무 진단 확인</button>
+          </li>
+          <li>
+            <strong>부족액과 필요 자금 분석</strong>
+            <p>
+              생활비에서 연금·급여를 빼고 신탁 인출과 수익을 반영합니다. 65세
+              급여 전환 전후를 확인하세요.
+            </p>
+            <button onClick={() => openResult(2)}>신탁 경로 확인</button>{" "}
+            <button onClick={() => openResult(3)}>급여 변화 확인</button>{" "}
+            <a href="#formulas">계산 산식 확인</a>
+          </li>
+          <li>
+            <strong>대안 선택</strong>
+            <p>
+              단계 적립과 사후 보충의 비용·부족액·부모 자산을 비교합니다. 보고서
+              기준 보기에서 네 사건에 대한 표 9의 결론을 확인할 수 있습니다.
+            </p>
+            <button onClick={() => openResult(1)}>대안 비교 확인</button>
+          </li>
+          <li>
+            <strong>계약과 실행 준비</strong>
+            <p>
+              신탁·보험·세무·돌봄 지원의 담당과 일정을 확인하고 상품 공식 문서로
+              실행 조건을 대조하세요.
+            </p>
+            <button onClick={() => openResult(4)}>실행 일정 확인</button>{" "}
+            <a href="#trusts">신탁 상품 찾아보기</a>
+          </li>
+          <li>
+            <strong>정기 점검과 재설계</strong>
+            <p>
+              생활비나 재취업 소득이 달라졌을 때 다시 계산하고 사례를 저장해
+              비교하세요. 실제 급여 판정과 계약 조건은 기관 확인이 필요합니다.
+            </p>
+            <a href="#events">다른 상황으로 점검하기</a>
+          </li>
+        </ol>
+      </details>
     </section>
   );
 }

@@ -1,3 +1,4 @@
+import { GuidedTrial } from "./GuidedTrial.tsx";
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
@@ -16,7 +17,7 @@ import {
   type TrustSource,
   type SourceRequest,
 } from "./TrustLibrary.tsx";
-import { CaseSlots, type SlotName } from "./CaseSlots.tsx";
+import { CaseSlots, useCaseSlots, type SlotName } from "./CaseSlots.tsx";
 import type { Snapshot } from "./analysis.ts";
 import { Entrance, SessionControl } from "./Entrance.tsx";
 import {
@@ -196,10 +197,12 @@ function Workspace({
     [busy, setBusy] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<SampleEvent | null>(null);
   const [eventApplied, setEventApplied] = useState(false);
+  const [editingSlot, setEditingSlot] = useState<SlotName | null>(null);
   const [activeSlot, setActiveSlot] = useState<SlotName | null>(null);
   const [slotActionsTarget, setSlotActionsTarget] =
     useState<HTMLDivElement | null>(null);
   const [retry, setRetry] = useState(0);
+  const caseSlots = useCaseSlots(ref);
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [analysisReset, setAnalysisReset] = useState(0);
   const [exportTarget, setExportTarget] = useState<HTMLDivElement | null>(null);
@@ -292,6 +295,7 @@ function Workspace({
     values?: Inputs,
     s: Strategy = strategy,
     slot: SlotName | null = null,
+    saveEditedSlot = false,
   ) {
     if (!ref || busy) return false;
     setError("");
@@ -309,13 +313,29 @@ function Workspace({
     setBusy(true);
     try {
       await calculate(ref, inputs, s);
-      setActiveSlot(slot);
+      const target = slot ?? (saveEditedSlot ? editingSlot : null);
+      let copiedSaved = true;
+      if (!slot && saveEditedSlot && editingSlot) {
+        copiedSaved = caseSlots.write(editingSlot, {
+          schema_version: 1,
+          case_id: ref.case_id,
+          source_version: ref.source_version,
+          strategy: s,
+          overrides: Object.fromEntries(
+            Object.entries(inputs).filter(
+              ([key, value]) => ref.defaults[key] !== value,
+            ),
+          ),
+        });
+      }
+      if (slot || !saveEditedSlot) setEditingSlot(null);
+      setActiveSlot(copiedSaved ? target : null);
       setApplied(inputs);
       setStrategy(s);
       setDraft(fill(inputs, ref));
       const stored = persist(ref, inputs, s);
       setNotice(
-        stored
+        stored && copiedSaved
           ? ""
           : "가상 사례를 적용했지만 저장소가 차단되어 현재 탭에서만 사용합니다.",
       );
@@ -335,6 +355,7 @@ function Workspace({
     if (!ref || busy) return;
     setError("");
     setActiveSlot(null);
+    setEditingSlot(null);
     setAnalysisReset((v) => v + 1);
     setResult(null);
     setComparison(null);
@@ -463,23 +484,16 @@ function Workspace({
             </div>
             {page === "simulation" && (
               <>
-                <section className="card">
-                  <h2>처음이라면 이렇게 시작하세요</h2>
-                  <p>
-                    지훈 씨 가족의 가상 사례로 부모의 노후와 자녀 생활비를 함께
-                    살펴봅니다. 오른쪽에서 월 생활비 등 다섯 가지 가정을 바꾸고
-                    ‘변경 적용’을 누르세요.
-                  </p>
-                  <div className="consumer-links">
-                    <a href="#events">상황별 사례로 시작</a>
-                    <a href="#report">보고서 흐름 따라가기</a>
-                    <a href="#trusts">목적에 맞는 신탁 찾기</a>
-                  </div>
-                  <p className="fine">
-                    저장 공간 A–D에 비교할 가정을 보관할 수 있습니다. 현재
-                    계산은 지훈 씨 가족의 나이와 재산을 공통으로 사용합니다.
-                  </p>
-                </section>
+                <GuidedTrial
+                  reference={ref}
+                  disabled={busy}
+                  onApply={(inputs) => apply(inputs, "B")}
+                />
+                <div className="consumer-links">
+                  <a href="#events">상황별 사례로 시작</a>
+                  <a href="#report">보고서 결과 비교</a>
+                  <a href="#trusts">목적에 맞는 신탁 찾기</a>
+                </div>
                 <div ref={setSlotActionsTarget} />
                 <section className="card family">
                   <div className="section-title">
@@ -591,6 +605,44 @@ function Workspace({
             {page === "report" && (
               <div className="results">
                 <ReportInsights
+                  reference={ref}
+                  slots={caseSlots.slots}
+                  disabled={busy}
+                  onSelectSlot={(name) => {
+                    const saved = caseSlots.slots[name];
+                    return saved
+                      ? apply(
+                          { ...ref.defaults, ...saved.overrides },
+                          saved.strategy,
+                          name,
+                        )
+                      : Promise.resolve(false);
+                  }}
+                  onCopy={() => {
+                    const name = caseSlots.copy({
+                      schema_version: 1,
+                      case_id: ref.case_id,
+                      source_version: ref.source_version,
+                      strategy,
+                      overrides: Object.fromEntries(
+                        Object.entries(applied).filter(
+                          ([key, value]) => ref.defaults[key] !== value,
+                        ),
+                      ),
+                    });
+                    if (name) {
+                      setActiveSlot(name);
+                      setEditingSlot(name);
+                      requestAnimationFrame(() =>
+                        document
+                          .querySelector<HTMLInputElement>(
+                            "#settings-panel input",
+                          )
+                          ?.focus(),
+                      );
+                    }
+                    return name;
+                  }}
                   reportValues={ref.report_values}
                   appliedResult={result}
                   appliedComparison={comparison}
@@ -778,6 +830,8 @@ function Workspace({
           <aside className="care-rail" aria-label="현재 사례와 설정">
             <CaseSlots
               reference={ref}
+              slots={caseSlots.slots}
+              onWrite={caseSlots.write}
               disabled={busy}
               current={
                 result
@@ -804,8 +858,11 @@ function Workspace({
                 )
               }
               onSave={(name, saved) => {
-                if (saved) setActiveSlot(name);
-                else if (activeSlot === name) setActiveSlot(null);
+                if (saved) {
+                  setActiveSlot(name);
+                  setEditingSlot(null);
+                } else if (activeSlot === name) setActiveSlot(null);
+                if (!saved && editingSlot === name) setEditingSlot(null);
               }}
               onCompare={setSnapshots}
             />
@@ -874,6 +931,12 @@ function Workspace({
               tabIndex={-1}
             >
               <StepTitle step="01">전략과 가정</StepTitle>
+              {editingSlot && (
+                <p className="fine" role="status">
+                  사례 {editingSlot} 수정 중 · 변경 적용하면 이 사례에
+                  저장됩니다.
+                </p>
+              )}
               <div className="strategy-tabs">
                 {(Object.keys(strategies) as Strategy[]).map((s) => (
                   <button
@@ -895,7 +958,7 @@ function Workspace({
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  void apply();
+                  void apply(undefined, strategy, null, true);
                 }}
               >
                 <div className="care-assumptions-fields">
