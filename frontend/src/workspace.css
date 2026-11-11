@@ -1561,3 +1561,34 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
   word-break: keep-all;
 }
 .slot-guide > button { margin-top: 12px; }
+
+.guide-skip {
+  position: fixed;
+  inset-block-start: max(16px, env(safe-area-inset-top));
+  inset-inline-end: max(16px, env(safe-area-inset-right));
+  z-index: 110;
+  min-height: 44px;
+  border-color: #a6c6e7;
+  background: #fff;
+  color: #004ea2;
+  box-shadow: 0 4px 14px rgb(11 28 53 / 18%);
+}
+.guide-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: fit-content;
+  margin: 12px 0 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #eaf2ff;
+  color: #004080;
+  font-weight: 650;
+  line-height: 1.5;
+  word-break: keep-all;
+}
+.guide-hint > span {
+  flex: none;
+  font-size: 1.15em;
+  line-height: 1.3;
+}

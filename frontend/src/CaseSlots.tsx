@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { GuideSkip } from "./GuideSkip.tsx";
 import type { Snapshot } from "./analysis.ts";
 import { requestSimulation, type Reference } from "./simulation.ts";
 import { validInputs, type Saved } from "./storage.ts";
@@ -175,6 +176,7 @@ export function CaseSlots({
       </p>
       <div className="care-slot-actions">
         <button
+          className={guiding ? "primary" : undefined}
           disabled={disabled || !current}
           onClick={() => {
             if (
@@ -221,9 +223,9 @@ export function CaseSlots({
         사례 슬롯
       </h2>
       {guiding && (
-        <p className="slot-guide-copy">
-          빈 슬롯을 고르고 ‘현재 적용값 저장’을 눌러 보세요. 저장한 사례는
-          보고서에서 불러와 다른 사례와 비교할 수 있어요.
+        <p className="guide-hint">
+          <span aria-hidden="true">↓</span> 아래에서 빈 슬롯을 고르고 ‘현재
+          적용값 저장’을 누르세요.
         </p>
       )}
       <div className="care-slot-buttons" aria-label="슬롯 선택">
@@ -253,9 +255,13 @@ export function CaseSlots({
       {guiding ? (
         <>
           {controls}
+          <p className="slot-guide-copy">
+            저장한 사례는 보고서에서 다른 사례와 비교할 수 있어요.
+          </p>
           <button type="button" onClick={onFinishGuide}>
             가이드 마치기
           </button>
+          <GuideSkip onSkip={() => onFinishGuide?.()} />
         </>
       ) : (
         actionsTarget &&

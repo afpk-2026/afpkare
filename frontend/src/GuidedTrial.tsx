@@ -7,6 +7,7 @@ import {
 import { money } from "./Chart.tsx";
 import type { Inputs } from "./storage.ts";
 import { fromDisplay } from "./units.ts";
+import { GuideSkip } from "./GuideSkip.tsx";
 
 const guideKey = "family-finance:guide-seen";
 
@@ -130,6 +131,7 @@ export function GuidedTrial({
 
   return (
     <div className={dim ? "guide-content guide-spotlight" : "guide-content"}>
+      {dim && <GuideSkip disabled={applying} onSkip={() => finish()} />}
       <section
         ref={card}
         className="card guided-trial"
@@ -146,11 +148,6 @@ export function GuidedTrial({
           <h2 id={titleId} tabIndex={-1}>
             처음이신가요?
           </h2>
-          {dim && (
-            <button disabled={applying} onClick={() => finish()}>
-              건너뛰기
-            </button>
-          )}
         </div>
         <ol className="guide-progress" aria-label="체험 단계">
           {["예시 사례 열기", "생활비 바꾸기", "결과 차이 확인"].map(
@@ -167,9 +164,14 @@ export function GuidedTrial({
         {step === 0 && (
           <>
             <p>
-              아래 버튼을 눌러 지훈 씨 가족의 예시를 열어 보세요. 월 생활비를
-              바꾸면 필요한 자금이 얼마나 달라지는지 확인할 수 있어요.
+              지훈 씨 가족의 월 생활비를 바꾸고 필요한 자금이 얼마나 달라지는지
+              확인해 보세요.
             </p>
+            {dim && (
+              <p className="guide-hint">
+                <span aria-hidden="true">↓</span> ‘예시 사례 열기’를 누르세요.
+              </p>
+            )}
             <button
               className="primary"
               disabled={loading || disabled}
@@ -187,6 +189,12 @@ export function GuidedTrial({
               void calculate();
             }}
           >
+            {dim && (
+              <p className="guide-hint">
+                <span aria-hidden="true">↓</span> 월 생활비를 바꾸고 ‘결과 차이
+                확인’을 누르세요.
+              </p>
+            )}
             <label>
               부모 사후 월 생활비 (만 원)
               <input
@@ -241,6 +249,12 @@ export function GuidedTrial({
               56세에 필요한 신탁 잔액을 비교했습니다. 이 가정을 적용하면 자금
               경로와 보고서에서도 결과를 확인할 수 있습니다.
             </p>
+            {dim && (
+              <p className="guide-hint">
+                <span aria-hidden="true">↓</span> ‘이 가정으로 계속하기’를
+                누르면 사례 슬롯 저장으로 이어집니다.
+              </p>
+            )}
             <button
               disabled={disabled || applying}
               className="primary"
