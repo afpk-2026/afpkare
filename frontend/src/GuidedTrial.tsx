@@ -28,15 +28,10 @@ export function GuidedTrial({
   onApply: (inputs: Inputs) => Promise<boolean>;
 }) {
   const [dim, setDim] = useState(() => !hasSeenGuide());
-  const [view, setView] = useState<"trial" | "shortcuts" | "idle">(
-    dim ? "trial" : "idle",
-  );
   const card = useRef<HTMLElement>(null);
-  const shortcuts = useRef<HTMLElement>(null);
   const returnFocus = useRef(false);
   const request = useRef<AbortController | null>(null);
   const titleId = useId();
-  const shortcutsTitleId = useId();
   const [step, setStep] = useState(0);
   const [monthly, setMonthly] = useState("185");
   const [baseline, setBaseline] = useState<Result | null>(null);
@@ -54,24 +49,20 @@ export function GuidedTrial({
       card.current?.querySelector("h2")?.focus({ preventScroll: true });
       return;
     }
-    if (view === "idle" && step === 0) return;
-    if (!disabled || view === "shortcuts") {
-      const panel = view === "shortcuts" ? shortcuts.current : card.current;
-      const target = panel?.querySelector<HTMLElement>("[data-guide-focus]");
+    if (!dim && step === 0) return;
+    if (!disabled) {
+      const target =
+        card.current?.querySelector<HTMLElement>("[data-guide-focus]");
       target?.focus({ preventScroll: true });
       target?.scrollIntoView({ block: "nearest" });
     }
-  }, [view, step, disabled]);
+  }, [dim, step, disabled]);
 
-  function finish(
-    nextView: "shortcuts" | "idle" = "idle",
-    restoreFocus = true,
-  ) {
+  function finish(restoreFocus = true) {
     request.current?.abort();
     setLoading(false);
-    returnFocus.current = nextView === "idle" && restoreFocus;
-    setView(nextView);
-    if (nextView === "idle") setDim(false);
+    returnFocus.current = dim && restoreFocus;
+    setDim(false);
     try {
       localStorage.setItem(guideKey, "1");
     } catch {}
@@ -136,18 +127,14 @@ export function GuidedTrial({
       : null;
 
   return (
-    <>
+    <div className={dim ? "guide-content guide-spotlight" : "guide-content"}>
       <section
         ref={card}
-        className={
-          dim && view === "trial"
-            ? "card guided-trial guide-spotlight"
-            : "card guided-trial"
-        }
+        className="card guided-trial"
         aria-labelledby={titleId}
         aria-busy={loading || applying}
         onKeyDown={(event) => {
-          if (event.key === "Escape" && view === "trial" && !applying) {
+          if (event.key === "Escape" && dim && !applying) {
             event.stopPropagation();
             finish();
           }
@@ -157,7 +144,7 @@ export function GuidedTrial({
           <h2 id={titleId} tabIndex={-1}>
             처음이신가요?
           </h2>
-          {view === "trial" && (
+          {dim && (
             <button disabled={applying} onClick={() => finish()}>
               건너뛰기
             </button>
@@ -258,8 +245,7 @@ export function GuidedTrial({
               onClick={async () => {
                 setApplying(true);
                 try {
-                  if (await onApply(trial.effective_inputs))
-                    finish("shortcuts");
+                  if (await onApply(trial.effective_inputs)) finish();
                   else
                     setError("가정을 적용하지 못했습니다. 다시 시도해 주세요.");
                 } finally {
@@ -286,74 +272,43 @@ export function GuidedTrial({
           </p>
         )}
       </section>
-      <section
-        ref={shortcuts}
-        className={
-          view === "shortcuts"
-            ? `card guide-shortcuts${dim ? " guide-spotlight" : ""}`
-            : undefined
-        }
-        aria-labelledby={view === "shortcuts" ? shortcutsTitleId : undefined}
-        onKeyDown={(event) => {
-          if (view === "shortcuts" && event.key === "Escape") {
-            event.stopPropagation();
-            finish();
-          }
-        }}
-      >
-        {view === "shortcuts" && (
-          <>
-            <div className="section-title">
-              <h2 id={shortcutsTitleId} tabIndex={-1} data-guide-focus>
-                다른 기능 둘러보기
-              </h2>
-              <button type="button" onClick={() => finish()}>
-                가이드 마치기
-              </button>
-            </div>
-            <p>관심 있는 기능을 골라 바로 이동할 수 있어요.</p>
-          </>
-        )}
-        <nav className="consumer-links" aria-label="다음으로 살펴보기">
-          {[
-            [
-              "#events",
-              "상황별 사례로 시작",
-              "생활비 변화나 은퇴 등 우리 가족과 비슷한 상황을 살펴보세요.",
-              "01",
-            ],
-            [
-              "#report",
-              "보고서 결과 비교",
-              "저장한 사례를 골라 진단과 준비 방법을 비교해 보세요.",
-              "02",
-            ],
-            [
-              "#trusts",
-              "목적에 맞는 신탁 찾기",
-              "돌봄과 생활비 준비에 필요한 상품과 공식 자료를 찾아보세요.",
-              "03",
-            ],
-          ].map(([href, title, description, number]) => (
-            <a
-              href={href}
-              key={href}
-              onClick={
-                view === "shortcuts" ? () => finish("idle", false) : undefined
-              }
-            >
-              <span className="consumer-link-number" aria-hidden="true">
-                {number}
-              </span>
-              <strong>{title}</strong>
-              <span className="consumer-link-description">{description}</span>
-              <span className="consumer-link-arrow" aria-hidden="true">
-                ↗
-              </span>
-            </a>
-          ))}
-        </nav>
-      </section>
-    </>
+      <nav className="consumer-links" aria-label="다음으로 살펴보기">
+        {[
+          [
+            "#events",
+            "상황별 사례로 시작",
+            "생활비 변화나 은퇴 등 우리 가족과 비슷한 상황을 살펴보세요.",
+            "01",
+          ],
+          [
+            "#report",
+            "보고서 결과 비교",
+            "저장한 사례를 골라 진단과 준비 방법을 비교해 보세요.",
+            "02",
+          ],
+          [
+            "#trusts",
+            "목적에 맞는 신탁 찾기",
+            "돌봄과 생활비 준비에 필요한 상품과 공식 자료를 찾아보세요.",
+            "03",
+          ],
+        ].map(([href, title, description, number]) => (
+          <a
+            href={href}
+            key={href}
+            onClick={dim ? () => finish(false) : undefined}
+          >
+            <span className="consumer-link-number" aria-hidden="true">
+              {number}
+            </span>
+            <strong>{title}</strong>
+            <span className="consumer-link-description">{description}</span>
+            <span className="consumer-link-arrow" aria-hidden="true">
+              ↗
+            </span>
+          </a>
+        ))}
+      </nav>
+    </div>
   );
 }
