@@ -1557,6 +1557,7 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
 
 .care-rail:has(> .slot-guide) { z-index: 60; }
 .slot-guide-copy {
+  margin: 0;
   line-height: 1.6;
   word-break: keep-all;
 }

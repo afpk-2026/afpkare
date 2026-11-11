@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { GuideSkip } from "./GuideSkip.tsx";
 import type { Snapshot } from "./analysis.ts";
@@ -104,12 +104,23 @@ export function CaseSlots({
   onCompare: (snapshots: Snapshot[]) => void;
 }) {
   const heading = useRef<HTMLHeadingElement>(null);
+  const finishButton = useRef<HTMLButtonElement>(null);
+  const completionId = useId();
+  const [savedGuideSlot, setSavedGuideSlot] = useState<SlotName | null>(null);
   const guiding = !!onFinishGuide;
+  const guideCompleted =
+    guiding && savedGuideSlot !== null && !!slots[savedGuideSlot];
   useEffect(() => {
     if (!guiding) return;
+    setSavedGuideSlot(null);
     heading.current?.focus({ preventScroll: true });
     heading.current?.scrollIntoView({ block: "nearest" });
   }, [guiding]);
+  useEffect(() => {
+    if (!guideCompleted) return;
+    finishButton.current?.focus({ preventScroll: true });
+    finishButton.current?.scrollIntoView({ block: "nearest" });
+  }, [guideCompleted]);
   const [selected, setSelected] = useState<SlotName>("A");
   const [notice, setNotice] = useState("");
   const [comparisonNotice, setComparisonNotice] = useState("");
@@ -162,6 +173,7 @@ export function CaseSlots({
       return;
     }
     onSave(selected, !!value);
+    if (guiding && value) setSavedGuideSlot(selected);
     setNotice(
       `사례 ${selected}${value ? "에 적용한 가정을 저장했습니다." : "를 비웠습니다."}`,
     );
@@ -176,7 +188,7 @@ export function CaseSlots({
       </p>
       <div className="care-slot-actions">
         <button
-          className={guiding ? "primary" : undefined}
+          className={guiding && !guideCompleted ? "primary" : undefined}
           disabled={disabled || !current}
           onClick={() => {
             if (
@@ -222,7 +234,7 @@ export function CaseSlots({
       <h2 ref={heading} tabIndex={guiding ? -1 : undefined}>
         사례 슬롯
       </h2>
-      {guiding && (
+      {guiding && !guideCompleted && (
         <p className="guide-hint">
           <span aria-hidden="true">↓</span> 아래에서 빈 슬롯을 고르고 ‘현재
           적용값 저장’을 누르세요.
@@ -255,12 +267,28 @@ export function CaseSlots({
       {guiding ? (
         <>
           {controls}
-          <p className="slot-guide-copy">
-            저장한 사례는 보고서에서 다른 사례와 비교할 수 있어요.
-          </p>
-          <button type="button" onClick={onFinishGuide}>
-            가이드 마치기
-          </button>
+          {guideCompleted && (
+            <>
+              <div className="guide-hint">
+                <span aria-hidden="true">↓</span>
+                <p id={completionId} className="slot-guide-copy">
+                  <strong>이제 AFPKare에서 저장한 사례를 비교해 보세요!</strong>
+                  <br />
+                  아래 ‘가이드 마치기’를 누른 뒤 ‘보고서 진단과 대안’에서 저장한
+                  사례를 열 수 있어요.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="primary"
+                ref={finishButton}
+                aria-describedby={completionId}
+                onClick={onFinishGuide}
+              >
+                가이드 마치기
+              </button>
+            </>
+          )}
           <GuideSkip onSkip={() => onFinishGuide?.()} />
         </>
       ) : (
