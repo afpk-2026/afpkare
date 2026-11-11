@@ -89,7 +89,7 @@ const landingSlides = [
   },
   ...previewCases,
 ];
-const previewIntervalMs = 7000;
+const previewIntervalMs = 4000;
 
 export function LandingPreview() {
   const [selected, setSelected] = useState(0);
