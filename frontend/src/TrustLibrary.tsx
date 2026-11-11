@@ -61,9 +61,27 @@ export function TrustLibrary({
   onAsk: (ids: string[]) => void;
   loadError: boolean;
 }) {
+  const [search, setSearch] = useState("");
+  const [purpose, setPurpose] = useState("");
+  const products = sources.filter((source) => source.bank);
+  const categories = [...new Set(products.map((source) => source.category))];
+  const filtered = products.filter(
+    (source) =>
+      (!purpose || source.category === purpose) &&
+      normalize(
+        [
+          source.bank,
+          source.title,
+          source.category,
+          source.summary,
+          ...source.terms,
+        ].join(" "),
+      ).includes(normalize(search)),
+  );
   return (
     <>
-      <section className="card care-directory">
+      <details className="card care-directory">
+        <summary>은행 공식 홈페이지 찾아보기</summary>
         <div className="directory-heading">
           <h2>은행 바로가기</h2>
           <span>8개 기관</span>
@@ -85,7 +103,7 @@ export function TrustLibrary({
             </a>
           ))}
         </div>
-      </section>
+      </details>
       <section className="card care-directory">
         <div className="directory-heading">
           <h2>신탁 자료</h2>
@@ -95,6 +113,42 @@ export function TrustLibrary({
           상품을 선택하면 공식 자료가 열립니다. 자세한 내용은 공식 문서 기반 AI
           도우미에게 물어보세요.
         </p>
+        <div className="product-search">
+          <label>
+            어떤 준비가 필요한가요?
+            <select
+              value={purpose}
+              onChange={(event) => setPurpose(event.target.value)}
+            >
+              <option value="">모든 목적</option>
+              {categories.map((category) => (
+                <option key={category}>{category}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            은행·상품·관심 내용 검색
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="예: 후견인, 하나, 사후 지급"
+            />
+          </label>
+        </div>
+        {products.length > 0 && (
+          <p role="status">{filtered.length}개 자료를 찾았습니다.</p>
+        )}
+        {products.length > 0 && filtered.length === 0 && (
+          <button
+            onClick={() => {
+              setSearch("");
+              setPurpose("");
+            }}
+          >
+            검색 조건 초기화
+          </button>
+        )}
         {loadError && (
           <p role="alert">
             신탁 자료를 불러오지 못했습니다. 새로고침해 다시 시도해 주세요.
@@ -104,39 +158,42 @@ export function TrustLibrary({
           <p role="status">신탁 자료를 불러오고 있습니다.</p>
         )}
         <div className="care-library-grid trust-grid">
-          {sources
-            .filter((source) => source.bank)
-            .map((source) => (
-              <article
-                className="care-library-item"
-                key={source.id}
-                data-source-id={source.id}
+          {filtered.map((source) => (
+            <article
+              className="care-library-item"
+              key={source.id}
+              data-source-id={source.id}
+            >
+              <div className="trust-item-copy">
+                <p className="trust-bank-label">
+                  {bankImages.has(source.bank) && (
+                    <img
+                      src={`/banks/${bankImages.get(source.bank)}`}
+                      alt=""
+                      loading="lazy"
+                    />
+                  )}
+                  {source.bank} · {source.category}
+                </p>
+                <h3>
+                  <a href={source.url} target="_blank" rel="noreferrer">
+                    {source.title} <span aria-hidden="true">↗</span>
+                  </a>
+                </h3>
+                <p>{source.summary}</p>
+                <p className="fine">
+                  상담 시 최소 가입금액, 보수, 추가 납입, 지급 조건을
+                  확인하세요.
+                </p>
+              </div>
+              <button
+                aria-label={`${source.title} AI로 자료 읽기`}
+                onClick={() => onAsk([source.id])}
               >
-                <div className="trust-item-copy">
-                  <p className="trust-bank-label">
-                    {bankImages.has(source.bank) && (
-                      <img
-                        src={`/banks/${bankImages.get(source.bank)}`}
-                        alt=""
-                        loading="lazy"
-                      />
-                    )}
-                    {source.bank} · {source.category}
-                  </p>
-                  <h3>
-                    <a href={source.url} target="_blank" rel="noreferrer">
-                      {source.title} <span aria-hidden="true">↗</span>
-                    </a>
-                  </h3>
-                </div>
-                <button
-                  aria-label={`${source.title} AI로 자료 읽기`}
-                  onClick={() => onAsk([source.id])}
-                >
-                  <span aria-hidden="true">✦</span> AI 설명
-                </button>
-              </article>
-            ))}
+                <span aria-hidden="true">✦</span> AI 설명
+              </button>
+            </article>
+          ))}
         </div>
       </section>
     </>

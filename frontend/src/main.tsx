@@ -68,6 +68,23 @@ const sampleEvents: SampleEvent[] = [
   { label: "83세까지 준비하는 경우", field: "child_end_age", value: 83 },
   { label: "95세까지 준비하는 경우", field: "child_end_age", value: 95 },
 ];
+const caseExamples: { title: string; detail: string; changes: Inputs }[] = [
+  {
+    title: "생활비가 늘어날 때",
+    detail: "월 생활비 210만 원 · 95세까지 준비",
+    changes: { monthly_child_cost: 2_100_000 },
+  },
+  {
+    title: "재취업이 어려울 때",
+    detail: "재취업 소득 0원 · 생활비 월 180만 원",
+    changes: { monthly_parent_reemployment_income: 0 },
+  },
+  {
+    title: "더 오래 준비할 때",
+    detail: "100세까지 준비 · 생활비 월 180만 원",
+    changes: { child_end_age: 100 },
+  },
+];
 function App() {
   const displayPreferences = usePreferences();
   const [entered, setEntered] = useState(
@@ -446,6 +463,23 @@ function Workspace({
             </div>
             {page === "simulation" && (
               <>
+                <section className="card">
+                  <h2>처음이라면 이렇게 시작하세요</h2>
+                  <p>
+                    지훈 씨 가족의 가상 사례로 부모의 노후와 자녀 생활비를 함께
+                    살펴봅니다. 오른쪽에서 월 생활비 등 다섯 가지 가정을 바꾸고
+                    ‘변경 적용’을 누르세요.
+                  </p>
+                  <div className="consumer-links">
+                    <a href="#events">상황별 사례로 시작</a>
+                    <a href="#report">보고서 흐름 따라가기</a>
+                    <a href="#trusts">목적에 맞는 신탁 찾기</a>
+                  </div>
+                  <p className="fine">
+                    저장 공간 A–D에 비교할 가정을 보관할 수 있습니다. 현재
+                    계산은 지훈 씨 가족의 나이와 재산을 공통으로 사용합니다.
+                  </p>
+                </section>
                 <div ref={setSlotActionsTarget} />
                 <section className="card family">
                   <div className="section-title">
@@ -622,6 +656,41 @@ function Workspace({
               </>
             )}
             <div hidden={page !== "events"}>
+              <section className="card">
+                <h2>어떤 상황을 살펴볼까요?</h2>
+                <p>
+                  보고서 기준 가정에서 아래 조건을 바꾼 예시입니다. 적용하면
+                  현재 입력이 예시의 가정으로 바뀝니다. 비교할 입력은 먼저
+                  시뮬레이터에서 저장해 두세요.
+                </p>
+                <div className="consumer-cases">
+                  {caseExamples.map((example) => (
+                    <article key={example.title}>
+                      <h3>{example.title}</h3>
+                      <p>{example.detail}</p>
+                      <button
+                        disabled={busy}
+                        onClick={async () => {
+                          if (
+                            await apply(
+                              { ...ref.defaults, ...example.changes },
+                              "B",
+                            )
+                          ) {
+                            location.hash = "simulation";
+                            setNotice(
+                              example.title +
+                                " 사례를 적용했습니다. B 단계 적립을 기준으로 계산했습니다.",
+                            );
+                          }
+                        }}
+                      >
+                        이 사례로 계산
+                      </button>
+                    </article>
+                  ))}
+                </div>
+              </section>
               <section className="card" id="events-panel">
                 <h2>샘플 사건</h2>
                 <p>살펴볼 상황을 고르고 현재 가정과 비교한 뒤 적용하세요.</p>

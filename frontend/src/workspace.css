@@ -1206,3 +1206,27 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
 .care-settings + .formula-reference {
   margin-top: 24px;
 }
+
+.consumer-links, .consumer-cases, .product-search {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: 16px;
+}
+.consumer-links a, .consumer-cases article {
+  padding: 16px;
+  border: 1px solid #dce4ef;
+  border-radius: 10px;
+}
+.product-search label { display: grid; gap: 8px; }
+.product-search input, .product-search select {
+  width: 100%;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #53667e;
+  border-radius: 6px;
+  background: white;
+  color: #172b45;
+}
+.report-journey ol { padding-left: 24px; }
+.report-journey li { padding: 12px 0; }
+.report-journey li p { margin: 8px 0; }
