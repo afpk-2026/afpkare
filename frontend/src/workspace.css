@@ -247,7 +247,7 @@ html[data-patterns] .diagnosis.risk {
   font-size: clamp(2.4em, 6vw, 4em);
   margin: 12px 0;
 }
-.care-hero p:not(.eyebrow) {
+.care-hero > div > p:not(.eyebrow) {
   max-width: 42ch;
   font-size: 1.15em;
 }
