@@ -1248,8 +1248,8 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
 
 .care-session-dialog { padding: 28px; }
 .login-heading {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  display: flex;
+  justify-content: space-between;
   align-items: center;
   gap: 8px;
 }
@@ -1258,9 +1258,9 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
   display: block;
   width: clamp(100px, 30vw, 148px);
   height: auto;
+  margin: 12px auto 0;
 }
 .login-heading button {
-  justify-self: end;
   border: 0;
   padding: 4px 10px;
   font-size: 24px;

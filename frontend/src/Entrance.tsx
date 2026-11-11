@@ -109,13 +109,6 @@ export function SessionControl() {
       >
         <div className="login-heading">
           <h2 id="login-title">로그인</h2>
-          <img
-            className="login-logo"
-            src="/brand/afpkare-logo.png"
-            alt="AFPKare"
-            width="2172"
-            height="724"
-          />
           <button
             type="button"
             aria-label="로그인 창 닫기"
@@ -124,6 +117,13 @@ export function SessionControl() {
             ×
           </button>
         </div>
+        <img
+          className="login-logo"
+          src="/brand/afpkare-logo.png"
+          alt="AFPKare"
+          width="2172"
+          height="724"
+        />
         <p id="login-help">
           로그인 없이도 시뮬레이터와
           <br />
