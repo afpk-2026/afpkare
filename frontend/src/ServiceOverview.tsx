@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import baseline from "./report-baseline.json";
+import previewCases from "./landing-preview-cases.json";
 import { money } from "./Chart.tsx";
 
 const strategies = [
@@ -76,14 +77,60 @@ const accessibility = [
   ["글자 크기 조정", "기본·크게·아주 크게 중에서 선택할 수 있습니다."],
 ];
 
+// Alternate paths are precomputed annual end balances using the report baseline
+// inputs, with only the cost or return changed as described on each slide.
+const landingSlides = [
+  {
+    label: "보고서 기준 사례",
+    title: "부모 사후 신탁 경로",
+    description:
+      "보고서 기준 가정에서 두 전략의 신탁 잔액이 어떻게 달라지는지 보여줍니다.",
+    paths: baseline.trust.map((item) => item.withdrawal),
+  },
+  ...previewCases,
+];
+const previewIntervalMs = 7000;
+
 export function LandingPreview() {
+  const [selected, setSelected] = useState(0);
+  const [playing, setPlaying] = useState(
+    () =>
+      !window.matchMedia("(prefers-reduced-motion: reduce)").matches &&
+      !document.documentElement.hasAttribute("data-no-motion"),
+  );
+  const [hovered, setHovered] = useState(false);
+  const slide = landingSlides[selected];
+
+  useEffect(() => {
+    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const stopForReducedMotion = () => {
+      if (preference.matches) setPlaying(false);
+    };
+    preference.addEventListener("change", stopForReducedMotion);
+    return () => preference.removeEventListener("change", stopForReducedMotion);
+  }, []);
+
+  useEffect(() => {
+    if (!playing || hovered) return;
+    const timer = window.setTimeout(() => {
+      setSelected((index) => (index + 1) % landingSlides.length);
+    }, previewIntervalMs);
+    return () => window.clearTimeout(timer);
+  }, [selected, playing, hovered]);
+
   const x = (age: number) => 54 + ((age - 56) / 39) * 490;
   const y = (balance: number) => 232 - (balance / 200_000_000) * 200;
   return (
-    <figure className="landing-demo">
-      <figcaption>
-        <span>보고서 기준 사례</span>
-        <strong>부모 사후 신탁 경로</strong>
+    <figure
+      className="landing-demo"
+      onPointerEnter={(event) => {
+        if (event.pointerType === "mouse") setHovered(true);
+      }}
+      onPointerLeave={() => setHovered(false)}
+    >
+      <figcaption aria-live={playing ? "off" : "polite"} aria-atomic="true">
+        <span>{slide.label}</span>
+        <strong>{slide.title}</strong>
       </figcaption>
       <div className="landing-demo-legend" aria-label="전략 범례">
         {strategies.map((strategy, index) => (
@@ -101,7 +148,7 @@ export function LandingPreview() {
       <svg
         viewBox="0 0 580 270"
         role="img"
-        aria-label="56세에서 95세까지의 기준 사례 신탁 잔액 경로"
+        aria-label={`${slide.label} · 56세부터 95세까지의 연말 신탁 잔액`}
       >
         {[0, 50_000_000, 100_000_000, 150_000_000, 200_000_000].map((value) => (
           <g key={value}>
@@ -123,10 +170,10 @@ export function LandingPreview() {
             </text>
           </g>
         ))}
-        {baseline.trust.map((item, index) => (
+        {slide.paths.map((path, index) => (
           <polyline
-            key={item.strategy}
-            points={item.withdrawal
+            key={strategies[index].title}
+            points={path
               .map(([age, balance]) => `${x(age)},${y(balance)}`)
               .join(" ")}
             fill="none"
@@ -148,9 +195,7 @@ export function LandingPreview() {
           </text>
         ))}
       </svg>
-      <p>
-        보고서 기준 가정에서 두 전략의 신탁 잔액이 어떻게 달라지는지 보여줍니다.
-      </p>
+      <p className="landing-slide-description">{slide.description}</p>
       <ol
         className="landing-fund-flow"
         aria-label="신탁 준비와 생활비 지급 흐름"
@@ -171,6 +216,36 @@ export function LandingPreview() {
           <small>바뀐 급여에 맞춰 인출</small>
         </li>
       </ol>
+      <div className="landing-slide-controls">
+        <div
+          className="landing-slide-dots"
+          role="group"
+          aria-label="그래프 사례 선택"
+        >
+          {landingSlides.map((example, index) => (
+            <button
+              key={example.label}
+              type="button"
+              aria-label={example.label}
+              aria-pressed={selected === index}
+              onClick={() => {
+                setSelected(index);
+                setPlaying(false);
+              }}
+            />
+          ))}
+        </div>
+        <button
+          className="landing-slide-play"
+          type="button"
+          aria-label={
+            playing ? "그래프 자동 전환 일시정지" : "그래프 자동 전환 재생"
+          }
+          onClick={() => setPlaying((value) => !value)}
+        >
+          <span aria-hidden="true">{playing ? "❚❚" : "▶"}</span>
+        </button>
+      </div>
     </figure>
   );
 }
@@ -308,16 +383,17 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
               ))}
             </ul>
             <p>
-              서로 다른 문항의 응답 비율입니다. 출처:보건복지부·한국보건사회연구원(2022)
-              「2021년 발달장애인 실태조사」
+              서로 다른 문항의 응답 비율입니다.
+              출처:보건복지부·한국보건사회연구원(2022) 「2021년 발달장애인
+              실태조사」
             </p>
           </figure>
         </div>
         <div className="landing-story-outcome">
           <p>
-            AFPKare는 보고서 속 지훈 씨 가족의 가상 사례로 부모의 노후
-            자금과 자녀의 생활비를 함께 계산합니다. 가정을 바꿔 부족 시점을
-            비교하고, 가족이나 상담 창구에서 확인할 질문을 정리할 수 있습니다.
+            AFPKare는 보고서 속 지훈 씨 가족의 가상 사례로 부모의 노후 자금과
+            자녀의 생활비를 함께 계산합니다. 가정을 바꿔 부족 시점을 비교하고,
+            가족이나 상담 창구에서 확인할 질문을 정리할 수 있습니다.
           </p>
           <dl className="landing-facts">
             <div>

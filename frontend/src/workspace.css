@@ -1439,3 +1439,48 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
   line-height: 1.6;
   margin-bottom: 0;
 }
+
+.landing-slide-description {
+  min-height: 3em;
+  word-break: keep-all;
+}
+.landing-slide-controls {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-items: center;
+  margin-top: 14px;
+}
+.landing-slide-dots { display: flex; }
+.landing-slide-controls button {
+  display: grid;
+  place-items: center;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #eef7ff;
+}
+.landing-slide-dots button::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border: 1px solid #bad4ea;
+  border-radius: 50%;
+}
+.landing-slide-dots button[aria-pressed="true"]::before {
+  width: 16px;
+  border-radius: 8px;
+  border-color: #65c4ff;
+  background: #65c4ff;
+}
+.landing-slide-play {
+  position: absolute;
+  right: 0;
+  font-size: 0.75rem;
+}
+.landing-slide-controls button:focus-visible {
+  outline: 2px solid #ffcb7b;
+  outline-offset: 2px;
+}
