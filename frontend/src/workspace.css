@@ -1536,7 +1536,7 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
 .guide-spotlight {
   position: relative;
   z-index: 60;
-  /* One shadow surrounds the guide card and its shortcuts. */
+  /* Shade the page around the current guide area. */
   box-shadow: 0 0 0 200vmax rgb(0 0 0 / 28%);
 }
 .guided-trial .section-title {
@@ -1554,3 +1554,10 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
   background: #f2f7fd;
   color: #172b45;
 }
+
+.care-rail:has(> .slot-guide) { z-index: 60; }
+.slot-guide-copy {
+  line-height: 1.6;
+  word-break: keep-all;
+}
+.slot-guide > button { margin-top: 12px; }

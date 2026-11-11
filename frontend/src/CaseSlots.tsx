@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Snapshot } from "./analysis.ts";
 import { requestSimulation, type Reference } from "./simulation.ts";
@@ -85,6 +85,7 @@ export function CaseSlots({
   disabled,
   activeSlot,
   actionsTarget,
+  onFinishGuide,
   onLoad,
   onSave,
   onCompare,
@@ -96,10 +97,18 @@ export function CaseSlots({
   disabled: boolean;
   activeSlot: SlotName | null;
   actionsTarget: HTMLDivElement | null;
+  onFinishGuide?: () => void;
   onLoad: (name: SlotName, slot: Saved) => Promise<boolean>;
   onSave: (name: SlotName, saved: boolean) => void;
   onCompare: (snapshots: Snapshot[]) => void;
 }) {
+  const heading = useRef<HTMLHeadingElement>(null);
+  const guiding = !!onFinishGuide;
+  useEffect(() => {
+    if (!guiding) return;
+    heading.current?.focus({ preventScroll: true });
+    heading.current?.scrollIntoView({ block: "nearest" });
+  }, [guiding]);
   const [selected, setSelected] = useState<SlotName>("A");
   const [notice, setNotice] = useState("");
   const [comparisonNotice, setComparisonNotice] = useState("");
@@ -157,9 +166,66 @@ export function CaseSlots({
     );
   }
   const slot = slots[selected];
+  const controls = (
+    <>
+      <p>
+        {slot
+          ? `${selected} · 전략 ${slot.strategy === "B" ? "B" : "B′"} · ${slot.overrides.child_end_age ?? reference.defaults.child_end_age}세까지`
+          : `슬롯 ${selected}가 비어 있어요.`}
+      </p>
+      <div className="care-slot-actions">
+        <button
+          disabled={disabled || !current}
+          onClick={() => {
+            if (
+              current &&
+              (!slot ||
+                window.confirm(`슬롯 ${selected}의 기존 가정을 덮어쓸까요?`))
+            )
+              write(current);
+          }}
+        >
+          현재 적용값 저장
+        </button>
+        <button
+          disabled={disabled || !slot}
+          onClick={() => {
+            if (window.confirm(`슬롯 ${selected}의 가상 사례를 삭제할까요?`))
+              write();
+          }}
+        >
+          비우기
+        </button>
+      </div>
+      {(notice || comparisonNotice) && (
+        <p role="status">{notice || comparisonNotice}</p>
+      )}
+    </>
+  );
   return (
-    <section className="card care-slots" aria-label="가상 사례 저장 슬롯">
-      <h2>사례 슬롯</h2>
+    <section
+      className={
+        guiding
+          ? "card care-slots guide-spotlight slot-guide"
+          : "card care-slots"
+      }
+      aria-label="가상 사례 저장 슬롯"
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && onFinishGuide) {
+          event.stopPropagation();
+          onFinishGuide();
+        }
+      }}
+    >
+      <h2 ref={heading} tabIndex={guiding ? -1 : undefined}>
+        사례 슬롯
+      </h2>
+      {guiding && (
+        <p className="slot-guide-copy">
+          빈 슬롯을 고르고 ‘현재 적용값 저장’을 눌러 보세요. 저장한 사례는
+          보고서에서 불러와 다른 사례와 비교할 수 있어요.
+        </p>
+      )}
       <div className="care-slot-buttons" aria-label="슬롯 선택">
         {slotNames.map((name) => (
           <button
@@ -184,52 +250,26 @@ export function CaseSlots({
           </button>
         ))}
       </div>
-      {actionsTarget &&
+      {guiding ? (
+        <>
+          {controls}
+          <button type="button" onClick={onFinishGuide}>
+            가이드 마치기
+          </button>
+        </>
+      ) : (
+        actionsTarget &&
         createPortal(
           <section
             className="card care-slot-management"
             aria-label="사례 슬롯 관리"
           >
             <h2>사례 슬롯 관리</h2>
-            <p>
-              {slot
-                ? `${selected} · 전략 ${slot.strategy === "B" ? "B" : "B′"} · ${slot.overrides.child_end_age ?? reference.defaults.child_end_age}세까지`
-                : `슬롯 ${selected}가 비어 있어요.`}
-            </p>
-            <div className="care-slot-actions">
-              <button
-                disabled={disabled || !current}
-                onClick={() => {
-                  if (
-                    current &&
-                    (!slot ||
-                      window.confirm(
-                        `슬롯 ${selected}의 기존 가정을 덮어쓸까요?`,
-                      ))
-                  )
-                    write(current);
-                }}
-              >
-                현재 적용값 저장
-              </button>
-              <button
-                disabled={disabled || !slot}
-                onClick={() => {
-                  if (
-                    window.confirm(`슬롯 ${selected}의 가상 사례를 삭제할까요?`)
-                  )
-                    write();
-                }}
-              >
-                비우기
-              </button>
-            </div>
-            {(notice || comparisonNotice) && (
-              <p role="status">{notice || comparisonNotice}</p>
-            )}
+            {controls}
           </section>,
           actionsTarget,
-        )}
+        )
+      )}
     </section>
   );
 }

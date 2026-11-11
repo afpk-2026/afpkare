@@ -182,6 +182,10 @@ function Workspace({
   const [eventApplied, setEventApplied] = useState(false);
   const [editingSlot, setEditingSlot] = useState<SlotName | null>(null);
   const [activeSlot, setActiveSlot] = useState<SlotName | null>(null);
+  const [showSlotGuide, setShowSlotGuide] = useState(false);
+  useEffect(() => {
+    if (page !== "simulation" && showSlotGuide) setShowSlotGuide(false);
+  }, [page, showSlotGuide]);
   const [slotActionsTarget, setSlotActionsTarget] =
     useState<HTMLDivElement | null>(null);
   const [retry, setRetry] = useState(0);
@@ -473,6 +477,7 @@ function Workspace({
                   reference={ref}
                   disabled={busy}
                   onApply={(inputs) => apply(inputs, "B")}
+                  onGuideComplete={() => setShowSlotGuide(true)}
                 />
                 <div ref={setSlotActionsTarget} />
                 <section className="card family">
@@ -861,6 +866,11 @@ function Workspace({
               }
               activeSlot={activeSlot}
               actionsTarget={slotActionsTarget}
+              onFinishGuide={
+                page === "simulation" && showSlotGuide
+                  ? () => setShowSlotGuide(false)
+                  : undefined
+              }
               onLoad={(name, slot) =>
                 apply(
                   { ...ref.defaults, ...slot.overrides },

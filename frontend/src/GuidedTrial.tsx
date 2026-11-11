@@ -22,10 +22,12 @@ export function GuidedTrial({
   reference,
   disabled,
   onApply,
+  onGuideComplete,
 }: {
   reference: Reference;
   disabled: boolean;
   onApply: (inputs: Inputs) => Promise<boolean>;
+  onGuideComplete: () => void;
 }) {
   const [dim, setDim] = useState(() => !hasSeenGuide());
   const card = useRef<HTMLElement>(null);
@@ -245,8 +247,10 @@ export function GuidedTrial({
               onClick={async () => {
                 setApplying(true);
                 try {
-                  if (await onApply(trial.effective_inputs)) finish();
-                  else
+                  if (await onApply(trial.effective_inputs)) {
+                    finish(false);
+                    if (dim) onGuideComplete();
+                  } else
                     setError("가정을 적용하지 못했습니다. 다시 시도해 주세요.");
                 } finally {
                   setApplying(false);
