@@ -14,6 +14,7 @@ import "./workspace.css";
 import {
   matchingSources,
   TrustLibrary,
+  TrustConversationProvider,
   type TrustSource,
   type SourceRequest,
 } from "./TrustLibrary.tsx";
@@ -1113,4 +1114,8 @@ function Workspace({
     </>
   );
 }
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+  <TrustConversationProvider>
+    <App />
+  </TrustConversationProvider>,
+);

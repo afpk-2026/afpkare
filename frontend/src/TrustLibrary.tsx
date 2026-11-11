@@ -1,4 +1,12 @@
-import React, { useEffect, useId, useRef, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 
 export type TrustSource = {
   id: string;
@@ -200,6 +208,92 @@ export function TrustLibrary({
   );
 }
 
+type TrustTurn = {
+  id: number;
+  question: string;
+  message: string;
+  sources: TrustSource[];
+};
+
+const TrustConversation = createContext<{
+  turns: TrustTurn[];
+  ask: (question: string, ids: string[]) => Promise<void>;
+} | null>(null);
+
+export function TrustConversationProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [turns, setTurns] = useState<TrustTurn[]>([]);
+  const sequence = useRef(0);
+  const pending = useRef(new Set<AbortController>());
+
+  useEffect(() => {
+    const requests = pending.current;
+    return () => {
+      for (const request of requests) request.abort();
+    };
+  }, []);
+
+  async function ask(question: string, ids: string[]) {
+    const id = ++sequence.current;
+    setTurns((all) => [
+      ...all,
+      {
+        id,
+        question,
+        message: ids.length
+          ? "공식 자료를 확인하고 있어요."
+          : "연결되는 공식 자료가 없어요. 은행명이나 상품 이름으로 찾아보세요.",
+        sources: [],
+      },
+    ]);
+    if (!ids.length) return;
+
+    const abort = new AbortController();
+    pending.current.add(abort);
+    function reply(message: string, sources: TrustSource[] = []) {
+      if (!abort.signal.aborted) {
+        setTurns((all) =>
+          all.map((turn) =>
+            turn.id === id ? { ...turn, message, sources } : turn,
+          ),
+        );
+      }
+    }
+    try {
+      const response = await fetch("/api/trust-explain", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ source_ids: ids }),
+        signal: AbortSignal.any([abort.signal, AbortSignal.timeout(25000)]),
+      });
+      if (!response.ok) throw new Error();
+      const result: { mode: string; sources: TrustSource[] } =
+        await response.json();
+      reply(
+        !result.sources.length
+          ? "질문과 연결되는 공식 자료를 찾지 못했어요. 은행이나 상품 이름을 함께 입력해 보세요."
+          : result.mode === "llm_sources"
+            ? "AI가 고른 공식 자료"
+            : "공식 자료 요약",
+        result.sources,
+      );
+    } catch {
+      reply("금융 설명 요청을 완료하지 못했습니다. 다시 시도해 주세요.");
+    } finally {
+      pending.current.delete(abort);
+    }
+  }
+
+  return (
+    <TrustConversation.Provider value={{ turns, ask }}>
+      {children}
+    </TrustConversation.Provider>
+  );
+}
+
 export function TrustChat({
   sources,
   request,
@@ -209,13 +303,10 @@ export function TrustChat({
   request: SourceRequest | null;
   formulaHref?: string;
 }) {
+  const { turns, ask } = useContext(TrustConversation)!;
   const [query, setQuery] = useState("");
-  const [answer, setAnswer] = useState<{
-    mode: string;
-    sources: TrustSource[];
-  } | null>(null);
-  const [message, setMessage] = useState("");
-  const controller = useRef<AbortController | null>(null);
+  const thread = useRef<HTMLDivElement>(null);
+  const followLatest = useRef(true);
   const searchInput = useRef<HTMLTextAreaElement>(null);
   const suggestions = useRef<HTMLDivElement>(null);
   const suggestionsId = useId();
@@ -223,78 +314,89 @@ export function TrustChat({
     const row = suggestions.current;
     if (row) row.scrollBy({ left: direction * row.clientWidth });
   }
-  useEffect(() => () => controller.current?.abort(), []);
-  async function ask(ids: string[]) {
-    controller.current?.abort();
-    setAnswer(null);
-    if (!ids.length) {
-      setMessage(
-        "연결되는 공식 자료가 없어요. 은행명이나 상품 이름으로 찾아보세요.",
-      );
-      return;
-    }
-    const abort = new AbortController();
-    controller.current = abort;
-    setMessage("공식 자료를 확인하고 있어요.");
-    try {
-      const response = await fetch("/api/trust-explain", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source_ids: ids }),
-        signal: AbortSignal.any([abort.signal, AbortSignal.timeout(25000)]),
-      });
-      if (!response.ok) throw new Error();
-      const result = await response.json();
-      if (!abort.signal.aborted) {
-        setAnswer(result);
-        setMessage(
-          !result.sources.length
-            ? "질문과 연결되는 공식 자료를 찾지 못했어요. 은행이나 상품 이름을 함께 입력해 보세요."
-            : result.mode === "llm_sources"
-              ? "AI가 고른 공식 자료"
-              : "공식 자료 요약",
-        );
-      }
-    } catch {
-      if (!abort.signal.aborted)
-        setMessage("금융 설명 요청을 완료하지 못했습니다. 다시 시도해 주세요.");
-    }
+
+  function scrollToLatest() {
+    const log = thread.current;
+    if (log?.clientHeight && followLatest.current)
+      log.scrollTop = log.scrollHeight;
   }
+
+  useLayoutEffect(scrollToLatest, [turns]);
   useEffect(() => {
-    if (request) void ask(request.ids);
+    const log = thread.current;
+    if (!log) return;
+    const observer = new ResizeObserver(scrollToLatest);
+    observer.observe(log);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!request) return;
+    followLatest.current = true;
+    void ask("선택한 공식 자료 설명해 주세요.", request.ids);
   }, [request]);
+
   function submitQuery() {
     const search = query.trim();
     if (search.length < 2) return;
-    void ask(matchingSources(search, sources));
+    followLatest.current = true;
+    void ask(search, matchingSources(search, sources));
     setQuery("");
   }
   return (
     <>
       <div
         className="chat-thread"
+        ref={thread}
         role="log"
+        tabIndex={0}
         aria-label="공식 신탁 자료 기반 금융 설명"
+        onScroll={(event) => {
+          const log = event.currentTarget;
+          if (log.clientHeight) {
+            followLatest.current =
+              log.scrollHeight - log.scrollTop - log.clientHeight < 32;
+          }
+        }}
       >
         <div className="chat-message assistant">
           <span className="chat-speaker">자료 도우미</span>
           <div className="chat-bubble">
-            {message ||
-              "은행 이름, 상품 이름, 유언대용신탁 같은 용어로 공식 자료를 찾아보세요."}
+            은행 이름, 상품 이름, 유언대용신탁 같은 용어로 공식 자료를
+            찾아보세요.
           </div>
         </div>
-        {answer?.sources.map((source) => (
-          <article className="care-source-answer" key={source.id}>
-            <h3>{source.title}</h3>
-            <p>{source.summary}</p>
-            <a
-              href={source.url === "#formulas" ? formulaHref : source.url}
-              target={source.url.startsWith("#") ? undefined : "_blank"}
-              rel="noreferrer"
-            >
-              {source.document} ↗
-            </a>
-          </article>
+        {turns.map((turn) => (
+          <React.Fragment key={turn.id}>
+            <div className="chat-message user">
+              <span className="chat-speaker">나</span>
+              <div className="chat-bubble">{turn.question}</div>
+            </div>
+            <div className="chat-message assistant">
+              <span className="chat-speaker">자료 도우미</span>
+              <div className="chat-bubble" aria-live="polite">
+                {turn.message}
+              </div>
+              {turn.sources.map((source) => (
+                <article className="care-source-answer" key={source.id}>
+                  <h3>{source.title}</h3>
+                  <p>{source.summary}</p>
+                  <a
+                    href={
+                      source.url === "#formulas" ||
+                      source.url === "#formula-panel"
+                        ? formulaHref
+                        : source.url
+                    }
+                    target={source.url.startsWith("#") ? undefined : "_blank"}
+                    rel="noreferrer"
+                  >
+                    {source.document} ↗
+                  </a>
+                </article>
+              ))}
+            </div>
+          </React.Fragment>
         ))}
       </div>
       <form
