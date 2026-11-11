@@ -33,9 +33,6 @@ BLOCKERS = [
 
 @app.middleware("http")
 async def boundaries(request: Request, call_next):
-    public = {"/api/health", "/api/session", "/api/session/login", "/api/session/logout"}
-    if request.url.path.startswith("/api/") and request.url.path not in public and not auth.authenticated(request):
-        return api_status(401, "로그인이 필요합니다.")
     if request.url.path in {"/api/session/login", "/api/session/logout"} and request.method == "POST":
         if request.headers.get("content-type", "").split(";")[0] != "application/json":
             return api_status(415, "요청 형식을 확인해 주세요.")

@@ -184,7 +184,7 @@ export function AnalysisWorkspace({
         {snapshots.length > 0 ? (
           <>
             <SnapshotCards current={current} snapshots={snapshots} />
-            <details>
+            <details open>
               <summary>입력·지표 전체 비교 표</summary>
               <div className="table-scroll">
                 <table aria-label="고정 사례 비교">
@@ -346,7 +346,7 @@ export function AnalysisWorkspace({
                 field={field}
                 currentValue={current.effective_inputs[field]}
               />
-              <details>
+              <details open>
                 <summary>민감도 전체 지표 표</summary>
                 <div className="table-scroll">
                   <table aria-label="민감도 분석 결과">

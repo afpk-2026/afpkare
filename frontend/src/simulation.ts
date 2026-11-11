@@ -9,6 +9,11 @@ export type Reference = {
   fields: Fields;
   blockers: string[];
   evidence: { ref: string; status: string; detail: string }[];
+  report_values: {
+    required_83: number;
+    required_95: number;
+    projected_b_56: number;
+  };
   report_comparison: {
     strategy: string;
     label: string;
@@ -29,6 +34,10 @@ export type Summary = {
   parent_first_negative_year: number | null;
   parent_feasible: boolean;
   required_status: string;
+  comparison_costs: Record<
+    string,
+    { shortfall: number; lost_benefits: number; cost: number }
+  >;
 };
 export type Result = {
   status: string;

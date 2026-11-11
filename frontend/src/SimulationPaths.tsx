@@ -211,7 +211,7 @@ export function SimulationPaths({
         </p>
       )}
       {changed && baseline && (
-        <details className="baseline-summary">
+        <details open className="baseline-summary">
           <summary>기준 사례 수치 비교</summary>
           <p>
             필요 잔액 {money(baseline.summary.required_trust_at_56)} · 자녀

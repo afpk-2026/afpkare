@@ -251,19 +251,6 @@ html[data-patterns] .diagnosis.risk {
   max-width: 42ch;
   font-size: 1.15em;
 }
-.care-login {
-  margin-top: 24px;
-}
-.care-login form {
-  display: grid;
-  gap: 8px;
-  max-width: 420px;
-}
-.care-login input {
-  padding: 10px;
-  border: 1px solid #53667e;
-  border-radius: 6px;
-}
 @media (max-width: 680px) {
   .care-hero {
     grid-template-columns: 1fr;
@@ -1170,4 +1157,45 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
 }
 .care-settings-faq details p {
   margin-bottom: 0;
+}
+
+.care-session-dialog {
+  width: min(28rem, calc(100% - 2rem));
+  max-height: calc(100% - 2rem);
+  margin: auto;
+  color: inherit;
+}
+.care-session-dialog::backdrop {
+  background: rgb(11 28 53 / 55%);
+}
+.care-session-dialog form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.care-session-dialog label,
+.care-session-dialog input {
+  width: 100%;
+}
+
+.care-event-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.care-event-options button[aria-pressed="true"] {
+  border-color: var(--primary);
+  color: var(--primary);
+  font-weight: 700;
+}
+.care-event-preview {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid #dce4ef;
+  border-radius: 0.75rem;
+}
+
+.care-landing > .formula-reference,
+.care-settings + .formula-reference {
+  margin-top: 24px;
 }

@@ -3,7 +3,6 @@ import React, { useEffect, useState } from "react";
 export const pages = {
   simulation: "재무 설계 시뮬레이터",
   report: "보고서 진단과 대안",
-  formulas: "계산산식 보기",
   events: "샘플 사건과 민감도",
   trusts: "은행과 신탁 상품",
   settings: "환경설정",
@@ -11,6 +10,7 @@ export const pages = {
 export type Page = keyof typeof pages;
 export function currentPage(): Page {
   const hash = window.location.hash.slice(1);
+  if (hash === "formulas") return "settings";
   return Object.hasOwn(pages, hash) ? (hash as Page) : "simulation";
 }
 
@@ -137,8 +137,8 @@ export function PreferencesPanel({
           건강정보는 입력하지 마세요.
         </p>
         <p>
-          적용한 가상 입력과 접근성 설정은 이 브라우저에 보관됩니다. 대화와 계산
-          결과는 새로고침이나 로그아웃 시 지워집니다. 가상 사례 슬롯은 오른쪽
+          적용한 가상 입력과 접근성 설정은 이 브라우저에 보관됩니다. 새로고침하면
+          대화가 지워지고 저장된 가정으로 결과를 다시 계산합니다. 가상 사례 슬롯은 오른쪽
           패널에서 삭제할 수 있습니다.
         </p>
       </section>
@@ -147,8 +147,8 @@ export function PreferencesPanel({
         <details>
           <summary>로그인하려면 무엇이 필요한가요?</summary>
           <p>
-            운영자에게 받은 공용 데모 비밀번호로 로그인합니다. 소개와 기준 사례
-            미리보기는 공개되어 있습니다.
+            시뮬레이터는 로그인 없이 이용할 수 있습니다. 데모 로그인에는 운영자에게
+            받은 공용 비밀번호를 사용합니다.
           </p>
         </details>
         <details>

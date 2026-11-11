@@ -1,13 +1,11 @@
 import React from "react";
-import { StepTitle } from "./StepTitle.tsx";
 
 // Current arithmetic.md §§3, 7, 8. Section 6 documents an older model and is not shown.
 export function FormulaReference() {
   return (
     <aside className="evidence formula-reference" aria-label="계산 산식">
       <section className="card" id="formula-panel">
-        <p className="eyebrow">HOW IT IS CALCULATED</p>
-        <StepTitle step="03">계산 산식</StepTitle>
+        <h2>계산 산식</h2>
         <p className="fine">보고서 v1.5 · 2026년 실질 가격 · 금액 단위 원</p>
         <article>
           <span className="formula-index">식 1</span>
@@ -105,7 +103,9 @@ export function FormulaReference() {
             최대 후회(a) = max<sub>s</sub> regret(a, s)
           </p>
           <p className="formula-caption">
-            a: 전략 · s: 사건. 사건별 후회의 최댓값을 비교하는 보고서 식입니다.
+            a: 전략 · s: 사건. 공적급여 감소분은 같은 기간 동안 무신탁일 때 받는
+            급여에서 해당 전략의 급여를 뺀 값입니다. 슬롯 비용은 56세부터 선택
+            기간, 83세, 95세까지 계산합니다.
           </p>
         </article>
         <p className="formula-footnote">trunc: 0 방향 정수 절사 · ⌊ ⌋: 내림</p>

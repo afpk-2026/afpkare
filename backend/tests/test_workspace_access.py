@@ -17,11 +17,14 @@ def demo(monkeypatch):
     auth.sessions.clear()
 
 
-def test_session_gates_data_and_logout_revokes_cookie(demo):
+def test_guest_simulation_and_optional_session(demo):
     client, password = demo
     assert client.get("/api/health").json()["demo_login_ready"]
-    assert client.get("/api/reference-case").status_code == 401
-    assert client.post("/api/trust-explain", json={"source_ids": ["kb-care"]}).status_code == 401
+    assert client.get("/api/session").json() == {"authenticated": False}
+    ref = client.get("/api/reference-case").json()
+    calculated = client.post("/api/simulations", json={"case_id": ref["case_id"], "strategy": "B"})
+    assert calculated.json()["status"] == "calculated"
+    assert client.post("/api/trust-explain", json={"source_ids": ["kb-care"]}).status_code == 200
     assert client.post("/api/session/login", json={"password": "wrong"}).status_code == 401
     response = client.post("/api/session/login", json={"password": password})
     assert response.json() == {"authenticated": True}
@@ -31,7 +34,8 @@ def test_session_gates_data_and_logout_revokes_cookie(demo):
     assert client.get("/api/reference-case").status_code == 200
     assert client.post("/api/session/logout", json={}).status_code == 200
     client.cookies.set(auth.COOKIE, token)
-    assert client.get("/api/reference-case").status_code == 401
+    assert client.get("/api/session").json() == {"authenticated": False}
+    assert client.get("/api/reference-case").status_code == 200
 
 
 def test_login_requires_https_and_configured_secret(demo, monkeypatch):
@@ -42,10 +46,8 @@ def test_login_requires_https_and_configured_secret(demo, monkeypatch):
 
 
 def test_benefit_curves_use_selected_survivor_pension(demo):
-    client, password = demo
+    client, _ = demo
     url = "/api/benefit-curves"
-    assert client.get(url, params={"survivor_monthly": 0}).status_code == 401
-    assert client.post("/api/session/login", json={"password": password}).status_code == 200
     assert client.get(url, params={"survivor_monthly": -1}).status_code == 422
     zero = client.get(url, params={"survivor_monthly": 0}).json()
     pension = 800_000

@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { LandingPreview, ServiceOverview } from "./ServiceOverview.tsx";
+import { FormulaReference } from "./FormulaReference.tsx";
 import { FloatingAssistant } from "./FloatingAssistant.tsx";
 
 export async function sessionRequest(path: string, body?: object) {
@@ -18,45 +19,31 @@ export async function sessionRequest(path: string, body?: object) {
   return data.authenticated as boolean;
 }
 
-export function Entrance({ onEnter }: { onEnter: () => void }) {
+export function SessionControl() {
   const [signedIn, setSignedIn] = useState(false);
-  const [showLogin, setShowLogin] = useState(false);
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     let active = true;
-    sessionRequest("")
-      .then((value) => {
-        if (!active || !value) return;
-        setSignedIn(true);
-        if (
-          [
-            "#simulation",
-            "#report",
-            "#formulas",
-            "#events",
-            "#trusts",
-            "#settings",
-          ].includes(window.location.hash)
-        )
-          onEnter();
-      })
-      .catch(() => {});
+    const refresh = () => {
+      if (document.visibilityState !== "visible") return;
+      void sessionRequest("")
+        .then((value) => {
+          if (active) setSignedIn(value);
+        })
+        .catch(() => {});
+    };
+    refresh();
+    document.addEventListener("visibilitychange", refresh);
+    const timer = window.setInterval(refresh, 60_000);
     return () => {
       active = false;
+      document.removeEventListener("visibilitychange", refresh);
+      window.clearInterval(timer);
     };
-  }, [onEnter]);
-  function start() {
-    if (signedIn) {
-      onEnter();
-      return;
-    }
-    setShowLogin(true);
-    requestAnimationFrame(() =>
-      document.getElementById("demo-password")?.focus(),
-    );
-  }
+  }, []);
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     if (busy) return;
@@ -72,7 +59,8 @@ export function Entrance({ onEnter }: { onEnter: () => void }) {
     try {
       if (await sessionRequest("/login", { password })) {
         setPassword("");
-        onEnter();
+        setSignedIn(true);
+        dialog.current?.close();
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "로그인에 실패했습니다.");
@@ -80,6 +68,70 @@ export function Entrance({ onEnter }: { onEnter: () => void }) {
       setBusy(false);
     }
   }
+  async function logout() {
+    setBusy(true);
+    setError("");
+    try {
+      setSignedIn(await sessionRequest("/logout", {}));
+    } catch {
+      setError("로그아웃을 완료하지 못했습니다. 다시 시도해 주세요.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <>
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => {
+          if (signedIn) void logout();
+          else {
+            setError("");
+            dialog.current?.showModal();
+          }
+        }}
+      >
+        {signedIn ? "로그아웃" : "로그인"}
+      </button>
+      {signedIn && error && <span role="alert">{error}</span>}
+      <dialog
+        className="card care-session-dialog"
+        ref={dialog}
+        aria-labelledby="login-title"
+        onClose={() => setPassword("")}
+      >
+        <h2 id="login-title">데모 로그인</h2>
+        <p>운영자에게 받은 공용 데모 비밀번호를 입력하세요.</p>
+        <form onSubmit={submit}>
+          <label htmlFor="demo-password">데모 비밀번호</label>
+          <input
+            id="demo-password"
+            type="password"
+            autoComplete="current-password"
+            required
+            maxLength={128}
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+          />
+          <button className="primary" disabled={busy}>
+            {busy ? "확인 중…" : "로그인"}
+          </button>
+          <button type="button" onClick={() => dialog.current?.close()}>
+            닫기
+          </button>
+        </form>
+        {error && (
+          <p role="alert" className="error">
+            {error}
+          </p>
+        )}
+      </dialog>
+    </>
+  );
+}
+
+export function Entrance({ onEnter }: { onEnter: () => void }) {
   return (
     <div className="care-home">
       <header className="care-header">
@@ -95,9 +147,7 @@ export function Entrance({ onEnter }: { onEnter: () => void }) {
           <a href="#impact">계산 체험</a>
           <a href="#evidence">자료와 근거</a>
           <a href="#privacy">개인정보와 접근성</a>
-          <button className="primary" onClick={start}>
-            {signedIn ? "시뮬레이터 열기" : "로그인"}
-          </button>
+          <SessionControl />
         </nav>
       </header>
       <main className="care-landing">
@@ -114,7 +164,7 @@ export function Entrance({ onEnter }: { onEnter: () => void }) {
               바꾸고 재무설계 보고서의 산식과 결과를 확인할 수 있습니다.
             </p>
             <div className="care-hero-actions">
-              <button className="primary" onClick={start}>
+              <button className="primary" onClick={onEnter}>
                 시뮬레이터 시작하기 <span aria-hidden="true">↗</span>
               </button>
               <a href="#about">서비스 알아보기</a>
@@ -122,33 +172,8 @@ export function Entrance({ onEnter }: { onEnter: () => void }) {
           </div>
           <LandingPreview />
         </section>
-        {showLogin && (
-          <section className="card care-login" aria-labelledby="login-title">
-            <h2 id="login-title">데모 로그인</h2>
-            <p>운영자에게 받은 공용 데모 비밀번호를 입력하세요.</p>
-            <form onSubmit={submit}>
-              <label htmlFor="demo-password">데모 비밀번호</label>
-              <input
-                id="demo-password"
-                type="password"
-                autoComplete="current-password"
-                required
-                maxLength={128}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <button className="primary" disabled={busy}>
-                {busy ? "확인 중…" : "로그인"}
-              </button>
-            </form>
-            {error && (
-              <p role="alert" className="error">
-                {error}
-              </p>
-            )}
-          </section>
-        )}
-        <ServiceOverview onStart={start} />
+        <ServiceOverview onStart={onEnter} />
+        <FormulaReference />
       </main>
       <footer className="landing-footer">
         <strong>케어 파트너스</strong>
@@ -157,11 +182,11 @@ export function Entrance({ onEnter }: { onEnter: () => void }) {
       <FloatingAssistant initiallyOpen={false} title="케어 파트너스 안내">
         <div className="chat-thread">
           <p>
-            로그인하면 가상 사례를 계산하고 공식 신탁 자료를 바탕으로 금융
-            설명을 볼 수 있어요.
+            가상 사례를 계산하고 공식 신탁 자료를 바탕으로 금융 설명을 볼 수
+            있어요.
           </p>
-          <button className="primary" onClick={start}>
-            데모 로그인 열기
+          <button className="primary" onClick={onEnter}>
+            시뮬레이터 열기
           </button>
         </div>
       </FloatingAssistant>

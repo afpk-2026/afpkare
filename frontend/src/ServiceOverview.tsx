@@ -26,7 +26,7 @@ const steps = [
   {
     title: "저장한 사례 다시 비교하기",
     description:
-      "오른쪽 슬롯을 선택하고 시뮬레이터 본문의 ‘사례 슬롯 관리’에서 ‘현재 적용값 저장’을 누릅니다. 저장한 슬롯을 클릭하면 시뮬레이터와 보고서가 같은 가정으로 바뀝니다. ‘보고서 진단과 대안’의 대안 비교에서 B와 B′의 부족액을 비교해 보세요.",
+      "오른쪽 슬롯을 선택하고 시뮬레이터 본문의 ‘사례 슬롯 관리’에서 ‘현재 적용값 저장’을 누릅니다. 저장한 슬롯을 누르면 해당 가정이 적용됩니다. ‘보고서 진단과 대안’에서 현재 가정 및 저장 슬롯 보기로 바꾸면 B와 B′의 부족액을 비교할 수 있습니다.",
     image: "compare.webp",
     alt: "보고서 대안 비교 표와 오른쪽 A, B, C, D 사례 슬롯",
   },
@@ -52,7 +52,7 @@ const protections = [
   ],
   [
     "보안",
-    "운영 환경의 로그인은 HTTPS를 사용하며, 세션을 확인한 뒤 계산 기능을 제공합니다.",
+    "운영 환경의 로그인은 HTTPS를 사용하며, 계산 기능은 로그인 없이 이용할 수 있습니다.",
   ],
   [
     "익명정보 처리",
@@ -342,7 +342,7 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
         <p className="eyebrow">03 / 화면으로 보는 사용 가이드</p>
         <h2>어떻게 사용할 수 있나요?</h2>
         <p>
-          로그인 후 지훈 씨 가족의 가상 사례에서 아래 순서대로 따라해 보세요.
+          지훈 씨 가족의 가상 사례에서 아래 순서대로 따라해 보세요.
         </p>
         {steps.map(({ title, description, image, alt }, index) => (
           <article className="landing-guide-step" key={image}>
@@ -409,7 +409,7 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
           <p className="eyebrow">06 / 접근성</p>
           <h2>읽고 쓰기 편한 화면</h2>
           <p>
-            로그인한 뒤 왼쪽 메뉴의 ‘환경설정’에서 화면을 나에게 맞춰 보세요.
+            왼쪽 메뉴의 ‘환경설정’에서 화면을 나에게 맞춰 보세요.
           </p>
         </header>
         <dl>
@@ -492,7 +492,7 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
           사후 월 생활비만 바꾼 예시입니다.
         </p>
         <LivingCostPreview />
-        <details className="landing-impact-table">
+        <details open className="landing-impact-table">
           <summary>예시 두 가지를 표로 보기</summary>
           <div className="table-scroll">
             <table aria-label="월 생활비에 따른 가상 사례 계산 비교">

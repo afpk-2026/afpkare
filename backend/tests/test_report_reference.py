@@ -18,3 +18,20 @@ def test_reference_charts_match_current_engine_and_boundary_examples():
     assert bp['pre_supplement'] == 139604809
     assert bp['supplement'] == 35395191
     assert b['withdrawal'][-1] == [95,12398834]
+
+
+def test_slot_costs_reproduce_table_9_and_follow_selected_horizon():
+    from app.contracts import DEFAULTS
+    from app.engine import simulate
+
+    b = simulate(DEFAULTS, "B")["summary"]["comparison_costs"]
+    bp = simulate(DEFAULTS, "B_PRIME")["summary"]["comparison_costs"]
+    assert b["83"] == {"shortfall": 0, "lost_benefits": 45_360_000, "cost": 45_360_000}
+    assert bp["83"] == {"shortfall": 0, "lost_benefits": 44_760_000, "cost": 44_760_000}
+    inputs = {**DEFAULTS, "child_end_age": 90, "monthly_child_cost": 2_100_000}
+    summary = simulate(inputs, "B")["summary"]
+    costs = summary["comparison_costs"]
+    assert set(costs) == {"83", "90", "95"}
+    assert costs["90"]["shortfall"] == summary["child_shortfall_total"] > 0
+    assert costs["90"]["cost"] == 3 * costs["90"]["shortfall"] + costs["90"]["lost_benefits"]
+    assert costs["95"]["shortfall"] >= costs["90"]["shortfall"]

@@ -262,6 +262,28 @@ def parent_path(inputs: dict, strategy: str):
     return rows
 
 
+def comparison_costs(projected: int, inputs: dict, withdrawals: list) -> dict:
+    """Report equation 4 with the same survivor pension and no trust as the baseline."""
+    costs = {}
+    for end_age in sorted({83, 95, inputs["child_end_age"]}):
+        if end_age <= inputs["child_end_age"]:
+            rows = [row for row in withdrawals if row["child_age"] <= end_age]
+        else:
+            rows = post_parent_path(projected, inputs, end_age)
+        shortfall = sum(row["shortfall"] for row in rows)
+        benefits_without_trust = sum(
+            12 * sum(benefits(row["child_age"], 0, inputs["monthly_survivor_pension"]).values())
+            for row in rows
+        )
+        lost_benefits = benefits_without_trust - sum(row["benefits"] for row in rows)
+        costs[str(end_age)] = {
+            "shortfall": shortfall,
+            "lost_benefits": lost_benefits,
+            "cost": 3 * shortfall + lost_benefits,
+        }
+    return costs
+
+
 def simulate(inputs: dict, strategy: str):
     c = CONFIG
     accumulation = []
@@ -309,6 +331,7 @@ def simulate(inputs: dict, strategy: str):
         "parent_eligible_half_estate": estate_half,
         "child_shortfall_total": sum(row["shortfall"] for row in withdrawals),
         "child_shortfall_years": [row["year"] for row in withdrawals if row["shortfall"] > 0],
+        "comparison_costs": comparison_costs(projected, inputs, withdrawals),
         "parent_asset_min": min(c["parent_initial_assets"], *(row["end_balance"] for row in parents)),
         "parent_first_negative_year": next((row["year"] for row in parents if row["end_balance"] < 0), None),
         "parent_feasible": all(row["end_balance"] >= 0 for row in parents),
