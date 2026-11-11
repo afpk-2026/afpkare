@@ -1,17 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
 import baseline from "./report-baseline.json";
+import previewCases from "./landing-preview-cases.json";
 import { money } from "./Chart.tsx";
 
 const strategies = [
   {
     title: "B · 단계 적립",
-    description: "부모 생전에 여러 차례 나누어 적립하는 보고서의 대안입니다.",
     color: "#65c4ff",
   },
   {
     title: "B′ · 사후 보충",
-    description:
-      "부모 생전 적립과 사후 보충을 함께 검토하는 보고서의 대안입니다.",
     color: "#ffcb7b",
   },
 ];
@@ -26,7 +24,7 @@ const steps = [
   {
     title: "저장한 사례 다시 비교하기",
     description:
-      "오른쪽 슬롯을 선택하고 시뮬레이터 본문의 ‘사례 슬롯 관리’에서 ‘현재 적용값 저장’을 누릅니다. 저장한 슬롯을 클릭하면 시뮬레이터와 보고서가 같은 가정으로 바뀝니다. ‘보고서 진단과 대안’의 대안 비교에서 B와 B′의 부족액을 비교해 보세요.",
+      "오른쪽 슬롯을 선택하고 시뮬레이터 본문의 ‘사례 슬롯 관리’에서 ‘현재 적용값 저장’을 누릅니다. 저장한 슬롯을 누르면 해당 가정이 적용됩니다. ‘보고서 진단과 대안’에서 현재 가정 및 저장 슬롯 보기로 바꾸면 B와 B′의 부족액을 비교할 수 있습니다.",
     image: "compare.webp",
     alt: "보고서 대안 비교 표와 오른쪽 A, B, C, D 사례 슬롯",
   },
@@ -52,7 +50,7 @@ const protections = [
   ],
   [
     "보안",
-    "운영 환경의 로그인은 HTTPS를 사용하며, 세션을 확인한 뒤 계산 기능을 제공합니다.",
+    "운영 환경의 로그인은 HTTPS를 사용하며, 계산 기능은 로그인 없이 이용할 수 있습니다.",
   ],
   [
     "익명정보 처리",
@@ -60,11 +58,11 @@ const protections = [
   ],
   [
     "민감정보 보호",
-    "실명·연락처·계좌번호·건강정보 대신 가상의 금액과 나이를 입력하세요. 공식 자료 검색은 브라우저에서 대조하고 자료 식별자만 서버에 보냅니다.",
+    "실명·연락처·계좌번호·건강정보 대신 가상의 금액과 나이를 입력하세요. 검색은 자료 식별자만 서버에 보냅니다.",
   ],
   [
     "운영통제 및 공공기준",
-    "운영자가 데모 접속을 관리하고, 세션은 로그아웃·만료·서버 재시작 시 종료됩니다. 공공 도입 기준 충족 여부는 별도 검토 대상입니다.",
+    "개인 계정으로 로그인할 수 있고, 세션은 로그아웃하거나 유효기간이 지나면 종료됩니다. 공공 도입 기준 충족 여부는 별도 검토 대상입니다.",
   ],
 ];
 
@@ -79,73 +77,210 @@ const accessibility = [
   ["글자 크기 조정", "기본·크게·아주 크게 중에서 선택할 수 있습니다."],
 ];
 
+// Alternate paths are precomputed annual end balances using the report baseline
+// inputs, with only the cost or return changed as described on each slide.
+const landingSlides = [
+  {
+    label: "보고서 기준 사례",
+    title: "부모 사후 신탁 경로",
+    description:
+      "보고서 기준 가정에서 두 전략의 신탁 잔액이 어떻게 달라지는지 보여줍니다.",
+    paths: baseline.trust.map((item) => item.withdrawal),
+  },
+  ...previewCases,
+];
+const previewIntervalMs = 4000;
+
 export function LandingPreview() {
-  const [selected, setSelected] = useState(0);
-  const x = (age: number) => 30 + ((age - 56) / 39) * 360;
-  const y = (balance: number) => 133 - (balance / 200_000_000) * 110;
+  const [{ selected, previous }, setSlide] = useState({
+    selected: 0,
+    previous: null as number | null,
+  });
+  const [playing, setPlaying] = useState(
+    () =>
+      !window.matchMedia("(prefers-reduced-motion: reduce)").matches &&
+      !document.documentElement.hasAttribute("data-no-motion"),
+  );
+  const [hovered, setHovered] = useState(false);
+  const visibleSlides = previous === null ? [selected] : [previous, selected];
+
+  useEffect(() => {
+    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const stopForReducedMotion = () => {
+      if (preference.matches) setPlaying(false);
+    };
+    preference.addEventListener("change", stopForReducedMotion);
+    return () => preference.removeEventListener("change", stopForReducedMotion);
+  }, []);
+
+  useEffect(() => {
+    if (!playing || hovered) return;
+    const timer = window.setTimeout(() => {
+      setSlide(({ selected }) => ({
+        selected: (selected + 1) % landingSlides.length,
+        previous: selected,
+      }));
+    }, previewIntervalMs);
+    return () => window.clearTimeout(timer);
+  }, [selected, playing, hovered]);
+
+  const x = (age: number) => 54 + ((age - 56) / 39) * 490;
+  const y = (balance: number) => 232 - (balance / 200_000_000) * 200;
   return (
-    <figure className="landing-demo">
-      <figcaption>
-        <span>보고서 기준 사례</span>
-        <strong>부모 사후 신탁 경로</strong>
-      </figcaption>
-      <div className="landing-demo-controls" aria-label="전략 예시 선택">
-        {strategies.map((strategy, index) => (
-          <button
-            key={strategy.title}
-            aria-pressed={selected === index}
-            onClick={() => setSelected(index)}
-          >
-            {strategy.title}
-          </button>
-        ))}
-      </div>
-      <svg
-        viewBox="0 0 420 165"
-        role="img"
-        aria-label="56세에서 95세까지의 기준 사례 신탁 잔액 경로"
+    <div
+      className="landing-preview"
+      onPointerEnter={(event) => {
+        if (event.pointerType === "mouse") setHovered(true);
+      }}
+      onPointerLeave={() => setHovered(false)}
+    >
+      <div
+        className="landing-slide-viewport"
+        aria-live={playing ? "off" : "polite"}
       >
-        {[0, 50_000_000, 100_000_000, 150_000_000, 200_000_000].map((value) => (
-          <line
-            key={value}
-            x1="30"
-            x2="390"
-            y1={y(value)}
-            y2={y(value)}
-            stroke="#345673"
-          />
-        ))}
-        {baseline.trust.map((item, index) => (
-          <polyline
-            key={item.strategy}
-            points={item.withdrawal
-              .map(([age, balance]) => `${x(age)},${y(balance)}`)
-              .join(" ")}
-            fill="none"
-            stroke={strategies[index].color}
-            strokeWidth={selected === index ? 4 : 2}
-            strokeDasharray={index ? "6 4" : undefined}
-          />
-        ))}
-        {[56, 65, 83, 95].map((age) => (
-          <text
-            key={age}
-            x={x(age)}
-            y="153"
-            textAnchor="middle"
-            fill="#dcecff"
-            fontSize="13"
-          >
-            {age}세
-          </text>
-        ))}
-      </svg>
-      <div className="landing-demo-stat">
-        <span>56세 연초 예상 잔액</span>
-        <strong>{money(baseline.trust[selected].projected)}</strong>
+        <div
+          className="landing-slide-track"
+          key={selected}
+          data-sliding={previous !== null ? "" : undefined}
+        >
+          {visibleSlides.map((index) => {
+            const slide = landingSlides[index];
+            return (
+              <figure
+                className="landing-demo"
+                key={slide.label}
+                aria-hidden={index !== selected}
+              >
+                <figcaption>
+                  <span>{slide.label}</span>
+                  <strong>{slide.title}</strong>
+                </figcaption>
+                <div className="landing-demo-legend" aria-label="전략 범례">
+                  {strategies.map((strategy, index) => (
+                    <span key={strategy.title}>
+                      <i
+                        style={{
+                          borderColor: strategy.color,
+                          borderTopStyle: index ? "dashed" : "solid",
+                        }}
+                      />
+                      {strategy.title}
+                    </span>
+                  ))}
+                </div>
+                <svg
+                  viewBox="0 0 580 270"
+                  role="img"
+                  aria-label={`${slide.label} · 56세부터 95세까지의 연말 신탁 잔액`}
+                >
+                  {[0, 50_000_000, 100_000_000, 150_000_000, 200_000_000].map(
+                    (value) => (
+                      <g key={value}>
+                        <line
+                          x1="54"
+                          x2="544"
+                          y1={y(value)}
+                          y2={y(value)}
+                          stroke="#345673"
+                        />
+                        <text
+                          x="46"
+                          y={y(value) + 4}
+                          textAnchor="end"
+                          fill="#dcecff"
+                          fontSize="12"
+                        >
+                          {value / 100_000_000}억
+                        </text>
+                      </g>
+                    ),
+                  )}
+                  {slide.paths.map((path, index) => (
+                    <polyline
+                      key={strategies[index].title}
+                      points={path
+                        .map(([age, balance]) => `${x(age)},${y(balance)}`)
+                        .join(" ")}
+                      fill="none"
+                      stroke={strategies[index].color}
+                      strokeWidth={3}
+                      strokeDasharray={index ? "6 4" : undefined}
+                    />
+                  ))}
+                  {[56, 65, 83, 95].map((age) => (
+                    <text
+                      key={age}
+                      x={x(age)}
+                      y="255"
+                      textAnchor="middle"
+                      fill="#dcecff"
+                      fontSize="13"
+                    >
+                      {age}세
+                    </text>
+                  ))}
+                </svg>
+                <p className="landing-slide-description">{slide.description}</p>
+                <ol
+                  className="landing-fund-flow"
+                  aria-label="신탁 준비와 생활비 지급 흐름"
+                >
+                  <li>
+                    <span>부모 생전</span>
+                    <strong>적립</strong>
+                    <small>자녀를 위한 자금 준비</small>
+                  </li>
+                  <li>
+                    <span>56세부터</span>
+                    <strong>생활비 지급</strong>
+                    <small>연금·급여와 신탁 인출</small>
+                  </li>
+                  <li>
+                    <span>65세부터</span>
+                    <strong>급여 전환</strong>
+                    <small>바뀐 급여에 맞춰 인출</small>
+                  </li>
+                </ol>
+              </figure>
+            );
+          })}
+        </div>
       </div>
-      <p>{strategies[selected].description}</p>
-    </figure>
+      <div className="landing-slide-controls">
+        <div
+          className="landing-slide-dots"
+          role="group"
+          aria-label="그래프 사례 선택"
+        >
+          {landingSlides.map((example, index) => (
+            <button
+              key={example.label}
+              type="button"
+              aria-label={example.label}
+              aria-pressed={selected === index}
+              onClick={() => {
+                setSlide((current) =>
+                  current.selected === index
+                    ? current
+                    : { selected: index, previous: current.selected },
+                );
+                setPlaying(false);
+              }}
+            />
+          ))}
+        </div>
+        <button
+          className="landing-slide-play"
+          type="button"
+          aria-label={
+            playing ? "그래프 자동 전환 일시정지" : "그래프 자동 전환 재생"
+          }
+          onClick={() => setPlaying((value) => !value)}
+        >
+          <span aria-hidden="true">{playing ? "❚❚" : "▶"}</span>
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -282,17 +417,17 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
               ))}
             </ul>
             <p>
-              서로 다른 문항의 응답 비율입니다. 출처는 보고서 v1.5 그림 1(나),
-              보건복지부·한국보건사회연구원(2022) 「2021년 발달장애인 실태조사」
-              표 2-226·2-213입니다.
+              서로 다른 문항의 응답 비율입니다.
+              출처:보건복지부·한국보건사회연구원(2022) 「2021년 발달장애인
+              실태조사」
             </p>
           </figure>
         </div>
         <div className="landing-story-outcome">
           <p>
-            케어 파트너스는 보고서 속 지훈 씨 가족의 가상 사례로 부모의 노후
-            자금과 자녀의 생활비를 함께 계산합니다. 가정을 바꿔 부족 시점을
-            비교하고, 가족이나 상담 창구에서 확인할 질문을 정리할 수 있습니다.
+            AFPKare는 보고서 속 지훈 씨 가족의 가상 사례로 부모의 노후 자금과
+            자녀의 생활비를 함께 계산합니다. 가정을 바꿔 부족 시점을 비교하고,
+            가족이나 상담 창구에서 확인할 질문을 정리할 수 있습니다.
           </p>
           <dl className="landing-facts">
             <div>
@@ -311,7 +446,7 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
         </div>
       </section>
       <section className="landing-section">
-        <p className="eyebrow">02 / 케어 파트너스의 차별점</p>
+        <p className="eyebrow">02 / AFPKare의 차별점</p>
         <h2>같은 가족, 다른 가정. 무엇이 달라질까요?</h2>
         <div className="landing-steps">
           <article>
@@ -341,9 +476,7 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
       <section id="workflow" className="landing-section landing-guide">
         <p className="eyebrow">03 / 화면으로 보는 사용 가이드</p>
         <h2>어떻게 사용할 수 있나요?</h2>
-        <p>
-          로그인 후 지훈 씨 가족의 가상 사례에서 아래 순서대로 따라해 보세요.
-        </p>
+        <p>지훈 씨 가족의 가상 사례에서 아래 순서대로 따라해 보세요.</p>
         {steps.map(({ title, description, image, alt }, index) => (
           <article className="landing-guide-step" key={image}>
             <div>
@@ -408,9 +541,7 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
         <header>
           <p className="eyebrow">06 / 접근성</p>
           <h2>읽고 쓰기 편한 화면</h2>
-          <p>
-            로그인한 뒤 왼쪽 메뉴의 ‘환경설정’에서 화면을 나에게 맞춰 보세요.
-          </p>
+          <p>왼쪽 메뉴의 ‘환경설정’에서 화면을 나에게 맞춰 보세요.</p>
         </header>
         <dl>
           {accessibility.map(([title, detail]) => (
@@ -492,7 +623,7 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
           사후 월 생활비만 바꾼 예시입니다.
         </p>
         <LivingCostPreview />
-        <details className="landing-impact-table">
+        <details open className="landing-impact-table">
           <summary>예시 두 가지를 표로 보기</summary>
           <div className="table-scroll">
             <table aria-label="월 생활비에 따른 가상 사례 계산 비교">

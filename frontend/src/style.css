@@ -1691,8 +1691,7 @@ footer {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 16px 24px;
   }
-  .formula-reference .card > .eyebrow,
-  .formula-reference .step-title,
+  .formula-reference .card > h2,
   .formula-reference .card > .fine,
   .formula-footnote {
     grid-column: 1/-1;

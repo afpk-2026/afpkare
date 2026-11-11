@@ -1,9 +1,14 @@
-import React, { useEffect, useId, useState } from "react";
+import React, { useEffect, useId, useRef, useState } from "react";
+import {
+  slotNames,
+  slotLabel,
+  type SlotName,
+  type Slots,
+} from "./CaseSlots.tsx";
 import data from "./report-baseline.json";
 import { money } from "./Chart.tsx";
 import type { Snapshot } from "./analysis.ts";
-import type { Result } from "./simulation.ts";
-import { StepTitle } from "./StepTitle.tsx";
+import type { Reference, Result } from "./simulation.ts";
 
 type Series = {
   label: string;
@@ -234,18 +239,55 @@ const tabs = [
 ];
 export function ReportInsights({
   children,
-  result,
-  comparison,
+  reference,
+  slots,
+  disabled,
+  onSelectSlot,
+  onCopy,
+  reportValues,
+  appliedResult,
+  appliedComparison,
   activeSlot,
   snapshots,
 }: {
   children: React.ReactNode;
-  result: Result | null;
-  comparison: Result | null;
+  reference: Reference;
+  slots: Slots;
+  disabled: boolean;
+  onSelectSlot: (name: SlotName) => Promise<boolean>;
+  onCopy: () => SlotName | null;
+  reportValues: Reference["report_values"];
+  appliedResult: Result | null;
+  appliedComparison: Result | null;
   activeSlot: string | null;
   snapshots: Snapshot[];
 }) {
   const [tab, setTab] = useState(0);
+  const resultTabs = useRef<HTMLDivElement>(null);
+  const resultPanel = useRef<HTMLDivElement>(null);
+  const journeySummary = useRef<HTMLElement>(null);
+  function openResult(index: number) {
+    setTab(index);
+    requestAnimationFrame(() => {
+      resultPanel.current?.focus({ preventScroll: true });
+      resultTabs.current?.scrollIntoView({
+        block: "start",
+        behavior: "instant",
+      });
+    });
+  }
+  function returnToJourney() {
+    journeySummary.current?.parentElement?.setAttribute("open", "");
+    journeySummary.current?.focus({ preventScroll: true });
+    journeySummary.current?.scrollIntoView({
+      block: "start",
+      behavior: "instant",
+    });
+  }
+  const [showApplied, setShowApplied] = useState(false);
+  const [caseNotice, setCaseNotice] = useState("");
+  const result = showApplied ? appliedResult : null;
+  const comparison = showApplied ? appliedComparison : null;
   const [curves, setCurves] = useState<BenefitCurves | null>(null);
   const [curveError, setCurveError] = useState(false);
   const pension = result?.effective_inputs.monthly_survivor_pension;
@@ -318,16 +360,83 @@ export function ReportInsights({
   return (
     <section className="card comparison report-insights" id="comparison-panel">
       <div className="section-title">
-        <StepTitle step="02">적용 사례 진단</StepTitle>
-        <span className="tag">
-          {activeSlot ? `슬롯 ${activeSlot}` : "현재 적용"}
-        </span>
+        <h2>보고서 결과</h2>
+        <span className="tag">v1.5 · 2026년 실질 가격</span>
       </div>
-      <p className="fine">
-        {result
-          ? `${label(result)} · 생활비 ${money(result.effective_inputs.monthly_child_cost)}/월 · 연 ${Number((result.effective_inputs.net_real_return * 100).toFixed(2))}% · ${result.effective_inputs.child_end_age}세까지`
-          : "계산 결과를 불러오고 있어요."}
+      <p>
+        가족의 목표가 어떤 가정과 계산을 거쳐 실행 계획으로 이어지는지
+        확인하세요.
       </p>
+
+      <div
+        className="report-case-picker"
+        role="group"
+        aria-label="보고서 사례 선택"
+      >
+        <button
+          disabled={disabled}
+          aria-pressed={!showApplied}
+          onClick={() => setShowApplied(false)}
+        >
+          보고서 원본
+        </button>
+        {slotNames.map((name) => (
+          <button
+            key={name}
+            disabled={disabled || !slots[name]}
+            aria-pressed={showApplied && activeSlot === name}
+            onClick={async () => {
+              if (await onSelectSlot(name)) {
+                setShowApplied(true);
+                setCaseNotice("");
+              }
+            }}
+          >
+            {slots[name]
+              ? slotLabel(name, slots[name]!, reference)
+              : `사례 ${name} · 비어 있음`}
+          </button>
+        ))}
+        <button
+          disabled={disabled}
+          aria-pressed={showApplied && !activeSlot}
+          onClick={() => setShowApplied(true)}
+        >
+          현재 입력
+        </button>
+      </div>
+      <div className="report-case-actions">
+        <button
+          disabled={disabled || !appliedResult}
+          onClick={() => {
+            const name = onCopy();
+            if (name) {
+              setShowApplied(true);
+              setCaseNotice(
+                `사례 ${name}로 복사했습니다. 오른쪽 가정을 수정하고 변경 적용하면 이 사례에 저장됩니다.`,
+              );
+            } else
+              setCaseNotice(
+                "빈 저장 공간이 없거나 브라우저 저장소에 쓸 수 없습니다. 시뮬레이터의 사례 슬롯 관리에서 공간을 확인하세요.",
+              );
+          }}
+        >
+          현재 입력 복사해서 수정
+        </button>
+      </div>
+      {caseNotice && <p role="status">{caseNotice}</p>}
+      {showApplied && (
+        <p className="fine">
+          {result
+            ? `${activeSlot ? `슬롯 ${activeSlot}` : "현재 적용"} · ${label(result)} · 생활비 ${money(result.effective_inputs.monthly_child_cost)}/월 · 연 ${Number((result.effective_inputs.net_real_return * 100).toFixed(2))}% · ${result.effective_inputs.child_end_age}세까지`
+            : "적용 결과를 불러오고 있어요."}
+        </p>
+      )}
+      <div ref={resultTabs} className="report-result-navigation">
+        <button className="text-button" onClick={returnToJourney}>
+          보고서 전체 흐름 보기
+        </button>
+      </div>
       <div className="report-tabs" role="tablist" aria-label="보고서 참고 자료">
         {tabs.map((label, i) => (
           <button
@@ -357,6 +466,7 @@ export function ReportInsights({
         ))}
       </div>
       <div
+        ref={resultPanel}
         role="tabpanel"
         id={`${id}-panel`}
         aria-labelledby={`${id}-tab-${tab}`}
@@ -364,6 +474,28 @@ export function ReportInsights({
       >
         {tab === 0 && (
           <>
+            {!showApplied && (
+              <>
+                <p>
+                  보고서는 지훈 씨의 생활비와 부모의 노후를 함께 고려해,
+                  정년까지 신탁에 단계적으로 적립하는 B안을 제안합니다.
+                </p>
+                <div className="report-stat-row">
+                  <div>
+                    <span>83세까지 필요 잔액</span>
+                    <strong>{money(reportValues.required_83)}</strong>
+                  </div>
+                  <div>
+                    <span>95세까지 필요 잔액</span>
+                    <strong>{money(reportValues.required_95)}</strong>
+                  </div>
+                  <div>
+                    <span>B안 56세 예상 잔액</span>
+                    <strong>{money(reportValues.projected_b_56)}</strong>
+                  </div>
+                </div>
+              </>
+            )}
             {summary && (
               <div className="report-stat-row">
                 <div>
@@ -402,7 +534,7 @@ export function ReportInsights({
                 )}
               </div>
             )}
-            <details>
+            <details open>
               <summary>표 7 · 설계 전 재무비율 원문 보기</summary>
               <div className="report-summary">
                 <strong>부채·비상자금은 안정적</strong>
@@ -490,7 +622,51 @@ export function ReportInsights({
                 </table>
               </div>
             )}
-            {snapshots.length > 0 && (
+            {cases.length > 0 && (
+              <>
+                <h3>적용 가정의 대안 비용</h3>
+                <p className="fine">
+                  비용은 생활비 부족액의 3배와 무신탁 대비 줄어드는 공적급여의
+                  합입니다. 두 부모 사후인 56세부터 계산합니다. 조기 사망 사건과
+                  최대 후회는 보고서 기준에서 확인할 수 있습니다.
+                </p>
+                <div className="table-scroll">
+                  <table aria-label="적용 가정의 대안 비용">
+                    <thead>
+                      <tr>
+                        <th scope="col">전략</th>
+                        <th scope="col">종료 나이</th>
+                        <th scope="col">생활비 부족액</th>
+                        <th scope="col">줄어드는 공적급여</th>
+                        <th scope="col">비용</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {cases.flatMap((item) =>
+                        Object.entries(item.summary.comparison_costs).map(
+                          ([age, amounts]) => (
+                            <tr key={`${item.strategy}-${age}`}>
+                              <th scope="row">{label(item)}</th>
+                              <td>
+                                {age}세
+                                {Number(age) ===
+                                item.effective_inputs.child_end_age
+                                  ? " · 선택 기간"
+                                  : ""}
+                              </td>
+                              <td>{money(amounts.shortfall)}</td>
+                              <td>{money(amounts.lost_benefits)}</td>
+                              <td>{money(amounts.cost)}</td>
+                            </tr>
+                          ),
+                        ),
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+            {showApplied && snapshots.length > 0 && (
               <>
                 <h3>저장한 사례 슬롯 비교</h3>
                 <p className="fine">
@@ -505,6 +681,7 @@ export function ReportInsights({
                         <th scope="col">56세 필요 잔액</th>
                         <th scope="col">생활비 부족액</th>
                         <th scope="col">부모 금융자산 최저</th>
+                        <th scope="col">선택 기간 비용</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -521,6 +698,13 @@ export function ReportInsights({
                               {money(saved.summary.child_shortfall_total)}
                             </td>
                             <td>{money(saved.summary.parent_asset_min)}</td>
+                            <td>
+                              {money(
+                                saved.summary.comparison_costs[
+                                  saved.effective_inputs.child_end_age
+                                ]?.cost,
+                              )}
+                            </td>
                           </tr>
                         ),
                       )}
@@ -529,27 +713,39 @@ export function ReportInsights({
                 </div>
               </>
             )}
-            <details>
-              <summary>표 9 · 보고서 대안 비용과 최대 후회</summary>
-              {children}
-            </details>
+            {!showApplied && (
+              <details open>
+                <summary>표 9 · 보고서 대안 비용과 최대 후회</summary>
+                {children}
+              </details>
+            )}
           </>
         )}
-        {tab === 2 && cases.length > 0 && (
+        {tab === 2 && (!showApplied || cases.length > 0) && (
           <div className="reference-pair">
-            {["accumulation", "withdrawal"].map((phase) => {
-              const series = cases
-                .map((item, index) => ({
-                  label: label(item),
-                  points: item.child_timeline.flatMap((row) =>
-                    row.phase === phase && row.child_age != null
-                      ? [[row.child_age, row.end_balance]]
-                      : [],
-                  ),
-                  color: index ? "#B38944" : "#004EA2",
-                  dashed: index === 1,
-                }))
-                .filter((item) => item.points.length);
+            {(["accumulation", "withdrawal"] as const).map((phase) => {
+              const series = !showApplied
+                ? data.trust.map((item, index) => ({
+                    label:
+                      item.strategy === "B"
+                        ? "B · 단계 적립"
+                        : "B′ · 사후 보충",
+                    points: item[phase],
+                    color: index ? "#B38944" : "#004EA2",
+                    dashed: index === 1,
+                  }))
+                : cases
+                    .map((item, index) => ({
+                      label: label(item),
+                      points: item.child_timeline.flatMap((row) =>
+                        row.phase === phase && row.child_age != null
+                          ? [[row.child_age, row.end_balance]]
+                          : [],
+                      ),
+                      color: index ? "#B38944" : "#004EA2",
+                      dashed: index === 1,
+                    }))
+                    .filter((item) => item.points.length);
               return (
                 series.length > 0 && (
                   <ReferenceChart
@@ -655,7 +851,7 @@ export function ReportInsights({
                 </table>
               </div>
             )}
-            <details>
+            <details open>
               <summary>그림 5 · 기준 급여 문턱 보기</summary>
               <div className="reference-pair">
                 {[64, 65].map((age) => (
@@ -785,6 +981,62 @@ export function ReportInsights({
           </p>
         )}
       </div>
+      <details className="report-journey">
+        <summary ref={journeySummary}>보고서의 전체 흐름 따라가기</summary>
+        <ol>
+          <li>
+            <strong>가족의 목표와 제약</strong>
+            <p>
+              부모 노후를 유지하면서 지훈 씨의 95세까지 생활비를 준비하고,
+              누나의 금전 기여는 0원으로 둡니다.
+            </p>
+            <a href="#simulation">가족과 입력 가정 확인</a>
+          </li>
+          <li>
+            <strong>현황 수집과 재무 진단</strong>
+            <p>
+              소득·지출·재산으로 저축 여력과 준비 수준을 살펴봅니다. 표 7의 설계
+              전 지표와 적용 후 결과를 함께 읽어보세요.
+            </p>
+            <button onClick={() => openResult(0)}>재무 진단 확인</button>
+          </li>
+          <li>
+            <strong>부족액과 필요 자금 분석</strong>
+            <p>
+              생활비에서 연금·급여를 빼고 신탁 인출과 수익을 반영합니다. 65세
+              급여 전환 전후를 확인하세요.
+            </p>
+            <button onClick={() => openResult(2)}>신탁 경로 확인</button>{" "}
+            <button onClick={() => openResult(3)}>급여 변화 확인</button>{" "}
+            <a href="#formulas">계산 산식 확인</a>
+          </li>
+          <li>
+            <strong>대안 선택</strong>
+            <p>
+              단계 적립과 사후 보충의 비용·부족액·부모 자산을 비교합니다. 보고서
+              기준 보기에서 네 사건에 대한 표 9의 결론을 확인할 수 있습니다.
+            </p>
+            <button onClick={() => openResult(1)}>대안 비교 확인</button>
+          </li>
+          <li>
+            <strong>계약과 실행 준비</strong>
+            <p>
+              신탁·보험·세무·돌봄 지원의 담당과 일정을 확인하고 상품 공식 문서로
+              실행 조건을 대조하세요.
+            </p>
+            <button onClick={() => openResult(4)}>실행 일정 확인</button>{" "}
+            <a href="#trusts">신탁 상품 찾아보기</a>
+          </li>
+          <li>
+            <strong>정기 점검과 재설계</strong>
+            <p>
+              생활비나 재취업 소득이 달라졌을 때 다시 계산하고 사례를 저장해
+              비교하세요. 실제 급여 판정과 계약 조건은 기관 확인이 필요합니다.
+            </p>
+            <a href="#events">다른 상황으로 점검하기</a>
+          </li>
+        </ol>
+      </details>
     </section>
   );
 }

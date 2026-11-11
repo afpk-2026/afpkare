@@ -249,7 +249,7 @@ export function evidenceHtml(
  <h2>보고서 근거와 확인 상태</h2>${table(
    ["근거", "상태", "설명"],
    bundle.evidence.map((e) => [e.ref, e.status, e.detail]),
- )}<h2>계산 가정과 한계</h2><ol>${calc.warnings.map((w) => `<li>${h(w)}</li>`).join("")}</ol><p>연결 근거: ${calc.source_refs.map(h).join(" · ")}</p><details><summary>계산 계약 원자료 · 단위는 필드명과 가정 설명 참조</summary><pre>${h(JSON.stringify(bundle.assumptions, null, 2))}</pre></details>
+ )}<h2>계산 가정과 한계</h2><ol>${calc.warnings.map((w) => `<li>${h(w)}</li>`).join("")}</ol><p>연결 근거: ${calc.source_refs.map(h).join(" · ")}</p><details open><summary>계산 계약 원자료 · 단위는 필드명과 가정 설명 참조</summary><pre>${h(JSON.stringify(bundle.assumptions, null, 2))}</pre></details>
  <h2>부모 연도별 경로</h2>${annual(calc.parent_timeline)}<h2>자녀 연도별 경로</h2>${annual(calc.child_timeline)}<p>적립기의 자녀 급여는 계산 범위 밖으로 — 표시. 자녀 급여는 신탁 유입에 더하지 않으며 부모 급여는 유입에 포함합니다. 이 문서는 외부 리소스 없이 인쇄할 수 있습니다.</p></body></html>`;
 }
 export function downloadFile(contents: string, mime: string, filename: string) {

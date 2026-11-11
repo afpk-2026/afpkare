@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useState } from "react";
+import { GuidedTrial } from "./GuidedTrial.tsx";
+import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   restore,
@@ -13,12 +14,13 @@ import "./workspace.css";
 import {
   matchingSources,
   TrustLibrary,
+  TrustConversationProvider,
   type TrustSource,
   type SourceRequest,
 } from "./TrustLibrary.tsx";
-import { CaseSlots, type SlotName } from "./CaseSlots.tsx";
+import { CaseSlots, useCaseSlots, type SlotName } from "./CaseSlots.tsx";
 import type { Snapshot } from "./analysis.ts";
-import { Entrance, sessionRequest } from "./Entrance.tsx";
+import { Entrance, SessionControl } from "./Entrance.tsx";
 import {
   currentPage,
   pages,
@@ -38,8 +40,9 @@ import { ChatAssistant } from "./ChatAssistant.tsx";
 import { ReportInsights } from "./ReportInsights.tsx";
 import { FormulaReference } from "./FormulaReference.tsx";
 import { AnalysisWorkspace } from "./AnalysisWorkspace.tsx";
+import { sampleEventGroups } from "./sampleEvents.ts";
 
-const PROJECT_NAME = "케어 파트너스";
+const PROJECT_NAME = "AFPKare";
 const TEAM_NAME = "OOOO팀";
 const CONTEST_TITLE =
   "제1회 전국 대학생 AI 재무설계 콘테스트 「AFPK 영 플래너 챌린지 2026」";
@@ -48,37 +51,40 @@ const strategies: Record<Strategy, string> = {
   B: "B · 단계 적립",
   B_PRIME: "B′ · 사후 보충",
 };
+const caseExamples: { title: string; detail: string; changes: Inputs }[] = [
+  {
+    title: "생활비가 늘어날 때",
+    detail: "월 생활비 210만 원 · 95세까지 준비",
+    changes: { monthly_child_cost: 2_100_000 },
+  },
+  {
+    title: "재취업이 어려울 때",
+    detail: "재취업 소득 0원 · 생활비 월 180만 원",
+    changes: { monthly_parent_reemployment_income: 0 },
+  },
+  {
+    title: "더 오래 준비할 때",
+    detail: "100세까지 준비 · 생활비 월 180만 원",
+    changes: { child_end_age: 100 },
+  },
+];
 function App() {
   const displayPreferences = usePreferences();
-  const [entered, setEntered] = useState(false);
-  const enter = useCallback(() => {
-    if (!Object.hasOwn(pages, location.hash.slice(1)))
-      history.replaceState(null, "", "#simulation");
+  const [entered, setEntered] = useState(
+    () =>
+      Object.hasOwn(pages, location.hash.slice(1)) ||
+      location.hash === "#formulas",
+  );
+  function enter() {
+    history.replaceState(null, "", "#simulation");
     setEntered(true);
-  }, []);
-  const leave = () => {
-    history.replaceState(null, "", location.pathname);
+    window.scrollTo(0, 0);
+  }
+  function leave() {
+    history.replaceState(null, "", location.pathname + location.search);
     setEntered(false);
-  };
-  useEffect(() => {
-    if (!entered) return;
-    let active = true;
-    const verify = () => {
-      if (document.visibilityState === "visible")
-        void sessionRequest("")
-          .then((valid) => {
-            if (active && !valid) leave();
-          })
-          .catch(() => {});
-    };
-    const timer = window.setInterval(verify, 60_000);
-    document.addEventListener("visibilitychange", verify);
-    return () => {
-      active = false;
-      window.clearInterval(timer);
-      document.removeEventListener("visibilitychange", verify);
-    };
-  }, [entered]);
+    window.scrollTo(0, 0);
+  }
   return entered ? (
     <Workspace onExit={leave} displayPreferences={displayPreferences} />
   ) : (
@@ -145,28 +151,15 @@ function Workspace({
     document.addEventListener("selectionchange", readSelection);
     return () => document.removeEventListener("selectionchange", readSelection);
   }, [sources]);
-  const [loggingOut, setLoggingOut] = useState(false);
-  useEffect(() => {
-    if (!location.hash) history.replaceState(null, "", "#simulation");
-  }, []);
-  async function logout() {
-    setLoggingOut(true);
-    try {
-      await sessionRequest("/logout", {});
-      onExit();
-    } catch {
-      setError(
-        "로그아웃을 완료하지 못했습니다. 연결을 확인하고 다시 시도해 주세요.",
-      );
-    } finally {
-      setLoggingOut(false);
-    }
-  }
   const [preferences, setPreferences] = displayPreferences;
   useEffect(() => {
     const navigate = () => {
       setPage(currentPage());
-      window.scrollTo(0, 0);
+      if (location.hash === "#formulas") {
+        requestAnimationFrame(() =>
+          document.getElementById("formula-panel")?.scrollIntoView(),
+        );
+      } else window.scrollTo(0, 0);
     };
     window.addEventListener("hashchange", navigate);
     return () => window.removeEventListener("hashchange", navigate);
@@ -184,10 +177,19 @@ function Workspace({
     [notice, setNotice] = useState(""),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
+  const [eventGroup, setEventGroup] = useState(sampleEventGroups[0]);
+  const [eventValue, setEventValue] = useState<number | null>(null);
+  const [eventApplied, setEventApplied] = useState(false);
+  const [editingSlot, setEditingSlot] = useState<SlotName | null>(null);
   const [activeSlot, setActiveSlot] = useState<SlotName | null>(null);
+  const [showSlotGuide, setShowSlotGuide] = useState(false);
+  useEffect(() => {
+    if (page !== "simulation" && showSlotGuide) setShowSlotGuide(false);
+  }, [page, showSlotGuide]);
   const [slotActionsTarget, setSlotActionsTarget] =
     useState<HTMLDivElement | null>(null);
   const [retry, setRetry] = useState(0);
+  const caseSlots = useCaseSlots(ref);
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [analysisReset, setAnalysisReset] = useState(0);
   const [exportTarget, setExportTarget] = useState<HTMLDivElement | null>(null);
@@ -225,10 +227,6 @@ function Workspace({
       setError("");
       try {
         const response = await fetch("/api/reference-case");
-        if (response.status === 401 && active) {
-          onExit();
-          return;
-        }
         if (!response.ok) throw new Error("기준 사례를 불러오지 못했습니다.");
         const r: Reference = await response.json();
         if (!active) return;
@@ -284,6 +282,7 @@ function Workspace({
     values?: Inputs,
     s: Strategy = strategy,
     slot: SlotName | null = null,
+    saveEditedSlot = false,
   ) {
     if (!ref || busy) return false;
     setError("");
@@ -301,13 +300,29 @@ function Workspace({
     setBusy(true);
     try {
       await calculate(ref, inputs, s);
-      setActiveSlot(slot);
+      const target = slot ?? (saveEditedSlot ? editingSlot : null);
+      let copiedSaved = true;
+      if (!slot && saveEditedSlot && editingSlot) {
+        copiedSaved = caseSlots.write(editingSlot, {
+          schema_version: 1,
+          case_id: ref.case_id,
+          source_version: ref.source_version,
+          strategy: s,
+          overrides: Object.fromEntries(
+            Object.entries(inputs).filter(
+              ([key, value]) => ref.defaults[key] !== value,
+            ),
+          ),
+        });
+      }
+      if (slot || !saveEditedSlot) setEditingSlot(null);
+      setActiveSlot(copiedSaved ? target : null);
       setApplied(inputs);
       setStrategy(s);
       setDraft(fill(inputs, ref));
       const stored = persist(ref, inputs, s);
       setNotice(
-        stored
+        stored && copiedSaved
           ? ""
           : "가상 사례를 적용했지만 저장소가 차단되어 현재 탭에서만 사용합니다.",
       );
@@ -327,6 +342,7 @@ function Workspace({
     if (!ref || busy) return;
     setError("");
     setActiveSlot(null);
+    setEditingSlot(null);
     setAnalysisReset((v) => v + 1);
     setResult(null);
     setComparison(null);
@@ -352,6 +368,10 @@ function Workspace({
       setBusy(false);
     }
   }
+  useEffect(() => {
+    if (ref && page === "settings" && location.hash === "#formulas")
+      document.getElementById("formula-panel")?.scrollIntoView();
+  }, [ref, page]);
   if (!ref)
     return (
       <main className="loading">
@@ -370,16 +390,6 @@ function Workspace({
   const hasUnappliedDraft = Object.entries(fill(applied, ref)).some(
     ([key, value]) => value !== draft[key],
   );
-  function openAssumptions() {
-    requestAnimationFrame(() =>
-      document.getElementById("settings-panel")?.focus(),
-    );
-  }
-  const preview = (changes: Inputs) => {
-    setDraft(fill({ ...applied, ...changes }, ref));
-    openAssumptions();
-    setNotice("변경안을 입력에 옮겼습니다. 확인 후 변경 적용을 눌러 주세요.");
-  };
   const display = (key: string, v: number) =>
     key === "net_real_return"
       ? `${(v * 100).toFixed(2)}%`
@@ -390,11 +400,13 @@ function Workspace({
     <>
       <header className="topbar contest-header">
         <a className="brand" href="#simulation">
-          <span className="brandmark">영</span>
-          <span>
-            <strong>{PROJECT_NAME}</strong>
-            <small>{TEAM_NAME}</small>
-          </span>
+          <img
+            className="afpkare-logo"
+            src="/brand/afpkare-logo.png"
+            alt={PROJECT_NAME}
+            width="2172"
+            height="724"
+          />
         </a>
         <p className="contest-heading">{CONTEST_TITLE}</p>
         <div className="header-credit">
@@ -402,9 +414,7 @@ function Workspace({
           <small>{TEAM_CREDIT}</small>
           <div className="care-header-actions">
             <button onClick={onExit}>소개 홈</button>
-            <button onClick={() => void logout()} disabled={loggingOut}>
-              로그아웃
-            </button>
+            <SessionControl />
           </div>
         </div>
       </header>
@@ -463,6 +473,12 @@ function Workspace({
             </div>
             {page === "simulation" && (
               <>
+                <GuidedTrial
+                  reference={ref}
+                  disabled={busy}
+                  onApply={(inputs) => apply(inputs, "B")}
+                  onGuideComplete={() => setShowSlotGuide(true)}
+                />
                 <div ref={setSlotActionsTarget} />
                 <section className="card family">
                   <div className="section-title">
@@ -574,15 +590,52 @@ function Workspace({
             {page === "report" && (
               <div className="results">
                 <ReportInsights
-                  result={result}
-                  comparison={comparison}
+                  reference={ref}
+                  slots={caseSlots.slots}
+                  disabled={busy}
+                  onSelectSlot={(name) => {
+                    const saved = caseSlots.slots[name];
+                    return saved
+                      ? apply(
+                          { ...ref.defaults, ...saved.overrides },
+                          saved.strategy,
+                          name,
+                        )
+                      : Promise.resolve(false);
+                  }}
+                  onCopy={() => {
+                    const name = caseSlots.copy({
+                      schema_version: 1,
+                      case_id: ref.case_id,
+                      source_version: ref.source_version,
+                      strategy,
+                      overrides: Object.fromEntries(
+                        Object.entries(applied).filter(
+                          ([key, value]) => ref.defaults[key] !== value,
+                        ),
+                      ),
+                    });
+                    if (name) {
+                      setActiveSlot(name);
+                      setEditingSlot(name);
+                      requestAnimationFrame(() =>
+                        document
+                          .querySelector<HTMLInputElement>(
+                            "#settings-panel input",
+                          )
+                          ?.focus(),
+                      );
+                    }
+                    return name;
+                  }}
+                  reportValues={ref.report_values}
+                  appliedResult={result}
+                  appliedComparison={comparison}
                   activeSlot={activeSlot}
                   snapshots={snapshots}
                 >
-                  <span className="tag">표 9 · 보고서 고정값</span>
                   <p className="fine">
-                    2026년 기준 · 비용/최대 후회 단위: 억 원 · 새로운 권고를
-                    계산하지 않습니다.
+                    2026년 실질 가격 · 비용과 최대 후회 단위 억 원
                   </p>
                   <div className="table-scroll">
                     <table>
@@ -600,39 +653,29 @@ function Workspace({
                         {ref.report_comparison.map((row) => (
                           <tr
                             key={row.strategy}
-                            className={
-                              row.strategy === strategy ? "selected" : ""
-                            }
+                            className={row.strategy === "B" ? "selected" : ""}
                           >
                             <th>
                               {row.strategy === "B_PRIME" ? "B′" : row.strategy}
                               <small>{row.label}</small>
                             </th>
                             {row.costs.map((v, i) => (
-                              <td key={i}>{changed ? "—" : v.toFixed(2)}</td>
+                              <td key={i}>{v.toFixed(2)}</td>
                             ))}
-                            <td>{changed ? "—" : row.max_regret.toFixed(2)}</td>
+                            <td>{row.max_regret.toFixed(2)}</td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
                   </div>
-                  {changed && (
-                    <p className="notice">
-                      변경 입력의 동적 비용·후회는 계산 미지원입니다. A/D는 기준
-                      사례 고정 비교만 지원합니다. 초기화하면 표 9를 볼 수
-                      있습니다.
-                    </p>
-                  )}
                   <p className="fine">
-                    E · 누나에게 금전 부담: 가족의 ‘금전 기여 0원’ 제약 위반으로
-                    선택 제외. 신탁 잔액 5억: 표 8 고정 민감도 참고값이며 A안이
-                    아닙니다.
+                    보고서는 최대 후회가 가장 작은 B안을 권고합니다. E안은
+                    누나의 금전 기여를 0원으로 유지한다는 가족의 제약에 따라
+                    제외했습니다.
                   </p>
                 </ReportInsights>{" "}
               </div>
             )}
-            {page === "formulas" && <FormulaReference />}
             {page === "trusts" && (
               <TrustLibrary
                 sources={sources}
@@ -641,36 +684,150 @@ function Workspace({
               />
             )}
             {page === "settings" && (
-              <PreferencesPanel value={preferences} onChange={setPreferences} />
+              <>
+                <PreferencesPanel
+                  value={preferences}
+                  onChange={setPreferences}
+                />
+                <FormulaReference />
+              </>
             )}
             <div hidden={page !== "events"}>
+              <section className="card">
+                <h2>보고서 기준으로 바로 시작</h2>
+                <p>
+                  보고서 기준 가정에서 아래 조건을 바꾼 예시입니다. 적용하면
+                  현재 입력이 예시의 가정으로 바뀝니다. 비교할 입력은 먼저
+                  시뮬레이터에서 저장해 두세요.
+                </p>
+                <div className="consumer-cases">
+                  {caseExamples.map((example) => (
+                    <article key={example.title}>
+                      <h3>{example.title}</h3>
+                      <p>{example.detail}</p>
+                      <button
+                        disabled={busy}
+                        onClick={async () => {
+                          if (
+                            await apply(
+                              { ...ref.defaults, ...example.changes },
+                              "B",
+                            )
+                          ) {
+                            location.hash = "simulation";
+                            setNotice(
+                              example.title +
+                                " 사례를 적용했습니다. B 단계 적립을 기준으로 계산했습니다.",
+                            );
+                          }
+                        }}
+                      >
+                        이 사례로 계산
+                      </button>
+                    </article>
+                  ))}
+                </div>
+              </section>
               <section className="card" id="events-panel">
-                <StepTitle step="04">샘플 사건</StepTitle>
-                <p className="fine">선택 → 변경안 확인 → 변경 적용</p>
-                <div className="events">
-                  {[
-                    ["재취업 실패", { monthly_parent_reemployment_income: 0 }],
-                    [
-                      "재취업 월 100만",
-                      { monthly_parent_reemployment_income: 1000000 },
-                    ],
-                    ["생활비 월 185만", { monthly_child_cost: 1850000 }],
-                    ["83세까지 비교", { child_end_age: 83 }],
-                    ["95세까지 비교", { child_end_age: 95 }],
-                  ].map(([label, changes]) => (
+                <h2>샘플 사건</h2>
+                <p>
+                  유형과 상황을 고르면 현재 가정에서 해당 값만 바꿔 계산할 수
+                  있습니다.
+                </p>
+                <div
+                  className="care-event-types"
+                  role="group"
+                  aria-label="사건 유형"
+                >
+                  {sampleEventGroups.map((group) => (
                     <button
+                      type="button"
+                      key={group.field}
                       disabled={busy}
-                      key={String(label)}
-                      onClick={() => preview(changes as Inputs)}
+                      aria-pressed={group === eventGroup}
+                      onClick={() => {
+                        if (group === eventGroup) return;
+                        setEventGroup(group);
+                        setEventValue(null);
+                        setEventApplied(false);
+                      }}
                     >
-                      {String(label)} ↗
+                      {group.title}
                     </button>
                   ))}
                 </div>
-                <p className="fine">
-                  어머니 선사망 · 25세 부모 사고: 별도 상속·돌봄 산식 미확정으로
-                  미지원.
-                </p>
+                <div
+                  className="care-event-options"
+                  role="group"
+                  aria-label={`${eventGroup.title} 상황 선택`}
+                >
+                  {eventGroup.options.map((event) => (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      key={event.value}
+                      aria-pressed={event.value === eventValue}
+                      onClick={() => {
+                        setEventValue(event.value);
+                        setEventApplied(false);
+                      }}
+                    >
+                      <strong>{event.label}</strong>
+                      <span>
+                        {eventGroup.monthly && "월 "}
+                        {display(eventGroup.field, event.value)}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+                {eventValue !== null && (
+                  <div className="care-event-preview">
+                    <h3>{ref.fields[eventGroup.field].label}</h3>
+                    <p>
+                      현재{" "}
+                      {eventGroup.monthly && "월 "}
+                      {display(eventGroup.field, applied[eventGroup.field])}
+                      {applied[eventGroup.field] !== eventValue && (
+                        <>
+                          {" → 사건 적용 시 "}
+                          {eventGroup.monthly && "월 "}
+                          {display(eventGroup.field, eventValue)}
+                        </>
+                      )}
+                    </p>
+                    {hasUnappliedDraft && (
+                      <p className="fine">
+                        사건을 적용하면 오른쪽의 미적용 입력이 현재 가정으로
+                        돌아갑니다.
+                      </p>
+                    )}
+                    <button
+                      className="primary"
+                      disabled={
+                        busy || applied[eventGroup.field] === eventValue
+                      }
+                      onClick={async () => {
+                        const appliedEvent = await apply({
+                          ...applied,
+                          [eventGroup.field]: eventValue,
+                        });
+                        setEventApplied(appliedEvent);
+                      }}
+                    >
+                      {busy ? "계산 중…" : "사건 적용하고 계산"}
+                    </button>
+                    {applied[eventGroup.field] === eventValue && (
+                      <p role="status">
+                        {eventApplied
+                          ? "사건을 적용했습니다."
+                          : "현재 같은 값이 적용되어 있습니다."}{" "}
+                        <a href="#simulation">시뮬레이션 결과 보기</a>
+                        {" · "}
+                        <a href="#report">보고서에서 비교</a>
+                      </p>
+                    )}
+                  </div>
+                )}
               </section>
               <div className="scenario-exports" ref={setExportTarget} />
               {result && comparison && (
@@ -689,6 +846,8 @@ function Workspace({
           <aside className="care-rail" aria-label="현재 사례와 설정">
             <CaseSlots
               reference={ref}
+              slots={caseSlots.slots}
+              onWrite={caseSlots.write}
               disabled={busy}
               current={
                 result
@@ -707,6 +866,11 @@ function Workspace({
               }
               activeSlot={activeSlot}
               actionsTarget={slotActionsTarget}
+              onFinishGuide={
+                page === "simulation" && showSlotGuide
+                  ? () => setShowSlotGuide(false)
+                  : undefined
+              }
               onLoad={(name, slot) =>
                 apply(
                   { ...ref.defaults, ...slot.overrides },
@@ -715,76 +879,101 @@ function Workspace({
                 )
               }
               onSave={(name, saved) => {
-                if (saved) setActiveSlot(name);
-                else if (activeSlot === name) setActiveSlot(null);
+                if (saved) {
+                  setActiveSlot(name);
+                  setEditingSlot(null);
+                } else if (activeSlot === name) setActiveSlot(null);
+                if (!saved && editingSlot === name) setEditingSlot(null);
               }}
               onCompare={setSnapshots}
             />
-            <div
-              className="care-rail-heading"
-              id="current-case-summary"
-              tabIndex={-1}
-            >
-              <h2>{activeSlot ? `슬롯 ${activeSlot} 적용 중` : "현재 적용"}</h2>
-              <span>{strategies[strategy]}</span>
-            </div>
-            <p className="care-applied-inputs">
-              생활비 {display("monthly_child_cost", applied.monthly_child_cost)}{" "}
-              / 월 · {display("net_real_return", applied.net_real_return)} ·{" "}
-              {display("child_end_age", applied.child_end_age)}까지
-            </p>
-            {hasUnappliedDraft && (
-              <p className="care-applied-inputs" role="status">
-                입력 변경을 확인한 뒤 적용하세요.
+            <section className="applied-summary" aria-label="현재 적용 요약">
+              <div
+                className="care-rail-heading"
+                id="current-case-summary"
+                tabIndex={-1}
+              >
+                <h2>
+                  {activeSlot ? `슬롯 ${activeSlot} 적용 중` : "현재 적용"}
+                </h2>
+                <span className="applied-strategy">{strategies[strategy]}</span>
+              </div>
+              <p className="care-applied-inputs">
+                <span>
+                  생활비{" "}
+                  <b>
+                    {display("monthly_child_cost", applied.monthly_child_cost)}{" "}
+                    / 월
+                  </b>
+                </span>
+                <span>
+                  수익률{" "}
+                  <b>{display("net_real_return", applied.net_real_return)}</b>
+                </span>
+                <span>
+                  준비 기간{" "}
+                  <b>{display("child_end_age", applied.child_end_age)}까지</b>
+                </span>
               </p>
-            )}
-            <section
-              className="metrics"
-              aria-label="계산 결과"
-              aria-live="polite"
-              aria-busy={busy}
-            >
-              {[
-                ["선택 기간 필요 잔액", result?.summary.required_trust_at_56],
-                [
-                  `${strategy === "B" ? "B" : "B′"}안 56세 예상 잔액`,
-                  result?.summary.projected_trust_at_56,
-                ],
-                [
-                  "자녀 평생 생활비 부족액",
-                  result?.summary.child_shortfall_total,
-                ],
-              ].map(([title, value]) => (
-                <article className="card metric" key={String(title)}>
-                  <span>{String(title)}</span>
-                  <strong className="computed-value">
-                    {result
-                      ? money(value as number | undefined | null)
-                      : busy
-                        ? "계산 중"
-                        : "결과 없음"}
-                  </strong>
-                  <div>
-                    <span className="tag">보고서 세부식 직접 계산</span>
-                  </div>
-                </article>
-              ))}
-            </section>
-            <div className="care-feedback" aria-live="polite">
-              {notice && <p className="notice">{notice}</p>}
-              {error && (
-                <p className="error" role="alert">
-                  {error}{" "}
-                  <button onClick={() => apply(applied)}>다시 시도</button>
+              {hasUnappliedDraft && (
+                <p className="care-applied-inputs" role="status">
+                  입력 변경을 확인한 뒤 적용하세요.
                 </p>
               )}
-            </div>
+              <section
+                className="metrics"
+                aria-label="계산 결과"
+                aria-live="polite"
+                aria-busy={busy}
+              >
+                {[
+                  ["선택 기간 필요 잔액", result?.summary.required_trust_at_56],
+                  [
+                    `${strategy === "B" ? "B" : "B′"}안 56세 예상 잔액`,
+                    result?.summary.projected_trust_at_56,
+                  ],
+                  [
+                    "자녀 평생 생활비 부족액",
+                    result?.summary.child_shortfall_total,
+                  ],
+                ].map(([title, value]) => (
+                  <article className="card metric" key={String(title)}>
+                    <span>{String(title)}</span>
+                    <strong className="computed-value">
+                      {result
+                        ? money(value as number | undefined | null)
+                        : busy
+                          ? "계산 중"
+                          : "결과 없음"}
+                    </strong>
+                    <div>
+                      <span className="tag">보고서 세부식 직접 계산</span>
+                    </div>
+                  </article>
+                ))}
+              </section>
+              <div className="care-feedback" aria-live="polite">
+                {notice && <p className="notice">{notice}</p>}
+                {error && (
+                  <p className="error" role="alert">
+                    {error}{" "}
+                    <button onClick={() => apply(applied)}>다시 시도</button>
+                  </p>
+                )}
+              </div>
+            </section>
             <section
               className="card care-assumptions"
               id="settings-panel"
               tabIndex={-1}
             >
               <StepTitle step="01">전략과 가정</StepTitle>
+              {editingSlot && (
+                <p className="fine" role="status">
+                  사례 {editingSlot} 수정 중 · 변경 적용하면 이 사례에
+                  저장됩니다.
+                </p>
+              )}
               <div className="strategy-tabs">
                 {(Object.keys(strategies) as Strategy[]).map((s) => (
                   <button
@@ -806,7 +995,7 @@ function Workspace({
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
-                  void apply();
+                  void apply(undefined, strategy, null, true);
                 }}
               >
                 <div className="care-assumptions-fields">
@@ -900,4 +1089,8 @@ function Workspace({
     </>
   );
 }
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")!).render(
+  <TrustConversationProvider>
+    <App />
+  </TrustConversationProvider>,
+);
