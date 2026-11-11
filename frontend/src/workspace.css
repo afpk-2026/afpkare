@@ -1525,10 +1525,12 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
   /* Keep the guide in the grid and shade the page around its edges. */
   box-shadow: 0 0 0 200vmax rgb(11 28 53 / 58%);
 }
-.guide-spotlight .section-title {
+.guided-trial .section-title,
+.guide-shortcuts .section-title {
   gap: 12px;
 }
-.guide-spotlight .section-title h2 {
+.guided-trial .section-title h2,
+.guide-shortcuts .section-title h2 {
   margin: 0;
 }
 .guided-trial button[data-guide-focus]:not(:disabled) {
