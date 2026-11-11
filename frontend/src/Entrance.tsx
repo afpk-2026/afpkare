@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { LandingPreview, ServiceOverview } from "./ServiceOverview.tsx";
 import { FormulaReference } from "./FormulaReference.tsx";
+import { TrustChat, type TrustSource } from "./TrustLibrary.tsx";
 import { FloatingAssistant } from "./FloatingAssistant.tsx";
 
 export async function sessionRequest(path: string, body?: object) {
@@ -132,6 +133,33 @@ export function SessionControl() {
 }
 
 export function Entrance({ onEnter }: { onEnter: () => void }) {
+  const [sources, setSources] = useState<TrustSource[]>([]);
+  const [sourceError, setSourceError] = useState(false);
+  const [retry, setRetry] = useState(0);
+  useEffect(() => {
+    const controller = new AbortController();
+    setSourceError(false);
+    fetch("/api/trust-sources", {
+      signal: AbortSignal.any([controller.signal, AbortSignal.timeout(10000)]),
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error();
+        return response.json();
+      })
+      .then((data: { sources: TrustSource[] }) => {
+        if (!controller.signal.aborted)
+          setSources(
+            data.sources.map((source) => ({
+              ...source,
+              url: source.url === "#formulas" ? "#formula-panel" : source.url,
+            })),
+          );
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setSourceError(true);
+      });
+    return () => controller.abort();
+  }, [retry]);
   return (
     <div className="care-home">
       <header className="care-header">
@@ -179,16 +207,16 @@ export function Entrance({ onEnter }: { onEnter: () => void }) {
         <strong>케어 파트너스</strong>
         <p>AFPK 영 플래너 챌린지 2026 제출작</p>
       </footer>
-      <FloatingAssistant initiallyOpen={false} title="케어 파트너스 안내">
-        <div className="chat-thread">
-          <p>
-            가상 사례를 계산하고 공식 신탁 자료를 바탕으로 금융 설명을 볼 수
-            있어요.
+      <FloatingAssistant title="신탁과 재무설계 자료 도우미">
+        {sourceError && (
+          <p role="alert" className="fine">
+            자료 목록을 불러오지 못했습니다.{" "}
+            <button onClick={() => setRetry((value) => value + 1)}>
+              다시 연결
+            </button>
           </p>
-          <button className="primary" onClick={onEnter}>
-            시뮬레이터 열기
-          </button>
-        </div>
+        )}
+        <TrustChat sources={sources} request={null} formulaHref="#formula-panel" />
       </FloatingAssistant>
     </div>
   );

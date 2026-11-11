@@ -81,8 +81,11 @@ const accessibility = [
 
 export function LandingPreview() {
   const [selected, setSelected] = useState(0);
-  const x = (age: number) => 30 + ((age - 56) / 39) * 360;
-  const y = (balance: number) => 133 - (balance / 200_000_000) * 110;
+  const [age, setAge] = useState(56);
+  const path = baseline.trust[selected];
+  const yearEnd = path.withdrawal.find(([year]) => year === age)?.[1];
+  const x = (age: number) => 54 + ((age - 56) / 39) * 490;
+  const y = (balance: number) => 232 - (balance / 200_000_000) * 200;
   return (
     <figure className="landing-demo">
       <figcaption>
@@ -101,19 +104,29 @@ export function LandingPreview() {
         ))}
       </div>
       <svg
-        viewBox="0 0 420 165"
+        viewBox="0 0 580 270"
         role="img"
         aria-label="56세에서 95세까지의 기준 사례 신탁 잔액 경로"
       >
         {[0, 50_000_000, 100_000_000, 150_000_000, 200_000_000].map((value) => (
-          <line
-            key={value}
-            x1="30"
-            x2="390"
-            y1={y(value)}
-            y2={y(value)}
-            stroke="#345673"
-          />
+          <g key={value}>
+            <line
+              x1="54"
+              x2="544"
+              y1={y(value)}
+              y2={y(value)}
+              stroke="#345673"
+            />
+            <text
+              x="46"
+              y={y(value) + 4}
+              textAnchor="end"
+              fill="#dcecff"
+              fontSize="12"
+            >
+              {value / 100_000_000}억
+            </text>
+          </g>
         ))}
         {baseline.trust.map((item, index) => (
           <polyline
@@ -127,11 +140,27 @@ export function LandingPreview() {
             strokeDasharray={index ? "6 4" : undefined}
           />
         ))}
+        <line
+          x1={x(age)}
+          x2={x(age)}
+          y1="32"
+          y2="232"
+          stroke="#dcecff"
+          strokeDasharray="3 5"
+        />
+        {yearEnd != null && (
+          <circle
+            cx={x(age)}
+            cy={y(yearEnd)}
+            r="5"
+            fill={strategies[selected].color}
+          />
+        )}
         {[56, 65, 83, 95].map((age) => (
           <text
             key={age}
             x={x(age)}
-            y="153"
+            y="255"
             textAnchor="middle"
             fill="#dcecff"
             fontSize="13"
@@ -140,11 +169,45 @@ export function LandingPreview() {
           </text>
         ))}
       </svg>
+      <label className="landing-age-control">
+        <span>
+          {age}세 연말 잔액 <strong>{money(yearEnd)}</strong>
+        </span>
+        <input
+          type="range"
+          min="56"
+          max="95"
+          step="1"
+          value={age}
+          aria-label="신탁 잔액을 확인할 나이"
+          onChange={(event) => setAge(Number(event.target.value))}
+        />
+      </label>
       <div className="landing-demo-stat">
         <span>56세 연초 예상 잔액</span>
         <strong>{money(baseline.trust[selected].projected)}</strong>
       </div>
       <p>{strategies[selected].description}</p>
+      <ol
+        className="landing-fund-flow"
+        aria-label="신탁 준비와 생활비 지급 흐름"
+      >
+        <li>
+          <span>부모 생전</span>
+          <strong>적립</strong>
+          <small>자녀를 위한 자금 준비</small>
+        </li>
+        <li>
+          <span>56세부터</span>
+          <strong>생활비 지급</strong>
+          <small>연금·급여와 신탁 인출</small>
+        </li>
+        <li>
+          <span>65세부터</span>
+          <strong>급여 전환</strong>
+          <small>바뀐 급여에 맞춰 인출</small>
+        </li>
+      </ol>
     </figure>
   );
 }
@@ -341,9 +404,7 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
       <section id="workflow" className="landing-section landing-guide">
         <p className="eyebrow">03 / 화면으로 보는 사용 가이드</p>
         <h2>어떻게 사용할 수 있나요?</h2>
-        <p>
-          지훈 씨 가족의 가상 사례에서 아래 순서대로 따라해 보세요.
-        </p>
+        <p>지훈 씨 가족의 가상 사례에서 아래 순서대로 따라해 보세요.</p>
         {steps.map(({ title, description, image, alt }, index) => (
           <article className="landing-guide-step" key={image}>
             <div>
@@ -408,9 +469,7 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
         <header>
           <p className="eyebrow">06 / 접근성</p>
           <h2>읽고 쓰기 편한 화면</h2>
-          <p>
-            왼쪽 메뉴의 ‘환경설정’에서 화면을 나에게 맞춰 보세요.
-          </p>
+          <p>왼쪽 메뉴의 ‘환경설정’에서 화면을 나에게 맞춰 보세요.</p>
         </header>
         <dl>
           {accessibility.map(([title, detail]) => (

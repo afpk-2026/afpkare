@@ -203,9 +203,11 @@ export function TrustLibrary({
 export function TrustChat({
   sources,
   request,
+  formulaHref = "#formulas",
 }: {
   sources: TrustSource[];
   request: SourceRequest | null;
+  formulaHref?: string;
 }) {
   const [query, setQuery] = useState("");
   const [semanticSearch, setSemanticSearch] = useState(false);
@@ -301,7 +303,7 @@ export function TrustChat({
             <h3>{source.title}</h3>
             <p>{source.summary}</p>
             <a
-              href={source.url}
+              href={source.url === "#formulas" ? formulaHref : source.url}
               target={source.url.startsWith("#") ? undefined : "_blank"}
               rel="noreferrer"
             >

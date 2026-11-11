@@ -1230,3 +1230,41 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
 .report-journey ol { padding-left: 24px; }
 .report-journey li { padding: 12px 0; }
 .report-journey li p { margin: 8px 0; }
+
+.care-hero {
+  grid-template-columns: minmax(0, .85fr) minmax(0, 1.3fr);
+  gap: clamp(24px, 4vw, 56px);
+}
+.landing-age-control {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.landing-age-control > span {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.landing-age-control input {
+  width: 100%;
+  accent-color: #65c4ff;
+}
+.landing-fund-flow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  list-style: none;
+  padding: 18px 0 0;
+  margin: 20px 0 0;
+  border-top: 1px solid #55738b;
+  gap: 16px;
+}
+.landing-fund-flow li { display: grid; gap: 6px; }
+.landing-fund-flow span, .landing-fund-flow small { color: #bad4ea; }
+.landing-fund-flow strong { color: #eef7ff; font-size: 1.1em; }
+.care-home .assistant-panel {
+  height: min(620px, calc(100dvh - 110px));
+}
+@media (max-width: 800px) {
+  .care-hero { grid-template-columns: 1fr; }
+  .landing-fund-flow { gap: 10px; }
+}
