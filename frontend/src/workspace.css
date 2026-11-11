@@ -507,37 +507,10 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
 .landing-demo figcaption strong {
   font-size: 1.45em;
 }
-.landing-demo-controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 12px;
-}
-.landing-demo-controls button {
-  background: #183f61;
-  color: #eef7ff;
-  border-color: #55738b;
-  padding: 7px 9px;
-}
-.landing-demo-controls button[aria-pressed="true"] {
-  background: #e7f4ff;
-  color: #112a45;
-}
 .landing-demo svg {
   display: block;
   width: 100%;
   margin: 8px 0;
-}
-.landing-demo-stat {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 6px;
-}
-.landing-demo-stat strong {
-  font-size: 1.5em;
-  color: #b6e1ff;
 }
 .care-hero .landing-demo p {
   font-size: 0.92em;
@@ -1232,23 +1205,24 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
 .report-journey li p { margin: 8px 0; }
 
 .care-hero {
-  grid-template-columns: minmax(0, .85fr) minmax(0, 1.3fr);
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
   gap: clamp(24px, 4vw, 56px);
 }
-.landing-age-control {
-  display: grid;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-.landing-age-control > span {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-}
-.landing-age-control input {
+.care-hero .landing-demo {
   width: 100%;
-  accent-color: #65c4ff;
+  max-width: 540px;
+  justify-self: end;
 }
+.care-hero .landing-demo svg { max-height: 235px; }
+.landing-demo-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+  font-size: 0.9em;
+}
+.landing-demo-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.landing-demo-legend i { width: 20px; border-top-width: 3px; }
 .landing-fund-flow {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1284,6 +1258,7 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
   background: transparent;
 }
 .care-session-dialog #login-help {
+  text-align: center;
   color: #53667e;
   line-height: 1.7;
   margin: 16px 0 24px;

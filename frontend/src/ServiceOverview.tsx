@@ -5,13 +5,10 @@ import { money } from "./Chart.tsx";
 const strategies = [
   {
     title: "B · 단계 적립",
-    description: "부모 생전에 여러 차례 나누어 적립하는 보고서의 대안입니다.",
     color: "#65c4ff",
   },
   {
     title: "B′ · 사후 보충",
-    description:
-      "부모 생전 적립과 사후 보충을 함께 검토하는 보고서의 대안입니다.",
     color: "#ffcb7b",
   },
 ];
@@ -80,10 +77,6 @@ const accessibility = [
 ];
 
 export function LandingPreview() {
-  const [selected, setSelected] = useState(0);
-  const [age, setAge] = useState(56);
-  const path = baseline.trust[selected];
-  const yearEnd = path.withdrawal.find(([year]) => year === age)?.[1];
   const x = (age: number) => 54 + ((age - 56) / 39) * 490;
   const y = (balance: number) => 232 - (balance / 200_000_000) * 200;
   return (
@@ -92,15 +85,17 @@ export function LandingPreview() {
         <span>보고서 기준 사례</span>
         <strong>부모 사후 신탁 경로</strong>
       </figcaption>
-      <div className="landing-demo-controls" aria-label="전략 예시 선택">
+      <div className="landing-demo-legend" aria-label="전략 범례">
         {strategies.map((strategy, index) => (
-          <button
-            key={strategy.title}
-            aria-pressed={selected === index}
-            onClick={() => setSelected(index)}
-          >
+          <span key={strategy.title}>
+            <i
+              style={{
+                borderColor: strategy.color,
+                borderTopStyle: index ? "dashed" : "solid",
+              }}
+            />
             {strategy.title}
-          </button>
+          </span>
         ))}
       </div>
       <svg
@@ -136,26 +131,10 @@ export function LandingPreview() {
               .join(" ")}
             fill="none"
             stroke={strategies[index].color}
-            strokeWidth={selected === index ? 4 : 2}
+            strokeWidth={3}
             strokeDasharray={index ? "6 4" : undefined}
           />
         ))}
-        <line
-          x1={x(age)}
-          x2={x(age)}
-          y1="32"
-          y2="232"
-          stroke="#dcecff"
-          strokeDasharray="3 5"
-        />
-        {yearEnd != null && (
-          <circle
-            cx={x(age)}
-            cy={y(yearEnd)}
-            r="5"
-            fill={strategies[selected].color}
-          />
-        )}
         {[56, 65, 83, 95].map((age) => (
           <text
             key={age}
@@ -169,25 +148,9 @@ export function LandingPreview() {
           </text>
         ))}
       </svg>
-      <label className="landing-age-control">
-        <span>
-          {age}세 연말 잔액 <strong>{money(yearEnd)}</strong>
-        </span>
-        <input
-          type="range"
-          min="56"
-          max="95"
-          step="1"
-          value={age}
-          aria-label="신탁 잔액을 확인할 나이"
-          onChange={(event) => setAge(Number(event.target.value))}
-        />
-      </label>
-      <div className="landing-demo-stat">
-        <span>56세 연초 예상 잔액</span>
-        <strong>{money(baseline.trust[selected].projected)}</strong>
-      </div>
-      <p>{strategies[selected].description}</p>
+      <p>
+        보고서 기준 가정에서 두 전략의 신탁 잔액이 어떻게 달라지는지 보여줍니다.
+      </p>
       <ol
         className="landing-fund-flow"
         aria-label="신탁 준비와 생활비 지급 흐름"

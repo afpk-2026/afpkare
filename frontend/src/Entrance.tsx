@@ -120,9 +120,6 @@ export function SessionControl() {
         <p id="login-help">
           로그인 없이도 시뮬레이터와 신탁 자료 검색을 이용할 수 있습니다.
         </p>
-        <p className="fine">
-          운영자에게 전달받은 아이디와 비밀번호를 입력하세요.
-        </p>
         <form onSubmit={submit}>
           <label htmlFor="login-username">아이디</label>
           <input
