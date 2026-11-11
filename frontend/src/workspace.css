@@ -978,15 +978,9 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
     transform: translateY(0);
   }
 }
-@keyframes landing-slide-in {
-  from {
-    opacity: 0;
-    transform: translateX(28%);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+@keyframes landing-slide-left {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
 }
 @keyframes landing-scroll-in {
   from {
@@ -1098,8 +1092,8 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
   html:not([data-no-motion]) .care-hero > div {
     animation: landing-appear 0.55s ease-out both;
   }
-  html:not([data-no-motion]) .landing-preview .landing-demo {
-    animation: landing-slide-in 0.48s cubic-bezier(0.22, 1, 0.36, 1) both;
+  html:not([data-no-motion]) .landing-slide-track[data-sliding] {
+    animation: landing-slide-left 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
   }
 }
 
@@ -1472,6 +1466,14 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
 }
 
 .landing-slide-viewport { overflow: hidden; }
+.landing-slide-track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 100%;
+}
+.landing-slide-track[data-sliding] {
+  transform: translateX(-100%);
+}
 .landing-slide-description {
   min-height: 3em;
   word-break: keep-all;

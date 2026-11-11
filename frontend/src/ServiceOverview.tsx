@@ -92,14 +92,17 @@ const landingSlides = [
 const previewIntervalMs = 4000;
 
 export function LandingPreview() {
-  const [selected, setSelected] = useState(0);
+  const [{ selected, previous }, setSlide] = useState({
+    selected: 0,
+    previous: null as number | null,
+  });
   const [playing, setPlaying] = useState(
     () =>
       !window.matchMedia("(prefers-reduced-motion: reduce)").matches &&
       !document.documentElement.hasAttribute("data-no-motion"),
   );
   const [hovered, setHovered] = useState(false);
-  const slide = landingSlides[selected];
+  const visibleSlides = previous === null ? [selected] : [previous, selected];
 
   useEffect(() => {
     const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -113,7 +116,10 @@ export function LandingPreview() {
   useEffect(() => {
     if (!playing || hovered) return;
     const timer = window.setTimeout(() => {
-      setSelected((index) => (index + 1) % landingSlides.length);
+      setSlide(({ selected }) => ({
+        selected: (selected + 1) % landingSlides.length,
+        previous: selected,
+      }));
     }, previewIntervalMs);
     return () => window.clearTimeout(timer);
   }, [selected, playing, hovered]);
@@ -132,98 +138,113 @@ export function LandingPreview() {
         className="landing-slide-viewport"
         aria-live={playing ? "off" : "polite"}
       >
-        <figure className="landing-demo" key={slide.label}>
-          <figcaption>
-            <span>{slide.label}</span>
-            <strong>{slide.title}</strong>
-          </figcaption>
-          <div className="landing-demo-legend" aria-label="전략 범례">
-            {strategies.map((strategy, index) => (
-              <span key={strategy.title}>
-                <i
-                  style={{
-                    borderColor: strategy.color,
-                    borderTopStyle: index ? "dashed" : "solid",
-                  }}
-                />
-                {strategy.title}
-              </span>
-            ))}
-          </div>
-          <svg
-            viewBox="0 0 580 270"
-            role="img"
-            aria-label={`${slide.label} · 56세부터 95세까지의 연말 신탁 잔액`}
-          >
-            {[0, 50_000_000, 100_000_000, 150_000_000, 200_000_000].map(
-              (value) => (
-                <g key={value}>
-                  <line
-                    x1="54"
-                    x2="544"
-                    y1={y(value)}
-                    y2={y(value)}
-                    stroke="#345673"
-                  />
-                  <text
-                    x="46"
-                    y={y(value) + 4}
-                    textAnchor="end"
-                    fill="#dcecff"
-                    fontSize="12"
-                  >
-                    {value / 100_000_000}억
-                  </text>
-                </g>
-              ),
-            )}
-            {slide.paths.map((path, index) => (
-              <polyline
-                key={strategies[index].title}
-                points={path
-                  .map(([age, balance]) => `${x(age)},${y(balance)}`)
-                  .join(" ")}
-                fill="none"
-                stroke={strategies[index].color}
-                strokeWidth={3}
-                strokeDasharray={index ? "6 4" : undefined}
-              />
-            ))}
-            {[56, 65, 83, 95].map((age) => (
-              <text
-                key={age}
-                x={x(age)}
-                y="255"
-                textAnchor="middle"
-                fill="#dcecff"
-                fontSize="13"
+        <div
+          className="landing-slide-track"
+          key={selected}
+          data-sliding={previous !== null ? "" : undefined}
+        >
+          {visibleSlides.map((index) => {
+            const slide = landingSlides[index];
+            return (
+              <figure
+                className="landing-demo"
+                key={slide.label}
+                aria-hidden={index !== selected}
               >
-                {age}세
-              </text>
-            ))}
-          </svg>
-          <p className="landing-slide-description">{slide.description}</p>
-          <ol
-            className="landing-fund-flow"
-            aria-label="신탁 준비와 생활비 지급 흐름"
-          >
-            <li>
-              <span>부모 생전</span>
-              <strong>적립</strong>
-              <small>자녀를 위한 자금 준비</small>
-            </li>
-            <li>
-              <span>56세부터</span>
-              <strong>생활비 지급</strong>
-              <small>연금·급여와 신탁 인출</small>
-            </li>
-            <li>
-              <span>65세부터</span>
-              <strong>급여 전환</strong>
-              <small>바뀐 급여에 맞춰 인출</small>
-            </li>
-          </ol>
-        </figure>
+                <figcaption>
+                  <span>{slide.label}</span>
+                  <strong>{slide.title}</strong>
+                </figcaption>
+                <div className="landing-demo-legend" aria-label="전략 범례">
+                  {strategies.map((strategy, index) => (
+                    <span key={strategy.title}>
+                      <i
+                        style={{
+                          borderColor: strategy.color,
+                          borderTopStyle: index ? "dashed" : "solid",
+                        }}
+                      />
+                      {strategy.title}
+                    </span>
+                  ))}
+                </div>
+                <svg
+                  viewBox="0 0 580 270"
+                  role="img"
+                  aria-label={`${slide.label} · 56세부터 95세까지의 연말 신탁 잔액`}
+                >
+                  {[0, 50_000_000, 100_000_000, 150_000_000, 200_000_000].map(
+                    (value) => (
+                      <g key={value}>
+                        <line
+                          x1="54"
+                          x2="544"
+                          y1={y(value)}
+                          y2={y(value)}
+                          stroke="#345673"
+                        />
+                        <text
+                          x="46"
+                          y={y(value) + 4}
+                          textAnchor="end"
+                          fill="#dcecff"
+                          fontSize="12"
+                        >
+                          {value / 100_000_000}억
+                        </text>
+                      </g>
+                    ),
+                  )}
+                  {slide.paths.map((path, index) => (
+                    <polyline
+                      key={strategies[index].title}
+                      points={path
+                        .map(([age, balance]) => `${x(age)},${y(balance)}`)
+                        .join(" ")}
+                      fill="none"
+                      stroke={strategies[index].color}
+                      strokeWidth={3}
+                      strokeDasharray={index ? "6 4" : undefined}
+                    />
+                  ))}
+                  {[56, 65, 83, 95].map((age) => (
+                    <text
+                      key={age}
+                      x={x(age)}
+                      y="255"
+                      textAnchor="middle"
+                      fill="#dcecff"
+                      fontSize="13"
+                    >
+                      {age}세
+                    </text>
+                  ))}
+                </svg>
+                <p className="landing-slide-description">{slide.description}</p>
+                <ol
+                  className="landing-fund-flow"
+                  aria-label="신탁 준비와 생활비 지급 흐름"
+                >
+                  <li>
+                    <span>부모 생전</span>
+                    <strong>적립</strong>
+                    <small>자녀를 위한 자금 준비</small>
+                  </li>
+                  <li>
+                    <span>56세부터</span>
+                    <strong>생활비 지급</strong>
+                    <small>연금·급여와 신탁 인출</small>
+                  </li>
+                  <li>
+                    <span>65세부터</span>
+                    <strong>급여 전환</strong>
+                    <small>바뀐 급여에 맞춰 인출</small>
+                  </li>
+                </ol>
+              </figure>
+            );
+          })}
+        </div>
       </div>
       <div className="landing-slide-controls">
         <div
@@ -238,7 +259,11 @@ export function LandingPreview() {
               aria-label={example.label}
               aria-pressed={selected === index}
               onClick={() => {
-                setSelected(index);
+                setSlide((current) =>
+                  current.selected === index
+                    ? current
+                    : { selected: index, previous: current.selected },
+                );
                 setPlaying(false);
               }}
             />
