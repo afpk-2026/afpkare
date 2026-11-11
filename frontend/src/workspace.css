@@ -1394,6 +1394,11 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
 }
 
 /* Navigation cards keep the same appearance before and after a visit. */
+.consumer-links-heading {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 1.12em;
+}
 .consumer-links a,
 .consumer-links a:visited {
   position: relative;

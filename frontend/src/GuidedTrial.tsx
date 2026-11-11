@@ -35,6 +35,7 @@ export function GuidedTrial({
   const returnFocus = useRef(false);
   const request = useRef<AbortController | null>(null);
   const titleId = useId();
+  const recommendationsId = useId();
   const [step, setStep] = useState(0);
   const [monthly, setMonthly] = useState("185");
   const [baseline, setBaseline] = useState<Result | null>(null);
@@ -290,7 +291,10 @@ export function GuidedTrial({
           </p>
         )}
       </section>
-      <nav className="consumer-links" aria-label="다음으로 살펴보기">
+      <nav className="consumer-links" aria-labelledby={recommendationsId}>
+        <h2 className="consumer-links-heading" id={recommendationsId}>
+          추천 기능
+        </h2>
         {[
           [
             "#events",
