@@ -1342,3 +1342,91 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
   word-break: keep-all;
   text-wrap: pretty;
 }
+
+/* Navigation cards keep the same appearance before and after a visit. */
+.consumer-links a,
+.consumer-links a:visited {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 22px 44px 22px 22px;
+  background: #fff;
+  color: #172b45;
+  text-decoration: none;
+  border: 1px solid #dce4ef;
+  border-radius: 14px;
+  transition: border-color 150ms, box-shadow 150ms;
+}
+.consumer-links a:hover {
+  border-color: #004ea2;
+  box-shadow: 0 4px 16px #172b450d;
+}
+.consumer-links a:focus-visible {
+  outline: 3px solid #004ea2;
+  outline-offset: 3px;
+}
+.consumer-link-number {
+  color: #53667e;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.consumer-links strong { font-size: 1.05rem; word-break: keep-all; }
+.consumer-link-description {
+  color: #53667e;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  word-break: keep-all;
+}
+.consumer-link-arrow { position: absolute; right: 20px; top: 20px; color: #004ea2; }
+.care-rail { background: #f5f7fa; }
+.applied-summary {
+  padding: 18px;
+  background: #fff;
+  border: 1px solid #dce4ef;
+  border-radius: 14px;
+  margin-block: 16px;
+}
+.applied-summary .care-rail-heading { flex-wrap: wrap; margin-bottom: 14px; }
+.applied-summary .care-rail-heading h2 { margin: 0; }
+.applied-strategy {
+  padding: 5px 9px;
+  border-radius: 6px;
+  background: #f1f4f8;
+  color: #43556d;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.applied-summary .care-applied-inputs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 0 0 16px;
+  color: #53667e;
+  font-size: 0.8rem;
+  line-height: 1.7;
+}
+.care-applied-inputs b { font-weight: 600; color: #172b45; }
+.applied-summary .metrics { gap: 0; margin: 0; }
+.applied-summary .metric {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 13px 0;
+  background: transparent;
+  border-top: 1px solid #edf0f4;
+}
+.applied-summary .metric > span { font-size: 0.85rem; color: #53667e; }
+.applied-summary .metric strong { color: #172b45; font-size: 1.15rem; white-space: nowrap; }
+.applied-summary .metric:first-child strong { color: #004ea2; font-size: 1.4rem; }
+.applied-summary .care-feedback .notice {
+  border: 0;
+  border-radius: 8px;
+  background: #f5f7fa;
+  color: #53667e;
+  padding: 10px 12px;
+  font-size: 0.75rem;
+  line-height: 1.6;
+  margin-bottom: 0;
+}

@@ -413,7 +413,13 @@ function Workspace({
     <>
       <header className="topbar contest-header">
         <a className="brand" href="#simulation">
-          <img className="afpkare-logo" src="/brand/afpkare-logo.png" alt={PROJECT_NAME} width="2172" height="724" />
+          <img
+            className="afpkare-logo"
+            src="/brand/afpkare-logo.png"
+            alt={PROJECT_NAME}
+            width="2172"
+            height="724"
+          />
         </a>
         <p className="contest-heading">{CONTEST_TITLE}</p>
         <div className="header-credit">
@@ -485,11 +491,41 @@ function Workspace({
                   disabled={busy}
                   onApply={(inputs) => apply(inputs, "B")}
                 />
-                <div className="consumer-links">
-                  <a href="#events">상황별 사례로 시작</a>
-                  <a href="#report">보고서 결과 비교</a>
-                  <a href="#trusts">목적에 맞는 신탁 찾기</a>
-                </div>
+                <nav className="consumer-links" aria-label="다음으로 살펴보기">
+                  {[
+                    [
+                      "#events",
+                      "상황별 사례로 시작",
+                      "생활비 변화나 은퇴 등 우리 가족과 비슷한 상황을 살펴보세요.",
+                      "01",
+                    ],
+                    [
+                      "#report",
+                      "보고서 결과 비교",
+                      "저장한 사례를 골라 진단과 준비 방법을 비교해 보세요.",
+                      "02",
+                    ],
+                    [
+                      "#trusts",
+                      "목적에 맞는 신탁 찾기",
+                      "돌봄과 생활비 준비에 필요한 상품과 공식 자료를 찾아보세요.",
+                      "03",
+                    ],
+                  ].map(([href, title, description, number]) => (
+                    <a href={href} key={href}>
+                      <span className="consumer-link-number" aria-hidden="true">
+                        {number}
+                      </span>
+                      <strong>{title}</strong>
+                      <span className="consumer-link-description">
+                        {description}
+                      </span>
+                      <span className="consumer-link-arrow" aria-hidden="true">
+                        ↗
+                      </span>
+                    </a>
+                  ))}
+                </nav>
                 <div ref={setSlotActionsTarget} />
                 <section className="card family">
                   <div className="section-title">
@@ -862,65 +898,81 @@ function Workspace({
               }}
               onCompare={setSnapshots}
             />
-            <div
-              className="care-rail-heading"
-              id="current-case-summary"
-              tabIndex={-1}
-            >
-              <h2>{activeSlot ? `슬롯 ${activeSlot} 적용 중` : "현재 적용"}</h2>
-              <span>{strategies[strategy]}</span>
-            </div>
-            <p className="care-applied-inputs">
-              생활비 {display("monthly_child_cost", applied.monthly_child_cost)}{" "}
-              / 월 · {display("net_real_return", applied.net_real_return)} ·{" "}
-              {display("child_end_age", applied.child_end_age)}까지
-            </p>
-            {hasUnappliedDraft && (
-              <p className="care-applied-inputs" role="status">
-                입력 변경을 확인한 뒤 적용하세요.
+            <section className="applied-summary" aria-label="현재 적용 요약">
+              <div
+                className="care-rail-heading"
+                id="current-case-summary"
+                tabIndex={-1}
+              >
+                <h2>
+                  {activeSlot ? `슬롯 ${activeSlot} 적용 중` : "현재 적용"}
+                </h2>
+                <span className="applied-strategy">{strategies[strategy]}</span>
+              </div>
+              <p className="care-applied-inputs">
+                <span>
+                  생활비{" "}
+                  <b>
+                    {display("monthly_child_cost", applied.monthly_child_cost)}{" "}
+                    / 월
+                  </b>
+                </span>
+                <span>
+                  수익률{" "}
+                  <b>{display("net_real_return", applied.net_real_return)}</b>
+                </span>
+                <span>
+                  준비 기간{" "}
+                  <b>{display("child_end_age", applied.child_end_age)}까지</b>
+                </span>
               </p>
-            )}
-            <section
-              className="metrics"
-              aria-label="계산 결과"
-              aria-live="polite"
-              aria-busy={busy}
-            >
-              {[
-                ["선택 기간 필요 잔액", result?.summary.required_trust_at_56],
-                [
-                  `${strategy === "B" ? "B" : "B′"}안 56세 예상 잔액`,
-                  result?.summary.projected_trust_at_56,
-                ],
-                [
-                  "자녀 평생 생활비 부족액",
-                  result?.summary.child_shortfall_total,
-                ],
-              ].map(([title, value]) => (
-                <article className="card metric" key={String(title)}>
-                  <span>{String(title)}</span>
-                  <strong className="computed-value">
-                    {result
-                      ? money(value as number | undefined | null)
-                      : busy
-                        ? "계산 중"
-                        : "결과 없음"}
-                  </strong>
-                  <div>
-                    <span className="tag">보고서 세부식 직접 계산</span>
-                  </div>
-                </article>
-              ))}
-            </section>
-            <div className="care-feedback" aria-live="polite">
-              {notice && <p className="notice">{notice}</p>}
-              {error && (
-                <p className="error" role="alert">
-                  {error}{" "}
-                  <button onClick={() => apply(applied)}>다시 시도</button>
+              {hasUnappliedDraft && (
+                <p className="care-applied-inputs" role="status">
+                  입력 변경을 확인한 뒤 적용하세요.
                 </p>
               )}
-            </div>
+              <section
+                className="metrics"
+                aria-label="계산 결과"
+                aria-live="polite"
+                aria-busy={busy}
+              >
+                {[
+                  ["선택 기간 필요 잔액", result?.summary.required_trust_at_56],
+                  [
+                    `${strategy === "B" ? "B" : "B′"}안 56세 예상 잔액`,
+                    result?.summary.projected_trust_at_56,
+                  ],
+                  [
+                    "자녀 평생 생활비 부족액",
+                    result?.summary.child_shortfall_total,
+                  ],
+                ].map(([title, value]) => (
+                  <article className="card metric" key={String(title)}>
+                    <span>{String(title)}</span>
+                    <strong className="computed-value">
+                      {result
+                        ? money(value as number | undefined | null)
+                        : busy
+                          ? "계산 중"
+                          : "결과 없음"}
+                    </strong>
+                    <div>
+                      <span className="tag">보고서 세부식 직접 계산</span>
+                    </div>
+                  </article>
+                ))}
+              </section>
+              <div className="care-feedback" aria-live="polite">
+                {notice && <p className="notice">{notice}</p>}
+                {error && (
+                  <p className="error" role="alert">
+                    {error}{" "}
+                    <button onClick={() => apply(applied)}>다시 시도</button>
+                  </p>
+                )}
+              </div>
+            </section>
             <section
               className="card care-assumptions"
               id="settings-panel"
