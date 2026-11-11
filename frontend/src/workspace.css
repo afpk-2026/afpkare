@@ -1505,3 +1505,31 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
   outline: 2px solid #004ea2;
   outline-offset: 2px;
 }
+
+.guided-trial {
+  width: min(36rem, calc(100% - 2rem));
+  max-height: calc(100dvh - 2rem);
+  margin: auto;
+  padding: clamp(18px, 4vw, 28px);
+  overflow: auto;
+  color: #172b45;
+  background: #fff;
+}
+.guided-trial::backdrop {
+  background: rgb(11 28 53 / 63%);
+}
+.guided-trial .section-title {
+  gap: 12px;
+}
+.guided-trial .section-title h2 {
+  margin: 0;
+}
+.guided-trial button[data-guide-focus]:not(:disabled) {
+  box-shadow: 0 0 0 4px #d5e6fc;
+}
+.guided-trial input[data-guide-focus] {
+  border: 1px solid #004ea2;
+  border-radius: 8px;
+  background: #f2f7fd;
+  color: #172b45;
+}
