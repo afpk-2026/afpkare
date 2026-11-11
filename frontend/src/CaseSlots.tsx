@@ -257,9 +257,21 @@ export function CaseSlots({
           >
             {name}
             <small>
-              {slots[name]
-                ? `생활비 ${((slots[name]!.overrides.monthly_child_cost ?? reference.defaults.monthly_child_cost) / 10000).toLocaleString("ko-KR")}만`
-                : "비어 있음"}
+              {slots[name] ? (
+                <>
+                  생활비
+                  <br />
+                  <span className="care-slot-amount">
+                    {(
+                      (slots[name]!.overrides.monthly_child_cost ??
+                        reference.defaults.monthly_child_cost) / 10000
+                    ).toLocaleString("ko-KR")}
+                    만
+                  </span>
+                </>
+              ) : (
+                "비어 있음"
+              )}
             </small>
           </button>
         ))}

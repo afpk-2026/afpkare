@@ -288,6 +288,9 @@ html[data-patterns] .diagnosis.risk {
 .care-slot-buttons small {
   display: block;
 }
+.care-slot-amount {
+  white-space: nowrap;
+}
 .care-slot-buttons button[aria-pressed="true"] {
   border: 2px solid #004ea2;
   background: #eaf2ff;
