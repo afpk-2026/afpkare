@@ -40,7 +40,7 @@ import { ReportInsights } from "./ReportInsights.tsx";
 import { FormulaReference } from "./FormulaReference.tsx";
 import { AnalysisWorkspace } from "./AnalysisWorkspace.tsx";
 
-const PROJECT_NAME = "케어 파트너스";
+const PROJECT_NAME = "AFPKare";
 const TEAM_NAME = "OOOO팀";
 const CONTEST_TITLE =
   "제1회 전국 대학생 AI 재무설계 콘테스트 「AFPK 영 플래너 챌린지 2026」";
@@ -413,11 +413,7 @@ function Workspace({
     <>
       <header className="topbar contest-header">
         <a className="brand" href="#simulation">
-          <span className="brandmark">영</span>
-          <span>
-            <strong>{PROJECT_NAME}</strong>
-            <small>{TEAM_NAME}</small>
-          </span>
+          <img className="afpkare-logo" src="/brand/afpkare-logo.png" alt={PROJECT_NAME} width="2184" height="710" />
         </a>
         <p className="contest-heading">{CONTEST_TITLE}</p>
         <div className="header-credit">

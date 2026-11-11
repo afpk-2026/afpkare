@@ -316,7 +316,7 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
         </div>
         <div className="landing-story-outcome">
           <p>
-            케어 파트너스는 보고서 속 지훈 씨 가족의 가상 사례로 부모의 노후
+            AFPKare는 보고서 속 지훈 씨 가족의 가상 사례로 부모의 노후
             자금과 자녀의 생활비를 함께 계산합니다. 가정을 바꿔 부족 시점을
             비교하고, 가족이나 상담 창구에서 확인할 질문을 정리할 수 있습니다.
           </p>
@@ -337,7 +337,7 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
         </div>
       </section>
       <section className="landing-section">
-        <p className="eyebrow">02 / 케어 파트너스의 차별점</p>
+        <p className="eyebrow">02 / AFPKare의 차별점</p>
         <h2>같은 가족, 다른 가정. 무엇이 달라질까요?</h2>
         <div className="landing-steps">
           <article>

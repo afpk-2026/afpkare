@@ -199,10 +199,7 @@ export function Entrance({ onEnter }: { onEnter: () => void }) {
     <div className="care-home">
       <header className="care-header">
         <a href="#" className="brand">
-          <span className="brandmark" aria-hidden="true">
-            ♥
-          </span>
-          <strong>케어 파트너스</strong>
+          <img className="afpkare-logo" src="/brand/afpkare-logo.png" alt="AFPKare" width="2184" height="710" />
         </a>
         <nav aria-label="홈 메뉴">
           <a href="#about">서비스 소개</a>
@@ -216,15 +213,14 @@ export function Entrance({ onEnter }: { onEnter: () => void }) {
       <main className="care-landing">
         <section className="care-hero">
           <div>
-            <p className="eyebrow">CARE PARTNERS</p>
+            <p className="eyebrow">AFPKare</p>
             <h1>
-              두 세대의 내일,
+              부모의 오늘부터,
               <br />
-              하나의 계획으로.
+              자녀의 내일까지
             </h1>
             <p>
-              부모의 노후와 자녀의 생활을 가상 사례로 함께 살펴보세요. 가정을
-              바꾸고 재무설계 보고서의 산식과 결과를 확인할 수 있습니다.
+              생활비와 자산을 살펴보고, 우리 가족에게 필요한 준비를 찾아보세요.
             </p>
             <div className="care-hero-actions">
               <button className="primary" onClick={onEnter}>
@@ -239,8 +235,9 @@ export function Entrance({ onEnter }: { onEnter: () => void }) {
         <FormulaReference />
       </main>
       <footer className="landing-footer">
-        <strong>케어 파트너스</strong>
-        <p>AFPK 영 플래너 챌린지 2026 제출작</p>
+        <strong>AFPKare</strong>
+        <p>돌봄은 이어지고, 내일은 준비됩니다.</p>
+        <small>AFPK 영 플래너 챌린지 2026 제출작</small>
       </footer>
       <FloatingAssistant title="신탁과 재무설계 자료 도우미">
         {sourceError && (
