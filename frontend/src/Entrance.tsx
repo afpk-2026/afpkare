@@ -210,29 +210,35 @@ export function Entrance({ onEnter }: { onEnter: () => void }) {
           <SessionControl />
         </nav>
       </header>
-      <main className="care-landing">
-        <section className="care-hero">
-          <div>
-            <p className="eyebrow">AFPKare</p>
-            <h1>
-              부모의 오늘부터,
-              <br />
-              자녀의 내일까지
-            </h1>
-            <p>
-              생활비와 자산을 살펴보고, 우리 가족에게 필요한 준비를 찾아보세요.
-            </p>
-            <div className="care-hero-actions">
-              <button className="primary" onClick={onEnter}>
-                시뮬레이터 시작하기 <span aria-hidden="true">↗</span>
-              </button>
-              <a href="#about">서비스 알아보기</a>
+      <main className="care-home-main">
+        <div className="care-landing">
+          <section className="care-hero">
+            <div>
+              <p className="eyebrow">AFPKare</p>
+              <h1>
+                부모의 오늘부터,
+                <br />
+                자녀의 내일까지
+              </h1>
+              <p>
+                생활비와 자산을 살펴보고, 우리 가족에게 필요한 준비를 찾아보세요.
+              </p>
+              <div className="care-hero-actions">
+                <button className="primary" onClick={onEnter}>
+                  시뮬레이터 시작하기 <span aria-hidden="true">↗</span>
+                </button>
+                <a href="#about">서비스 알아보기</a>
+              </div>
             </div>
+            <LandingPreview />
+          </section>
+          <ServiceOverview onStart={onEnter} />
+        </div>
+        <div className="landing-formulas">
+          <div className="care-landing">
+            <FormulaReference />
           </div>
-          <LandingPreview />
-        </section>
-        <ServiceOverview onStart={onEnter} />
-        <FormulaReference />
+        </div>
       </main>
       <footer className="landing-footer">
         <strong>AFPKare</strong>
