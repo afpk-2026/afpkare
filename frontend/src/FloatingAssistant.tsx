@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 export function FloatingAssistant({
   children,
   initiallyOpen = true,
-  title = "케어 파트너스 도우미",
+  title = "AFPKare 도우미",
   openRequest = 0,
 }: {
   children: React.ReactNode;

@@ -59,6 +59,11 @@ export const reference: Reference = {
   },
   blockers: [],
   evidence: [{ ref: "식1", status: "해석 미확인", detail: "예금 포함 <검토>" }],
+  report_values: {
+    required_83: 130000000,
+    required_95: 175000000,
+    projected_b_56: 181269636,
+  },
   report_comparison: [],
   samples: [],
   assumptions: { version: "scenario-v1", notes: ["예금 유지"] },
@@ -84,6 +89,7 @@ export const result: Result = {
     parent_first_negative_year: 2040,
     parent_feasible: false,
     required_status: "calculated",
+    comparison_costs: {},
   },
   child_timeline: [
     {

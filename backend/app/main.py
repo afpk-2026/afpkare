@@ -1,9 +1,9 @@
 import asyncio
-import hmac
 from starlette.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field
 from . import auth, trust
 import os
+import sqlite3
 from fastapi import FastAPI, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -33,9 +33,6 @@ BLOCKERS = [
 
 @app.middleware("http")
 async def boundaries(request: Request, call_next):
-    public = {"/api/health", "/api/session", "/api/session/login", "/api/session/logout"}
-    if request.url.path.startswith("/api/") and request.url.path not in public and not auth.authenticated(request):
-        return api_status(401, "로그인이 필요합니다.")
     if request.url.path in {"/api/session/login", "/api/session/logout"} and request.method == "POST":
         if request.headers.get("content-type", "").split(";")[0] != "application/json":
             return api_status(415, "요청 형식을 확인해 주세요.")
@@ -83,8 +80,9 @@ def api_status(code, message):
     )
 
 
-class DemoLogin(BaseModel):
+class AccountLogin(BaseModel):
     model_config = ConfigDict(extra="forbid")
+    username: str = Field(min_length=1, max_length=128)
     password: str = Field(min_length=1, max_length=128)
 
 
@@ -94,24 +92,22 @@ def session_status(request: Request):
 
 
 @app.post("/api/session/login")
-async def login(data: DemoLogin, request: Request):
+async def login(data: AccountLogin, request: Request):
     secure = auth.secure_transport(request)
     if not (secure or auth.local_http()):
         return api_status(403, "HTTPS에서 로그인해 주세요.")
-    credentials = auth.credentials()
-    if credentials is None:
-        return api_status(503, "운영자가 데모 로그인을 준비 중입니다.")
-    salt, expected = credentials
     if login_gate.locked():
         return api_status(429, "로그인 요청이 많습니다. 잠시 후 다시 시도해 주세요.")
-    async with login_gate:
-        actual = await run_in_threadpool(auth.password_hash, data.password, salt)
-    if not hmac.compare_digest(actual, expected):
-        return api_status(401, "데모 비밀번호를 확인해 주세요.")
-    auth.revoke(request)
-    token = auth.issue_session()
-    if token is None:
-        return api_status(503, "접속이 많습니다. 잠시 후 다시 시도해 주세요.")
+    try:
+        async with login_gate:
+            account_id = await run_in_threadpool(auth.verify_account, data.username, data.password)
+        if account_id is None:
+            return api_status(401, "아이디 또는 비밀번호를 확인해 주세요.")
+        token = await run_in_threadpool(
+            auth.issue_session, account_id, request.cookies.get(auth.COOKIE, "")
+        )
+    except (sqlite3.Error, OSError):
+        return api_status(503, "로그인 서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.")
     response = JSONResponse({"authenticated": True})
     response.set_cookie(auth.COOKIE, token, max_age=auth.LIFETIME, httponly=True,
                         secure=secure, samesite="strict")
@@ -120,7 +116,10 @@ async def login(data: DemoLogin, request: Request):
 
 @app.post("/api/session/logout")
 async def logout(request: Request):
-    auth.revoke(request)
+    try:
+        await run_in_threadpool(auth.revoke, request)
+    except (sqlite3.Error, OSError):
+        return api_status(503, "로그아웃을 완료하지 못했습니다. 다시 시도해 주세요.")
     response = JSONResponse({"authenticated": False})
     response.delete_cookie(auth.COOKIE, httponly=True, secure=auth.secure_transport(request),
                            samesite="strict")
@@ -131,7 +130,7 @@ async def logout(request: Request):
 def health():
     return {
         "status": "ok",
-        "demo_login_ready": auth.credentials() is not None,
+        "account_login_enabled": True,
         "version": "0.3.0",
         "release": os.getenv("APP_VERSION", "local"),
         "assumption_version": CONFIG["version"],
@@ -307,11 +306,23 @@ async def trust_explain(question: trust.TrustQuestion):
     if any(value not in trust.BY_ID for value in ids):
         return api_status(422, "등록된 신탁 자료를 선택해 주세요.")
     sources = [trust.BY_ID[value] for value in ids]
-    chosen = None
-    if not llm_gate.locked():
-        async with llm_gate:
+    if llm_gate.locked():
+        return {"mode": "official_sources", "sources": sources}
+    async with llm_gate:
+        if question.semantic_query:
+            candidates = await trust.retrieve(question.semantic_query, ids)
+            chosen = await trust.choose_sources(
+                candidates or trust.SOURCES, question.semantic_query
+            )
+            if chosen is not None:
+                return {
+                    "mode": "semantic_llm_sources" if candidates else "llm_sources",
+                    "sources": chosen,
+                }
+            if candidates:
+                return {"mode": "semantic_sources", "sources": candidates[:3]}
+        elif len(sources) > 1:
             chosen = await trust.choose_sources(sources)
-    return {
-        "mode": "llm_sources" if chosen else "official_sources",
-        "sources": chosen or sources,
-    }
+            if chosen:
+                return {"mode": "llm_sources", "sources": chosen}
+    return {"mode": "official_sources", "sources": sources}

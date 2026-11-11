@@ -5,10 +5,12 @@ services:
     build: ./backend
     restart: unless-stopped
     environment:
-      CARE_DEMO_PASSWORD_HASH: ${CARE_DEMO_PASSWORD_HASH:-}
+      CARE_AUTH_DB: /var/lib/care-partners/accounts.sqlite3
       APP_VERSION: ${APP_VERSION:-local}
       UPSTAGE_LLM_API_KEY: ${UPSTAGE_LLM_API_KEY:-}
       UPSTAGE_MODEL: ${UPSTAGE_MODEL:-solar-mini4}
+    volumes:
+      - accounts:/var/lib/care-partners
     read_only: true
     tmpfs: [/tmp]
     security_opt: [no-new-privileges:true]
@@ -31,3 +33,6 @@ services:
     logging:
       driver: json-file
       options: {max-size: 5m, max-file: '2'}
+
+volumes:
+  accounts:
