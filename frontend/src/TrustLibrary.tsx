@@ -210,7 +210,6 @@ export function TrustChat({
   formulaHref?: string;
 }) {
   const [query, setQuery] = useState("");
-  const [semanticSearch, setSemanticSearch] = useState(false);
   const [answer, setAnswer] = useState<{
     mode: string;
     sources: TrustSource[];
@@ -225,10 +224,10 @@ export function TrustChat({
     if (row) row.scrollBy({ left: direction * row.clientWidth });
   }
   useEffect(() => () => controller.current?.abort(), []);
-  async function ask(ids: string[], semanticQuery?: string) {
+  async function ask(ids: string[]) {
     controller.current?.abort();
     setAnswer(null);
-    if (!ids.length && !semanticQuery) {
+    if (!ids.length) {
       setMessage(
         "연결되는 공식 자료가 없어요. 은행명이나 상품 이름으로 찾아보세요.",
       );
@@ -241,10 +240,7 @@ export function TrustChat({
       const response = await fetch("/api/trust-explain", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          source_ids: ids,
-          semantic_query: semanticQuery,
-        }),
+        body: JSON.stringify({ source_ids: ids }),
         signal: AbortSignal.any([abort.signal, AbortSignal.timeout(25000)]),
       });
       if (!response.ok) throw new Error();
@@ -253,18 +249,10 @@ export function TrustChat({
         setAnswer(result);
         setMessage(
           !result.sources.length
-            ? semanticQuery && result.mode === "official_sources"
-              ? "AI 의미 검색을 사용할 수 없어요. 은행이나 상품 이름으로 기본 검색을 해보세요."
-              : "질문과 연결되는 공식 자료를 찾지 못했어요. 은행이나 상품 이름을 함께 입력해 보세요."
-            : result.mode === "semantic_llm_sources"
-              ? "질문의 의미를 바탕으로 AI가 고른 공식 자료"
-              : result.mode === "semantic_sources"
-                ? "질문의 의미와 가까운 공식 자료"
-                : result.mode === "llm_sources"
-                  ? "AI가 고른 공식 자료"
-                  : semanticQuery
-                    ? "키워드로 찾은 공식 자료"
-                    : "공식 자료 요약",
+            ? "질문과 연결되는 공식 자료를 찾지 못했어요. 은행이나 상품 이름을 함께 입력해 보세요."
+            : result.mode === "llm_sources"
+              ? "AI가 고른 공식 자료"
+              : "공식 자료 요약",
         );
       }
     } catch {
@@ -278,10 +266,7 @@ export function TrustChat({
   function submitQuery() {
     const search = query.trim();
     if (search.length < 2) return;
-    void ask(
-      matchingSources(search, sources),
-      semanticSearch ? search : undefined,
-    );
+    void ask(matchingSources(search, sources));
     setQuery("");
   }
   return (
@@ -392,14 +377,6 @@ export function TrustChat({
           }}
           placeholder="예: 하나 리빙트러스트"
         />
-        <label className="trust-semantic-option">
-          <input
-            type="checkbox"
-            checked={semanticSearch}
-            onChange={(event) => setSemanticSearch(event.target.checked)}
-          />
-          AI 의미 검색 · 입력한 검색어를 Upstage에 전송
-        </label>
         <button
           className="primary chat-send"
           disabled={query.trim().length < 2}
@@ -410,10 +387,8 @@ export function TrustChat({
         <details className="chat-privacy">
           <summary>지원 범위·개인정보 안내</summary>
           <p>
-            기본 검색은 브라우저에서 검색어를 대조하고 공식 자료 식별자만 서버로
-            보냅니다. AI 의미 검색을 선택하면 검색어를 Upstage에 보내 관련
-            자료를 찾습니다. 이름, 연락처, 계좌번호 같은 개인정보는 입력하지
-            마세요.
+            브라우저에서 검색어를 대조하고 공식 자료 식별자만 서버로 보냅니다.
+            이름, 연락처, 계좌번호 같은 개인정보는 입력하지 마세요.
           </p>
         </details>
       </form>
