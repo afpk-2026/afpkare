@@ -1261,6 +1261,17 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
 .care-home .assistant-panel {
   height: min(620px, calc(100dvh - 110px));
 }
+@media (min-width: 1024px) {
+  .care-home:has(.assistant-panel:not([hidden])) .care-hero {
+    /* Allow for the 420px panel at 80% zoom, its right inset, and a gap. */
+    padding-inline-end: max(
+      0px,
+      calc(374px - max(var(--home-gutter), (100vw - var(--home-content-width)) / 2))
+    );
+    grid-template-columns: minmax(245px, 0.75fr) minmax(0, 1fr);
+    column-gap: clamp(22px, 3vw, 44px);
+  }
+}
 @media (max-width: 800px) {
   .care-hero { grid-template-columns: 1fr; }
   .landing-fund-flow { gap: 10px; }
