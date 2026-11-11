@@ -121,103 +121,110 @@ export function LandingPreview() {
   const x = (age: number) => 54 + ((age - 56) / 39) * 490;
   const y = (balance: number) => 232 - (balance / 200_000_000) * 200;
   return (
-    <figure
-      className="landing-demo"
+    <div
+      className="landing-preview"
       onPointerEnter={(event) => {
         if (event.pointerType === "mouse") setHovered(true);
       }}
       onPointerLeave={() => setHovered(false)}
     >
-      <figcaption aria-live={playing ? "off" : "polite"} aria-atomic="true">
-        <span>{slide.label}</span>
-        <strong>{slide.title}</strong>
-      </figcaption>
-      <div className="landing-demo-legend" aria-label="전략 범례">
-        {strategies.map((strategy, index) => (
-          <span key={strategy.title}>
-            <i
-              style={{
-                borderColor: strategy.color,
-                borderTopStyle: index ? "dashed" : "solid",
-              }}
-            />
-            {strategy.title}
-          </span>
-        ))}
-      </div>
-      <svg
-        key={slide.label}
-        className="landing-slide-chart"
-        viewBox="0 0 580 270"
-        role="img"
-        aria-label={`${slide.label} · 56세부터 95세까지의 연말 신탁 잔액`}
+      <div
+        className="landing-slide-viewport"
+        aria-live={playing ? "off" : "polite"}
       >
-        {[0, 50_000_000, 100_000_000, 150_000_000, 200_000_000].map((value) => (
-          <g key={value}>
-            <line
-              x1="54"
-              x2="544"
-              y1={y(value)}
-              y2={y(value)}
-              stroke="#345673"
-            />
-            <text
-              x="46"
-              y={y(value) + 4}
-              textAnchor="end"
-              fill="#dcecff"
-              fontSize="12"
-            >
-              {value / 100_000_000}억
-            </text>
-          </g>
-        ))}
-        {slide.paths.map((path, index) => (
-          <polyline
-            key={strategies[index].title}
-            points={path
-              .map(([age, balance]) => `${x(age)},${y(balance)}`)
-              .join(" ")}
-            fill="none"
-            stroke={strategies[index].color}
-            strokeWidth={3}
-            strokeDasharray={index ? "6 4" : undefined}
-          />
-        ))}
-        {[56, 65, 83, 95].map((age) => (
-          <text
-            key={age}
-            x={x(age)}
-            y="255"
-            textAnchor="middle"
-            fill="#dcecff"
-            fontSize="13"
+        <figure className="landing-demo" key={slide.label}>
+          <figcaption>
+            <span>{slide.label}</span>
+            <strong>{slide.title}</strong>
+          </figcaption>
+          <div className="landing-demo-legend" aria-label="전략 범례">
+            {strategies.map((strategy, index) => (
+              <span key={strategy.title}>
+                <i
+                  style={{
+                    borderColor: strategy.color,
+                    borderTopStyle: index ? "dashed" : "solid",
+                  }}
+                />
+                {strategy.title}
+              </span>
+            ))}
+          </div>
+          <svg
+            viewBox="0 0 580 270"
+            role="img"
+            aria-label={`${slide.label} · 56세부터 95세까지의 연말 신탁 잔액`}
           >
-            {age}세
-          </text>
-        ))}
-      </svg>
-      <p className="landing-slide-description">{slide.description}</p>
-      <ol
-        className="landing-fund-flow"
-        aria-label="신탁 준비와 생활비 지급 흐름"
-      >
-        <li>
-          <span>부모 생전</span>
-          <strong>적립</strong>
-          <small>자녀를 위한 자금 준비</small>
-        </li>
-        <li>
-          <span>56세부터</span>
-          <strong>생활비 지급</strong>
-          <small>연금·급여와 신탁 인출</small>
-        </li>
-        <li>
-          <span>65세부터</span>
-          <strong>급여 전환</strong>
-          <small>바뀐 급여에 맞춰 인출</small>
-        </li>
-      </ol>
+            {[0, 50_000_000, 100_000_000, 150_000_000, 200_000_000].map(
+              (value) => (
+                <g key={value}>
+                  <line
+                    x1="54"
+                    x2="544"
+                    y1={y(value)}
+                    y2={y(value)}
+                    stroke="#345673"
+                  />
+                  <text
+                    x="46"
+                    y={y(value) + 4}
+                    textAnchor="end"
+                    fill="#dcecff"
+                    fontSize="12"
+                  >
+                    {value / 100_000_000}억
+                  </text>
+                </g>
+              ),
+            )}
+            {slide.paths.map((path, index) => (
+              <polyline
+                key={strategies[index].title}
+                points={path
+                  .map(([age, balance]) => `${x(age)},${y(balance)}`)
+                  .join(" ")}
+                fill="none"
+                stroke={strategies[index].color}
+                strokeWidth={3}
+                strokeDasharray={index ? "6 4" : undefined}
+              />
+            ))}
+            {[56, 65, 83, 95].map((age) => (
+              <text
+                key={age}
+                x={x(age)}
+                y="255"
+                textAnchor="middle"
+                fill="#dcecff"
+                fontSize="13"
+              >
+                {age}세
+              </text>
+            ))}
+          </svg>
+          <p className="landing-slide-description">{slide.description}</p>
+          <ol
+            className="landing-fund-flow"
+            aria-label="신탁 준비와 생활비 지급 흐름"
+          >
+            <li>
+              <span>부모 생전</span>
+              <strong>적립</strong>
+              <small>자녀를 위한 자금 준비</small>
+            </li>
+            <li>
+              <span>56세부터</span>
+              <strong>생활비 지급</strong>
+              <small>연금·급여와 신탁 인출</small>
+            </li>
+            <li>
+              <span>65세부터</span>
+              <strong>급여 전환</strong>
+              <small>바뀐 급여에 맞춰 인출</small>
+            </li>
+          </ol>
+        </figure>
+      </div>
       <div className="landing-slide-controls">
         <div
           className="landing-slide-dots"
@@ -248,7 +255,7 @@ export function LandingPreview() {
           <span aria-hidden="true">{playing ? "❚❚" : "▶"}</span>
         </button>
       </div>
-    </figure>
+    </div>
   );
 }
 

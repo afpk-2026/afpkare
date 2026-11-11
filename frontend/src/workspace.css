@@ -981,7 +981,7 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
 @keyframes landing-slide-in {
   from {
     opacity: 0;
-    transform: translateX(18px);
+    transform: translateX(28%);
   }
   to {
     opacity: 1;
@@ -1098,11 +1098,8 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
   html:not([data-no-motion]) .care-hero > div {
     animation: landing-appear 0.55s ease-out both;
   }
-  html:not([data-no-motion]) .landing-demo {
-    animation: landing-appear 0.65s 0.12s ease-out both;
-  }
-  html:not([data-no-motion]) .landing-slide-chart {
-    animation: landing-slide-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  html:not([data-no-motion]) .landing-preview .landing-demo {
+    animation: landing-slide-in 0.48s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 }
 
@@ -1233,7 +1230,8 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
   gap: clamp(24px, 4vw, 56px);
 }
-.care-hero .landing-demo {
+.care-hero .landing-preview {
+  min-width: 0;
   width: 100%;
   max-width: 540px;
   justify-self: end;
@@ -1462,6 +1460,7 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
   margin-bottom: 0;
 }
 
+.landing-slide-viewport { overflow: hidden; }
 .landing-slide-description {
   min-height: 3em;
   word-break: keep-all;
@@ -1482,20 +1481,20 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
   padding: 0;
   border: 0;
   background: transparent;
-  color: #eef7ff;
+  color: #004ea2;
 }
 .landing-slide-dots button::before {
   content: "";
   width: 8px;
   height: 8px;
-  border: 1px solid #bad4ea;
+  border: 1px solid #53667e;
   border-radius: 50%;
 }
 .landing-slide-dots button[aria-pressed="true"]::before {
   width: 16px;
   border-radius: 8px;
-  border-color: #65c4ff;
-  background: #65c4ff;
+  border-color: #004ea2;
+  background: #004ea2;
 }
 .landing-slide-play {
   position: absolute;
@@ -1503,6 +1502,6 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
   font-size: 0.75rem;
 }
 .landing-slide-controls button:focus-visible {
-  outline: 2px solid #ffcb7b;
+  outline: 2px solid #004ea2;
   outline-offset: 2px;
 }
