@@ -33,7 +33,7 @@ BLOCKERS = [
 
 @app.middleware("http")
 async def boundaries(request: Request, call_next):
-    if request.url.path in {"/api/session/login", "/api/session/register", "/api/session/logout"} and request.method == "POST":
+    if request.url.path in {"/api/session/login", "/api/session/logout"} and request.method == "POST":
         if request.headers.get("content-type", "").split(";")[0] != "application/json":
             return api_status(415, "요청 형식을 확인해 주세요.")
     if request.method == "POST":
@@ -112,26 +112,6 @@ async def login(data: AccountLogin, request: Request):
     response.set_cookie(auth.COOKIE, token, max_age=auth.LIFETIME, httponly=True,
                         secure=secure, samesite="strict")
     return response
-
-
-class AccountRegistration(AccountLogin):
-    password: str = Field(min_length=12, max_length=128)
-
-
-@app.post("/api/session/register")
-async def register(data: AccountRegistration, request: Request):
-    if not (auth.secure_transport(request) or auth.local_http()):
-        return api_status(403, "HTTPS에서 회원가입해 주세요.")
-    if login_gate.locked():
-        return api_status(429, "회원가입 요청이 많습니다. 잠시 후 다시 시도해 주세요.")
-    try:
-        async with login_gate:
-            await run_in_threadpool(auth.create_account, data.username, data.password)
-    except ValueError as error:
-        return api_status(422, str(error))
-    except (sqlite3.Error, OSError):
-        return api_status(503, "회원가입을 완료하지 못했습니다. 잠시 후 다시 시도해 주세요.")
-    return JSONResponse({"registered": True}, status_code=201)
 
 
 @app.post("/api/session/logout")

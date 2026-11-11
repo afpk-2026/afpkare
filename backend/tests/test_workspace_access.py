@@ -122,16 +122,19 @@ def test_semantic_search_uses_retrieved_source_ids_and_degrades_to_keywords(demo
     assert response.json() == {"mode": "official_sources", "sources": [trust.BY_ID["kb-care"]]}
 
 
-def test_registration_persistence_and_independent_sessions(demo, monkeypatch):
+def test_operator_accounts_persistence_and_independent_sessions(demo, monkeypatch):
     client, _ = demo
     other = TestClient(app, base_url="https://testserver")
     password = "individual-password-123"
     body = {"username": "Second.User", "password": password}
-    assert client.post("/api/session/register", json=body).status_code == 201
-    assert client.post("/api/session/register", json={**body, "username": "second.user"}).status_code == 422
-    assert client.post("/api/session/register", json={**body, "password": "short"}).status_code == 422
-    assert client.post("/api/session/register", json={**body, "username": "bad name"}).status_code == 422
-    assert client.post("http://testserver/api/session/register", json=body).status_code == 403
+    assert client.post("/api/session/register", json=body).status_code == 404
+    auth.create_account(body["username"], password)
+    with pytest.raises(ValueError, match="이미 사용"):
+        auth.create_account("second.user", password)
+    with pytest.raises(ValueError, match="비밀번호"):
+        auth.create_account("another", "short")
+    with pytest.raises(ValueError, match="아이디"):
+        auth.create_account("bad name", password)
 
     assert client.post("/api/session/login", json=body).json() == {"authenticated": True}
     assert other.post("/api/session/login", json={"username": "tester", "password": "test-demo-password-000"}).json() == {"authenticated": True}

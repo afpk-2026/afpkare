@@ -147,7 +147,7 @@ export function PreferencesPanel({
         <details>
           <summary>로그인하려면 무엇이 필요한가요?</summary>
           <p>
-            로그인 창의 ‘계정 만들기’에서 가입한 뒤 아이디와 비밀번호로 로그인합니다.
+            운영자에게 전달받은 아이디와 비밀번호로 로그인합니다.
             시뮬레이터는 로그인 없이도 이용할 수 있습니다.
           </p>
         </details>
