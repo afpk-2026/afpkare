@@ -231,10 +231,15 @@ export function Entrance({ onEnter }: { onEnter: () => void }) {
                 생활비와 자산을 살펴보고, 우리 가족에게 필요한 준비를 찾아보세요.
               </p>
               <div className="care-hero-actions">
-                <button className="primary" onClick={onEnter}>
+                <button type="button" className="primary" onClick={onEnter}>
                   시뮬레이터 시작하기 <span aria-hidden="true">↗</span>
                 </button>
-                <a href="#about">서비스 알아보기</a>
+                <button type="button" className="care-hero-resume" onClick={onEnter}>
+                  이어하기
+                </button>
+                <div className="care-hero-about">
+                  <a href="#about">서비스 알아보기</a>
+                </div>
               </div>
             </div>
             <LandingPreview />

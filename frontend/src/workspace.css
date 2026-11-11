@@ -403,9 +403,22 @@ html[data-patterns] .diagnosis.risk {
 .care-header-actions {
   justify-content: flex-end;
 }
+.care-hero-resume {
+  background: #f4f6f9;
+  color: #172b45;
+  border-color: #dce4ef;
+}
+.care-hero-resume:hover {
+  background: #eaf2ff;
+  border-color: #a6c6e7;
+}
+.care-hero-about {
+  flex-basis: 100%;
+}
 .care-hero-actions a {
+  display: inline-block;
   color: #004ea2;
-  padding: 6px;
+  padding: 6px 0;
   font-weight: 600;
 }
 html[data-patterns] .reference-chart path[stroke-dasharray],
