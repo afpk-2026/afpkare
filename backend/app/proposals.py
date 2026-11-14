@@ -1,5 +1,6 @@
 """Only fully validated fictional change sentences cross the external LLM boundary."""
 
+import asyncio
 import json
 import logging
 import os
@@ -9,6 +10,26 @@ from .contracts import FIELDS, Overrides
 
 class ProposalUnavailable(Exception):
     pass
+
+
+class InvalidProposal(ValueError):
+    pass
+
+
+def read_proposal(payload, expected):
+    if payload.get("status") != "completed":
+        raise InvalidProposal("incomplete")
+    outputs = [
+        part["text"]
+        for item in payload.get("output", [])
+        for part in item.get("content", [])
+        if part.get("type") == "output_text"
+    ]
+    raw = json.loads("".join(outputs))
+    parsed = Overrides.model_validate(raw).changes()
+    if parsed != expected:
+        raise InvalidProposal("meaning_mismatch")
+    return parsed
 
 
 async def propose(sentence: str, expected: dict):
@@ -21,76 +42,78 @@ async def propose(sentence: str, expected: dict):
             "서버 LLM 키 또는 모델이 설정되지 않았습니다. 수동 입력을 이용해 주세요."
         )
     properties = {
-        name: {"type": ["number" if name == "net_real_return" else "integer", "null"]}
-        for name in FIELDS
+        name: {
+            "type": "number" if name == "net_real_return" else "integer",
+            "description": (
+                "연 비율. 퍼센트를 100으로 나눈 값. 예: -0.5%=-0.005."
+                if name == "net_real_return"
+                else f'{FIELDS[name]["label"]} · {FIELDS[name]["unit"]}'
+            ),
+            "minimum": FIELDS[name]["min"],
+            "maximum": FIELDS[name]["max"],
+        }
+        for name in expected
     }
-    for name, info in FIELDS.items():
-        properties[name]["description"] = (
-            "연 비율. 퍼센트 숫자를 100으로 나눈 값. 예: 1%=0.01, -0.5%=-0.005, 0%=0."
-            if name == "net_real_return"
-            else info["label"]
-            + " · "
-            + info["unit"]
-            + ". 만 원은 10000을 곱해 원 정수로 변환."
-        )
-        properties[name]["minimum"] = info["min"]
-        properties[name]["maximum"] = info["max"]
     schema = {
         "type": "object",
         "properties": properties,
         "required": list(properties),
         "additionalProperties": False,
     }
-    stage = "transport"
+    request = {
+        "model": model,
+        "store": False,
+        "max_output_tokens": 500,
+        "reasoning": {"effort": "none"},
+        "instructions": (
+            "가상 재무 사례의 문장에서 스키마가 지정한 입력의 값을 추출하라. "
+            "만 원은 10000을 곱해 월 원 정수로, 퍼센트는 100으로 나눠 연 비율로 변환한다. "
+            "나이는 세 단위 정수다. 계산 결과, 설명, 법률 판단을 생성하지 마라."
+        ),
+        "input": sentence,
+        "text": {
+            "format": {
+                "type": "json_schema",
+                "name": "input_changes",
+                "strict": True,
+                "schema": schema,
+            }
+        },
+    }
+    logger = logging.getLogger(__name__)
     try:
-        async with httpx.AsyncClient(timeout=20.0) as client:
-            response = await client.post(
-                "https://api.upstage.ai/v1/responses",
-                headers={"Authorization": f"Bearer {key}"},
-                json={
-                    "model": model,
-                    "store": False,
-                    "max_output_tokens": 500,
-                    "reasoning": {"effort": "none"},
-                    "instructions": "가상 재무 사례의 문장에서 명시한 변경 입력만 추출하라. 금액은 월 원 정수, 수익률은 반드시 퍼센트를100으로 나눈 연 비율(-0.5%는-0.005, 1%는0.01), 나이는 세 정수. 명시하지 않은 필드는 null. 계산 결과, 설명, 법률 판단을 생성하지 마라.",
-                    "input": sentence,
-                    "text": {
-                        "format": {
-                            "type": "json_schema",
-                            "name": "input_changes",
-                            "strict": True,
-                            "schema": schema,
-                        }
-                    },
-                },
-            )
-            response.raise_for_status()
-            payload = response.json()
-        stage = "completion"
-        if payload.get("status") != "completed":
-            raise ValueError("Incomplete response")
-        outputs = [
-            part["text"]
-            for item in payload.get("output", [])
-            for part in item.get("content", [])
-            if part.get("type") == "output_text"
-        ]
-        stage = "schema"
-        raw = json.loads("".join(outputs))
-        if not isinstance(raw, dict):
-            raise ValueError("Output must be an object")
-        parsed = Overrides.model_validate(
-            {k: v for k, v in raw.items() if v is not None}
-        ).changes()
-        stage = "meaning"
-        # Allowed sentences have a known meaning; reject omitted/invented fields and values.
-        if parsed != expected or set(raw) != set(FIELDS):
-            raise ValueError("Proposal does not match supported sample")
-        return parsed
-    except (httpx.HTTPError, ValueError, KeyError, TypeError, AttributeError) as exc:
-        logging.getLogger(__name__).warning(
-            "proposal_failed stage=%s kind=%s", stage, type(exc).__name__
-        )
-        raise ProposalUnavailable(
-            "자연어 변경 제안을 검증하지 못했습니다. 잠시 후 다시 시도하거나 수동 입력을 이용해 주세요."
-        ) from None
+        # Leave room for the API to answer before the browser's 25-second timeout.
+        async with asyncio.timeout(20), httpx.AsyncClient(timeout=9.0) as client:
+            for attempt in (1, 2):
+                try:
+                    response = await client.post(
+                        "https://api.upstage.ai/v1/responses",
+                        headers={"Authorization": f"Bearer {key}"},
+                        json=request,
+                    )
+                    response.raise_for_status()
+                    return read_proposal(response.json(), expected)
+                except httpx.HTTPStatusError as exc:
+                    status = exc.response.status_code
+                    logger.warning(
+                        "proposal_failed attempt=%s upstream_status=%s", attempt, status
+                    )
+                    if status not in (408, 500, 502, 503, 504):
+                        break
+                except httpx.TransportError as exc:
+                    logger.warning(
+                        "proposal_failed attempt=%s transport=%s", attempt, type(exc).__name__
+                    )
+                except InvalidProposal as exc:
+                    logger.warning("proposal_failed attempt=%s reason=%s", attempt, exc)
+                except (ValueError, KeyError, TypeError, AttributeError) as exc:
+                    logger.warning(
+                        "proposal_failed attempt=%s response=%s", attempt, type(exc).__name__
+                    )
+                if attempt == 1:
+                    await asyncio.sleep(0.25)
+    except TimeoutError:
+        logger.warning("proposal_failed reason=deadline")
+    raise ProposalUnavailable(
+        "자연어 변경 제안을 검증하지 못했습니다. 잠시 후 다시 시도하거나 수동 입력을 이용해 주세요."
+    )

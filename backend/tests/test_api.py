@@ -2,7 +2,7 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
-from app.contracts import DEFAULTS, FIELDS
+from app.contracts import DEFAULTS
 from app import proposals
 
 client = TestClient(app, base_url="https://testserver")
@@ -109,11 +109,30 @@ def test_missing_key_manual_still_available(monkeypatch):
     assert simulation({"monthly_child_cost": 1850000}).status_code == 200
 
 
-@pytest.mark.parametrize("bad", [False, True])
-def test_real_llm_transport_validated(monkeypatch, bad):
+@pytest.mark.parametrize(
+    "replies, status, attempts",
+    [
+        ([{"monthly_child_cost": 1850000}], 200, 1),
+        ([{"monthly_child_cost": None}, {"monthly_child_cost": 1850000}], 200, 2),
+        ([{}, {"monthly_child_cost": 1850000}], 200, 2),
+        (["incomplete", {"monthly_child_cost": 1850000}], 200, 2),
+        (["malformed", {"monthly_child_cost": 1850000}], 200, 2),
+        (["timeout", {"monthly_child_cost": 1850000}], 200, 2),
+        ([502, {"monthly_child_cost": 1850000}], 200, 2),
+        ([401], 503, 1),
+        ([429], 503, 1),
+        ([{"monthly_child_cost": 185000}] * 2, 503, 2),
+        ([{"monthly_child_cost": "1850000"}] * 2, 503, 2),
+        ([{"monthly_child_cost": 1850000, "calculated_balance": 175000000}] * 2, 503, 2),
+        ([{"monthly_child_cost": 1850000, "child_end_age": 95}] * 2, 503, 2),
+        ([503, 503], 503, 2),
+    ],
+)
+def test_real_llm_transport_validated(monkeypatch, replies, status, attempts):
     monkeypatch.setenv("UPSTAGE_LLM_API_KEY", "test-placeholder")
     monkeypatch.setenv("UPSTAGE_MODEL", "test-model")
-    captured = {}
+    captured = []
+    responses = iter(replies)
 
     class MockAsyncClient:
         def __init__(self, **kwargs):
@@ -126,20 +145,25 @@ def test_real_llm_transport_validated(monkeypatch, bad):
             pass
 
         async def post(self, url, **kwargs):
-            captured.update(kwargs["json"])
-            values = {k: None for k in FIELDS}
-            values["monthly_child_cost"] = 1850000
-            if bad:
-                values["calculated_balance"] = 175000000
+            captured.append(kwargs["json"])
+            reply = next(responses)
+            request = proposals.httpx.Request("POST", url)
+            if reply == "timeout":
+                raise proposals.httpx.ReadTimeout("timeout", request=request)
+            if isinstance(reply, int):
+                return proposals.httpx.Response(reply, request=request)
             return proposals.httpx.Response(
                 200,
-                request=proposals.httpx.Request("POST", url),
+                request=request,
                 json={
-                    "status": "completed",
+                    "status": "incomplete" if reply == "incomplete" else "completed",
                     "output": [
                         {
                             "content": [
-                                {"type": "output_text", "text": json.dumps(values)}
+                                {
+                                    "type": "output_text",
+                                    "text": "{" if reply == "malformed" else json.dumps(reply),
+                                }
                             ]
                         }
                     ],
@@ -148,9 +172,17 @@ def test_real_llm_transport_validated(monkeypatch, bad):
 
     monkeypatch.setattr(proposals.httpx, "AsyncClient", MockAsyncClient)
     r = client.post("/api/parse-change", json={"sample_id": "cost185"})
-    assert captured["store"] is False
-    if bad:
-        assert r.status_code == 503
+    assert r.status_code == status
+    assert len(captured) == attempts
+    for payload in captured:
+        assert payload["store"] is False
+        schema = payload["text"]["format"]["schema"]
+        assert schema["required"] == ["monthly_child_cost"]
+        assert schema["properties"]["monthly_child_cost"]["type"] == "integer"
+        assert set(schema["properties"]) == {"monthly_child_cost"}
+        assert schema["additionalProperties"] is False
+    if status == 503:
+        assert r.json()["status"] == "unavailable"
     else:
         assert r.json() == {
             "status": "proposal",
@@ -165,6 +197,8 @@ def test_real_llm_transport_validated(monkeypatch, bad):
     "text,field,value",
     [
         ("생활비가 월 185만 원이면?", "monthly_child_cost", 1850000),
+        ("생활비 월 185.5만 원", "monthly_child_cost", 1855000),
+        ("생활비 월 1000만 원", "monthly_child_cost", 10000000),
         ("자녀 유족연금을 월 0원으로 바꿔 줘", "monthly_survivor_pension", 0),
         ("신탁 순실질수익률을 연 -0.5%로 바꿔 줘", "net_real_return", -0.005),
         (
@@ -173,6 +207,7 @@ def test_real_llm_transport_validated(monkeypatch, bad):
             1000000,
         ),
         ("자녀 설계 종료 나이를 83세로 바꿔 줘", "child_end_age", 83),
+        ("종료 나이 110세", "child_end_age", 110),
     ],
 )
 def test_allowed_sentence_grammar(text, field, value):
@@ -191,6 +226,10 @@ def test_allowed_sentence_grammar(text, field, value):
         "생활비를 올려 줘",
         "생활비가 월 -1원",
         "생활비가 월 0.1원",
+        "생활비 월 1000.0001만 원",
+        "수익률 0.001%",
+        "종료 나이 55세",
+        "생활비 월 185만 원, 종료 나이 83세",
     ],
 )
 def test_private_ambiguous_or_injection_not_sent_to_llm(monkeypatch, text):
