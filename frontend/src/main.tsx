@@ -43,10 +43,8 @@ import { AnalysisWorkspace } from "./AnalysisWorkspace.tsx";
 import { sampleEventGroups } from "./sampleEvents.ts";
 
 const PROJECT_NAME = "AFPKare";
-const TEAM_NAME = "OOOO팀";
 const CONTEST_TITLE =
   "제1회 전국 대학생 AI 재무설계 콘테스트 「AFPK 영 플래너 챌린지 2026」";
-const TEAM_CREDIT = "OOOO팀 제출작 - 김나예, 박민정, 박민준, 장유찬";
 const strategies: Record<Strategy, string> = {
   B: "B · 단계 적립",
   B_PRIME: "B′ · 사후 보충",
@@ -409,13 +407,9 @@ function Workspace({
           />
         </a>
         <p className="contest-heading">{CONTEST_TITLE}</p>
-        <div className="header-credit">
-          <b>{TEAM_NAME}</b>
-          <small>{TEAM_CREDIT}</small>
-          <div className="care-header-actions">
-            <button onClick={onExit}>소개 홈</button>
-            <SessionControl />
-          </div>
+        <div className="care-header-actions">
+          <button onClick={onExit}>소개 홈</button>
+          <SessionControl />
         </div>
       </header>
       <a
@@ -1061,10 +1055,6 @@ function Workspace({
           <div>
             <strong>{PROJECT_NAME}</strong>
             <span>{CONTEST_TITLE}</span>
-          </div>
-          <div>
-            <b>{TEAM_NAME}</b>
-            <span>{TEAM_CREDIT}</span>
           </div>
         </footer>
       </main>

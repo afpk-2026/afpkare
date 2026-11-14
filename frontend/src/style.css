@@ -1375,20 +1375,6 @@ footer {
   text-align: center;
   word-break: keep-all;
 }
-.header-credit {
-  text-align: right;
-}
-.header-credit b {
-  font-size: 12px;
-  color: #003d80;
-}
-.header-credit small {
-  display: block;
-  font-size: 12px;
-  margin-top: 7px;
-  line-height: 1.7;
-  word-break: keep-all;
-}
 .heading .muted {
   max-width: 650px;
 }
@@ -1564,16 +1550,9 @@ footer {
   gap: 8px;
   max-width: 620px;
 }
-.contest-footer > div:last-child {
-  text-align: right;
-}
 .contest-footer strong {
   font-size: 15px;
   color: #003d80;
-}
-.contest-footer b {
-  font-size: 12px;
-  color: #53667e;
 }
 .contest-footer span {
   font-size: 12px;
@@ -1704,14 +1683,9 @@ footer {
     grid-template-columns: 1fr 1.6fr;
     gap: 10px 20px;
   }
-  .header-credit {
+  .contest-header .care-header-actions {
     grid-column: 1/-1;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .header-credit small {
-    margin: 0;
+    justify-content: flex-start;
   }
 }
 @media (max-width: 760px) {
@@ -1728,16 +1702,6 @@ footer {
   }
   .contest-heading {
     text-align: left;
-    font-size: 12px;
-  }
-  .header-credit {
-    display: block;
-    text-align: left;
-  }
-  .header-credit b {
-    display: none;
-  }
-  .header-credit small {
     font-size: 12px;
   }
   .guided-nav {
@@ -1764,9 +1728,6 @@ footer {
   .contest-footer {
     display: grid;
     gap: 20px;
-  }
-  .contest-footer > div:last-child {
-    text-align: left;
   }
   .floating-assistant {
     right: 14px;
