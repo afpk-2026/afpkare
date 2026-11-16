@@ -5,7 +5,7 @@ set -euo pipefail
 checkout=${1:?checkout required}
 sha=${2:?commit required}
 [[ "$sha" =~ ^[0-9a-f]{40}$ ]] || exit 2
-[[ "$checkout" == /opt/actions-runner/_work/no-named/no-named ]] || exit 2
+[[ "$checkout" == /opt/actions-runner/_work/afpkare/afpkare ]] || exit 2
 export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=safe.directory GIT_CONFIG_VALUE_0="$checkout"
 [[ "$(git -C "$checkout" rev-parse HEAD)" == "$sha" ]] || exit 2
 base=/opt/family-finance
