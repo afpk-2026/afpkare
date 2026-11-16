@@ -2,6 +2,7 @@ import React from "react";
 import { money } from "./Chart.tsx";
 import { formatInput, type Sensitivity, type Snapshot } from "./analysis.ts";
 import type { Result } from "./simulation.ts";
+import { strategyLabels } from "./strategyLabels.ts";
 
 export function SensitivityBars({
   analysis,
@@ -25,10 +26,10 @@ export function SensitivityBars({
     <div className="sensitivity-visual" aria-label="민감도 잔액 비교 시각화">
       <div className="visual-legend">
         <span>
-          <i className="bar-b" /> B 예상
+          <i className="bar-b" /> {strategyLabels.B} 예상
         </span>
         <span>
-          <i className="bar-bp" /> B′ 예상
+          <i className="bar-bp" /> {strategyLabels.B_PRIME} 예상
         </span>
         <span>
           <i className="need-line" /> 필요액
@@ -54,7 +55,7 @@ export function SensitivityBars({
                 v.results
                   .map(
                     (r) =>
-                      `${r.strategy === "B" ? "B" : "B′"} 예상 ${money(r.summary.projected_trust_at_56)}`,
+                      `${strategyLabels[r.strategy]} 예상 ${money(r.summary.projected_trust_at_56)}`,
                   )
                   .join(", ") + `, 필요 ${money(required)}`
               }
@@ -95,7 +96,7 @@ export function SensitivityBars({
             <footer>
               {v.results.map((r) => (
                 <span key={r.strategy}>
-                  {r.strategy === "B" ? "B" : "B′"}{" "}
+                  {strategyLabels[r.strategy]}{" "}
                   {money(r.summary.projected_trust_at_56)}
                 </span>
               ))}
@@ -126,7 +127,7 @@ export function SnapshotCards({
         <article key={s.id} className={s.id === "current" ? "is-current" : ""}>
           <header>
             <b>{s.label}</b>
-            <span>{s.result.strategy === "B" ? "B" : "B′"}</span>
+            <span>{strategyLabels[s.result.strategy]}</span>
           </header>
           <p className="snapshot-inputs">
             생활비{" "}
