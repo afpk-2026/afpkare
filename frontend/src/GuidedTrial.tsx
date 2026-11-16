@@ -35,7 +35,6 @@ export function GuidedTrial({
   const returnFocus = useRef(false);
   const request = useRef<AbortController | null>(null);
   const titleId = useId();
-  const recommendationsId = useId();
   const [step, setStep] = useState(0);
   const [monthly, setMonthly] = useState("185");
   const [baseline, setBaseline] = useState<Result | null>(null);
@@ -291,46 +290,6 @@ export function GuidedTrial({
           </p>
         )}
       </section>
-      <nav className="consumer-links" aria-labelledby={recommendationsId}>
-        <h2 className="consumer-links-heading" id={recommendationsId}>
-          추천 기능
-        </h2>
-        {[
-          [
-            "#events",
-            "상황별 사례로 시작",
-            "생활비 변화나 은퇴 등 우리 가족과 비슷한 상황을 살펴보세요.",
-            "01",
-          ],
-          [
-            "#report",
-            "보고서 결과 비교",
-            "저장한 사례를 골라 진단과 준비 방법을 비교해 보세요.",
-            "02",
-          ],
-          [
-            "#trusts",
-            "목적에 맞는 신탁 찾기",
-            "돌봄과 생활비 준비에 필요한 상품과 공식 자료를 찾아보세요.",
-            "03",
-          ],
-        ].map(([href, title, description, number]) => (
-          <a
-            href={href}
-            key={href}
-            onClick={dim ? () => finish(false) : undefined}
-          >
-            <span className="consumer-link-number" aria-hidden="true">
-              {number}
-            </span>
-            <strong>{title}</strong>
-            <span className="consumer-link-description">{description}</span>
-            <span className="consumer-link-arrow" aria-hidden="true">
-              ↗
-            </span>
-          </a>
-        ))}
-      </nav>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 # main → Vultr CI/CD
 
-- 저장소: `afpk-2026/no-named` (비공개). workflow: `.github/workflows/checks.yml`.
+- 저장소: `afpk-2026/afpkare` (비공개). workflow: `.github/workflows/checks.yml`.
 - PR/작업 브랜치/main: GitHub Ubuntu 실행기에서 백엔드 시험, 프론트 시험·빌드, Compose 검증, Terraform fmt/validate/mock plan을 실행한다. 실제 Terraform apply는 하지 않는다.
 - main push 또는 main 수동 실행: 두 시험 job 성공 후 `production` 환경의 `vultr-production` 전용 실행기로 배포한다. PR은 서버에서 실행하지 않는다. production 배포 브랜치 정책은 main만 허용한다.
 - 서버 `/opt/actions-runner`의 `github-deploy` 계정으로 GitHub 공식 runner를 systemd 운영. 초기 설치 2.338.2, 공식 릴리스 SHA256 검증. runner 자체 자동 갱신을 유지한다. GitHub 쪽 연결만 사용하므로 새 인바운드 SSH 규칙이 필요 없다.

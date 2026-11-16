@@ -41,14 +41,11 @@ import { ReportInsights } from "./ReportInsights.tsx";
 import { FormulaReference } from "./FormulaReference.tsx";
 import { AnalysisWorkspace } from "./AnalysisWorkspace.tsx";
 import { sampleEventGroups } from "./sampleEvents.ts";
+import { reportStrategyLabels, strategyLabels } from "./strategyLabels.ts";
 
 const PROJECT_NAME = "AFPKare";
 const CONTEST_TITLE =
   "제1회 전국 대학생 AI 재무설계 콘테스트 「AFPK 영 플래너 챌린지 2026」";
-const strategies: Record<Strategy, string> = {
-  B: "B · 단계 적립",
-  B_PRIME: "B′ · 사후 보충",
-};
 const caseExamples: { title: string; detail: string; changes: Inputs }[] = [
   {
     title: "생활비가 늘어날 때",
@@ -497,7 +494,7 @@ function Workspace({
                   <section className="card" id="paths-panel">
                     <div className="section-title">
                       <StepTitle step="01">부모와 자녀의 자금 경로</StepTitle>
-                      <span className="badge">{strategies[strategy]}</span>
+                      <span className="badge">{strategyLabels[strategy]}</span>
                     </div>
                     <SimulationPaths
                       result={result}
@@ -533,7 +530,7 @@ function Workspace({
                       </div>
                     </details>
                     <details open>
-                      <summary>B/B′ 계산 결과 비교</summary>
+                      <summary>두 가지 준비 방법 비교</summary>
                       <div className="table-scroll">
                         <table>
                           <thead>
@@ -557,7 +554,7 @@ function Workspace({
                                 >
                                   <th>
                                     {v === baseline ? "기준 · " : "적용 · "}
-                                    {strategies[v.strategy]}
+                                    {strategyLabels[v.strategy]}
                                   </th>
                                   <td>
                                     {money(v.summary.projected_trust_at_56)}
@@ -629,7 +626,7 @@ function Workspace({
                   snapshots={snapshots}
                 >
                   <p className="fine">
-                    2026년 실질 가격 · 비용과 최대 후회 단위 억 원
+                    2026년 화폐가치 기준 · 단위 억 원
                   </p>
                   <div className="table-scroll">
                     <table>
@@ -640,7 +637,7 @@ function Workspace({
                           <th>어머니 먼저</th>
                           <th>25세 사고</th>
                           <th>95세 생존</th>
-                          <th>최대 후회</th>
+                          <th>최대 추가 비용</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -650,8 +647,8 @@ function Workspace({
                             className={row.strategy === "B" ? "selected" : ""}
                           >
                             <th>
-                              {row.strategy === "B_PRIME" ? "B′" : row.strategy}
-                              <small>{row.label}</small>
+                              {reportStrategyLabels[row.strategy] ?? row.label}
+                              {row.strategy !== "D" && <small>{row.label}</small>}
                             </th>
                             {row.costs.map((v, i) => (
                               <td key={i}>{v.toFixed(2)}</td>
@@ -663,9 +660,10 @@ function Workspace({
                     </table>
                   </div>
                   <p className="fine">
-                    보고서는 최대 후회가 가장 작은 B안을 권고합니다. E안은
-                    누나의 금전 기여를 0원으로 유지한다는 가족의 제약에 따라
-                    제외했습니다.
+                    최대 추가 비용은 각 상황에서 가장 저렴한 방법보다 더 드는
+                    비용 중 가장 큰 값입니다. 보고서는 이 값이 가장 작은
+                    ‘{strategyLabels.B}’를 권고합니다. 누나가 비용을 내는 방법은
+                    가족의 조건에 따라 비교에서 제외했습니다.
                   </p>
                 </ReportInsights>{" "}
               </div>
@@ -710,8 +708,7 @@ function Workspace({
                           ) {
                             location.hash = "simulation";
                             setNotice(
-                              example.title +
-                                " 사례를 적용했습니다. B 단계 적립을 기준으로 계산했습니다.",
+                              `${example.title} 사례를 적용했습니다. ‘${strategyLabels.B}’ 기준으로 계산했습니다.`,
                             );
                           }
                         }}
@@ -890,7 +887,7 @@ function Workspace({
                 <h2>
                   {activeSlot ? `슬롯 ${activeSlot} 적용 중` : "현재 적용"}
                 </h2>
-                <span className="applied-strategy">{strategies[strategy]}</span>
+                <span className="applied-strategy">{strategyLabels[strategy]}</span>
               </div>
               <p className="care-applied-inputs">
                 <span>
@@ -923,7 +920,7 @@ function Workspace({
                 {[
                   ["선택 기간 필요 잔액", result?.summary.required_trust_at_56],
                   [
-                    `${strategy === "B" ? "B" : "B′"}안 56세 예상 잔액`,
+                    "자녀 56세 예상 신탁 잔액",
                     result?.summary.projected_trust_at_56,
                   ],
                   [
@@ -969,21 +966,21 @@ function Workspace({
                 </p>
               )}
               <div className="strategy-tabs">
-                {(Object.keys(strategies) as Strategy[]).map((s) => (
+                {(Object.keys(strategyLabels) as Strategy[]).map((s) => (
                   <button
                     key={s}
                     aria-pressed={strategy === s}
                     disabled={busy}
                     onClick={() => apply(applied, s)}
                   >
-                    {strategies[s]}
+                    {strategyLabels[s]}
                   </button>
                 ))}
               </div>
               <p className="fine">
                 {strategy === "B"
-                  ? "지금 5천만 + 연 600만 × 5년 + 정년 5천만"
-                  : "지금·정년 합계 1억 + 사후 필요액 보충"}{" "}
+                  ? "지금 5천만 원, 5년간 매년 600만 원, 정년 때 5천만 원을 적립합니다."
+                  : "지금과 정년 때 총 1억 원을 적립하고, 부모 사망 후 상속재산으로 부족분을 채웁니다."}{" "}
                 · 상품 조건 미확인
               </p>
               <form

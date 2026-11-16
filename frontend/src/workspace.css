@@ -1212,12 +1212,12 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
   margin-top: 24px;
 }
 
-.consumer-links, .consumer-cases, .product-search {
+.consumer-cases, .product-search {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
   gap: 16px;
 }
-.consumer-links a, .consumer-cases article {
+.consumer-cases article {
   padding: 16px;
   border: 1px solid #dce4ef;
   border-radius: 10px;
@@ -1393,48 +1393,6 @@ html[data-patterns] :is(.year-heatmap, p) .shortfall {
   text-wrap: pretty;
 }
 
-/* Navigation cards keep the same appearance before and after a visit. */
-.consumer-links-heading {
-  grid-column: 1 / -1;
-  margin: 0;
-  font-size: 1.12em;
-}
-.consumer-links a,
-.consumer-links a:visited {
-  position: relative;
-  display: grid;
-  align-content: start;
-  gap: 10px;
-  padding: 22px 44px 22px 22px;
-  background: #fff;
-  color: #172b45;
-  text-decoration: none;
-  border: 1px solid #dce4ef;
-  border-radius: 14px;
-  transition: border-color 150ms, box-shadow 150ms;
-}
-.consumer-links a:hover {
-  border-color: #004ea2;
-  box-shadow: 0 4px 16px #172b450d;
-}
-.consumer-links a:focus-visible {
-  outline: 3px solid #004ea2;
-  outline-offset: 3px;
-}
-.consumer-link-number {
-  color: #53667e;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-}
-.consumer-links strong { font-size: 1.05rem; word-break: keep-all; }
-.consumer-link-description {
-  color: #53667e;
-  font-size: 0.875rem;
-  line-height: 1.6;
-  word-break: keep-all;
-}
-.consumer-link-arrow { position: absolute; right: 20px; top: 20px; color: #004ea2; }
 .care-rail { background: #f5f7fa; }
 .applied-summary {
   padding: 18px;

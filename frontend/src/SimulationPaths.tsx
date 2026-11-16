@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Chart, money } from "./Chart.tsx";
 import type { Result } from "./simulation.ts";
+import { strategyLabels } from "./strategyLabels.ts";
 
-const names = { B: "B · 단계 적립", B_PRIME: "B′ · 사후 보충" };
 const milestones = [
   [2031, "정년"],
   [2036, "국민연금"],
@@ -71,8 +71,8 @@ export function SimulationPaths({
   }, [playing, playbackRun, first, last]);
   const other = changed ? baseline : comparison;
   const otherLabel = changed
-    ? `기준 사례 · ${names[result.strategy]}`
-    : names[result.strategy === "B" ? "B_PRIME" : "B"];
+    ? `기준 사례 · ${strategyLabels[result.strategy]}`
+    : strategyLabels[result.strategy === "B" ? "B_PRIME" : "B"];
   const need = result.summary.required_trust_at_56;
   const coverage =
     need == null
@@ -128,7 +128,7 @@ export function SimulationPaths({
           title="부모 금융자산"
           rows={result.parent_timeline}
           otherRows={other?.parent_timeline ?? []}
-          label={names[result.strategy]}
+          label={strategyLabels[result.strategy]}
           otherLabel={otherLabel}
           cursorYear={year}
         />
@@ -136,7 +136,7 @@ export function SimulationPaths({
           title="자녀 신탁 잔액"
           rows={result.child_timeline}
           otherRows={other?.child_timeline ?? []}
-          label={names[result.strategy]}
+          label={strategyLabels[result.strategy]}
           otherLabel={otherLabel}
           cursorYear={year}
         />

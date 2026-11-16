@@ -1,6 +1,7 @@
 import type { Reference, Result } from "./simulation.ts";
 import type { Snapshot, Sensitivity } from "./analysis.ts";
 import { INPUT_KEYS } from "./analysis.ts";
+import { strategyLabels } from "./strategyLabels.ts";
 
 const summaryKeys = [
   "required_trust_at_56",
@@ -181,7 +182,7 @@ export function evidenceHtml(
         ? "계산 미지원"
         : String(v);
   const metrics = (r: ReturnType<typeof calculation>) => [
-    r.strategy,
+    strategyLabels[r.strategy],
     number(r.summary.required_trust_at_56),
     number(r.summary.projected_trust_at_56),
     number(r.summary.child_shortfall_total),

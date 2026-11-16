@@ -4,6 +4,7 @@ import { GuideSkip } from "./GuideSkip.tsx";
 import type { Snapshot } from "./analysis.ts";
 import { requestSimulation, type Reference } from "./simulation.ts";
 import { validInputs, type Saved } from "./storage.ts";
+import { strategyLabels } from "./strategyLabels.ts";
 
 const key = "family-finance:case-slots";
 export const slotNames = ["A", "B", "C", "D"] as const;
@@ -183,7 +184,7 @@ export function CaseSlots({
     <>
       <p>
         {slot
-          ? `${selected} · 전략 ${slot.strategy === "B" ? "B" : "B′"} · ${slot.overrides.child_end_age ?? reference.defaults.child_end_age}세까지`
+          ? `${selected} · ${strategyLabels[slot.strategy]} · ${slot.overrides.child_end_age ?? reference.defaults.child_end_age}세까지`
           : `슬롯 ${selected}가 비어 있어요.`}
       </p>
       <div className="care-slot-actions">
