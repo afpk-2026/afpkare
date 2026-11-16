@@ -92,7 +92,7 @@ export function FormulaReference() {
         </article>
         <article>
           <span className="formula-index">식 4</span>
-          <h3>보고서 대안 비용·후회</h3>
+          <h3>준비 방법별 비용 비교</h3>
           <p className="equation">
             cost(a, s) = 3 × 평생 부족액 + 잃는 공적급여
           </p>
@@ -100,7 +100,7 @@ export function FormulaReference() {
             regret(a, s) = cost(a, s) − min cost(대안, s)
           </p>
           <p className="equation">
-            최대 후회(a) = max<sub>s</sub> regret(a, s)
+            최대 추가 비용(a) = max<sub>s</sub> regret(a, s)
           </p>
           <p className="formula-caption">
             a: 전략 · s: 사건. 공적급여 감소분은 같은 기간 동안 무신탁일 때 받는

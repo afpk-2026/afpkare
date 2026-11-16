@@ -2,14 +2,15 @@ import React, { useEffect, useRef, useState } from "react";
 import baseline from "./report-baseline.json";
 import previewCases from "./landing-preview-cases.json";
 import { money } from "./Chart.tsx";
+import { strategyLabels } from "./strategyLabels.ts";
 
 const strategies = [
   {
-    title: "B · 단계 적립",
+    title: strategyLabels.B,
     color: "#65c4ff",
   },
   {
-    title: "B′ · 사후 보충",
+    title: strategyLabels.B_PRIME,
     color: "#ffcb7b",
   },
 ];
@@ -24,16 +25,16 @@ const steps = [
   {
     title: "저장한 사례 다시 비교하기",
     description:
-      "오른쪽 슬롯을 선택하고 시뮬레이터 본문의 ‘사례 슬롯 관리’에서 ‘현재 적용값 저장’을 누릅니다. 저장한 슬롯을 누르면 해당 가정이 적용됩니다. ‘보고서 진단과 대안’에서 현재 가정 및 저장 슬롯 보기로 바꾸면 B와 B′의 부족액을 비교할 수 있습니다.",
+      "시뮬레이터의 ‘사례 슬롯 관리’에서 저장할 칸을 선택하고 ‘현재 적용값 저장’을 누릅니다. ‘보고서 진단과 대안’에서 저장한 사례를 선택한 뒤 ‘대안 비교’를 열면 두 가지 신탁 준비 방법의 생활비 부족액을 비교할 수 있습니다.",
     image: "compare.webp",
-    alt: "보고서 대안 비교 표와 오른쪽 A, B, C, D 사례 슬롯",
+    alt: "생전에 나눠 적립하는 방법과 상속재산으로 추가 적립하는 방법의 생활비 부족액 비교 표",
   },
   {
     title: "공식 문서에서 답 찾기",
     description:
       "‘은행과 신탁 상품’에서 상품 이름을 누르면 원문이 열립니다. ‘AI 설명’을 누르면 공식 자료 요약과 출처 링크를 함께 볼 수 있습니다.",
     image: "sources.webp",
-    alt: "신탁 자료 목록과 공식 출처를 제시하는 AI 도우미",
+    alt: "공식 문서 링크와 AI 설명 버튼이 있는 신탁 자료 목록",
   },
 ];
 
@@ -297,7 +298,7 @@ function LivingCostPreview() {
     <div className="landing-impact">
       <div>
         <h3>월 생활비를 골라 보세요</h3>
-        <p>두 예시 모두 B안 · 연 순실질수익률 1% · 95세까지</p>
+        <p>두 예시 모두 {strategyLabels.B} · 연 순실질수익률 1% · 95세까지</p>
         <div
           className="landing-impact-options"
           role="group"
@@ -341,7 +342,7 @@ const checkpoints = [
   [
     "부모가 떠난 뒤",
     "적립금과 유족연금으로 자녀의 생활비를 얼마나 오래 충당할 수 있을까요?",
-    "B의 단계 적립과 B′의 사후 보충을 비교하고, 신탁 인출로도 부족한 해가 있는지 살펴보세요.",
+    "생전에 나눠 적립하는 방법과 상속재산으로 부족분을 채우는 방법을 비교해, 생활비가 부족한 해가 있는지 살펴보세요.",
   ],
   [
     "자녀가 65세가 되는 해",
@@ -432,7 +433,7 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
           <dl className="landing-facts">
             <div>
               <dt>계산 전략</dt>
-              <dd>B / B′</dd>
+              <dd>생전 적립과 상속재산 보충</dd>
             </div>
             <div>
               <dt>저장 슬롯</dt>
@@ -609,8 +610,10 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
           <details>
             <summary>기준 사례와 내가 바꾼 사례는 어떻게 구분하나요?</summary>
             <p>
-              A·D는 보고서 기준 사례의 고정 비교입니다. 월 생활비·수익률 등을
-              바꾸면 B·B′의 연도별 경로, 필요 잔액과 부족액을 다시 계산합니다.
+              자녀에게 재산을 많이 이전하는 방법과 별도 준비 없이 법정상속하는
+              방법은 보고서 기준값으로 비교합니다. 월 생활비나 수익률을 바꾸면
+              생전 적립과 상속재산 보충의 연도별 자금 흐름, 필요한 금액과
+              부족한 금액을 다시 계산합니다.
             </p>
           </details>
         </div>
@@ -619,8 +622,9 @@ export function ServiceOverview({ onStart }: { onStart: () => void }) {
         <p className="eyebrow">08 / 활용 효과</p>
         <h2>한 가지 가정을 바꾸고 차이를 살펴보세요</h2>
         <p>
-          같은 가족 사례에서 B안, 연 순실질수익률 1%, 95세까지를 유지하고 부모
-          사후 월 생활비만 바꾼 예시입니다.
+          같은 가족 사례에서 생전에 나눠 적립하고, 물가를 반영한 연 수익률 1%로
+          자녀가 95세가 될 때까지 계산합니다. 두 예시에서는 부모 사망 후
+          자녀의 월 생활비만 바꿉니다.
         </p>
         <LivingCostPreview />
         <details open className="landing-impact-table">

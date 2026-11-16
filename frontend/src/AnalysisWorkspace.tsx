@@ -24,8 +24,8 @@ import {
   evidenceHtml,
   timelineCsv,
 } from "./evidence.ts";
+import { strategyLabels } from "./strategyLabels.ts";
 
-const names = { B: "B", B_PRIME: "B′" };
 const displayNumber = (field: string, value: number) =>
   String(
     Number(
@@ -214,7 +214,7 @@ export function AnalysisWorkspace({
                           {s.label}
                           <small>{s.result.assumption_version}</small>
                         </th>
-                        <td>{names[s.result.strategy]}</td>
+                        <td>{strategyLabels[s.result.strategy]}</td>
                         {INPUT_KEYS.map((k) => (
                           <td key={k}>
                             {formatInput(k, s.result.effective_inputs[k])}
@@ -245,12 +245,12 @@ export function AnalysisWorkspace({
         <header id="sensitivity-title">
           <span className="badge">선택</span>
           <strong>고급 분석 · 한 가정의 영향</strong>
-          <small>하한·현재·상한의 B/B′ 비교</small>
+          <small>낮은 값·현재 값·높은 값 비교</small>
         </header>
         <section className="advanced-content" aria-label="고급 민감도 분석">
           <p className="muted">
-            다른 입력을 고정하고 한 가정의 하한·현재·상한에서 B와 B′를
-            재계산합니다.
+            다른 입력은 그대로 두고, 한 입력만 낮은 값·현재 값·높은 값으로
+            바꿔 두 준비 방법을 다시 계산합니다.
           </p>
           <form
             className="sensitivity-controls"
@@ -384,7 +384,7 @@ export function AnalysisWorkspace({
                                   <small>현재</small>
                                 )}
                               </th>
-                              <td>{names[r.strategy]}</td>
+                              <td>{strategyLabels[r.strategy]}</td>
                               <td>{money(r.summary.required_trust_at_56)}</td>
                               <td>
                                 {delta(
@@ -404,8 +404,8 @@ export function AnalysisWorkspace({
                 </div>
               </details>
               <p className="fine" role="status">
-                민감도 계산 완료 · {visibleAnalysis.variants.length}개 입력값 ×
-                B/B′ · {current.assumption_version}. 필요 잔액이 미지원이면
+                민감도 계산 완료 · {visibleAnalysis.variants.length}개 입력값에서
+                두 준비 방법 비교 · {current.assumption_version}. 필요 잔액이 미지원이면
                 차이도 비교 불가로 표시합니다. 자동 권고가 아닙니다.
               </p>
             </>
